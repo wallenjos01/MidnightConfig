@@ -92,7 +92,7 @@ public class TestConfigContext {
         ConfigContext ctx = ConfigContext.INSTANCE;
 
         ConfigSection section = new ConfigSection().with("Key1", "Value1");
-        ConfigObject obj = ctx.fill(section, ctx.toMap(Map.of("Key2", ctx.toString("Value2"))));
+        ConfigObject obj = ctx.mergeMap(section, ctx.toMap(Map.of("Key2", ctx.toString("Value2"))));
 
         // Fill
         Assertions.assertSame(section, obj);
@@ -102,7 +102,7 @@ public class TestConfigContext {
         Assertions.assertEquals("Value2", section.getString("Key2"));
 
         // Overwriting
-        obj = ctx.fillOverwrite(section, ctx.toMap(Map.of("Key1", ctx.toString("Value3"))));
+        obj = ctx.mergeMapOverwrite(section, ctx.toMap(Map.of("Key1", ctx.toString("Value3"))));
         Assertions.assertSame(section, obj);
         Assertions.assertTrue(section.isSection());
         Assertions.assertEquals(2, section.size());
@@ -110,7 +110,7 @@ public class TestConfigContext {
         Assertions.assertEquals("Value2", section.getString("Key2"));
 
         // Non-destructive fill
-        obj = ctx.fill(section, ctx.toMap(Map.of("Key1", ctx.toString("Value4"))));
+        obj = ctx.mergeMap(section, ctx.toMap(Map.of("Key1", ctx.toString("Value4"))));
         Assertions.assertSame(section, obj);
         Assertions.assertTrue(section.isSection());
         Assertions.assertEquals(2, section.size());

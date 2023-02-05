@@ -31,16 +31,37 @@ public interface SerializeContext<T> {
     T toList(Collection<T> list);
     T toMap(Map<String, T> map);
 
-    T mergeList(Collection<T> list, T object);
+    default T mergeList(Collection<T> list, T object) {
+        if(!isList(object)) return null;
+        Collection<T> objs = asList(object);
+        if(list != null) objs.addAll(list);
+        return toList(objs);
+    }
 
-    T fill(T value, T other);
-    T fillOverwrite(T value, T other);
+    default T mergeMap(T value, T other) {
+        if(!isMap(value) || !isMap(other)) return null;
+        for(String key : getOrderedKeys(other)) {
+            if(get(key, value) == null) {
+                set(key, get(key, other), value);
+            }
+        }
+        return value;
+    }
+    default T mergeMapOverwrite(T value, T other) {
+        if(!isMap(value) || !isMap(other)) return null;
+        for(String key : getOrderedKeys(other)) {
+            set(key, get(key, other), value);
+        }
+        return value;
+    }
 
     T set(String key, T value, T object);
 
+    @SuppressWarnings("unchecked")
     default <O> O convert(SerializeContext<O> other, T object) {
 
         if(object == null) return null;
+        if(other == this) return (O) object;
 
         if(isString(object)) {
             return other.toString(asString(object));

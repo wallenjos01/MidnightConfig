@@ -1,5 +1,7 @@
 package org.wallentines.mdcfg.codec;
 
+import org.wallentines.mdcfg.ConfigObject;
+import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.io.*;
@@ -30,6 +32,14 @@ public class JSONCodec implements Codec {
 
     public static FileCodec fileCodec() {
         return new FileCodec(readable(), "json");
+    }
+
+    public static ConfigObject loadConfig(String string) {
+        return minified().decode(ConfigContext.INSTANCE, string);
+    }
+
+    public static ConfigObject loadConfig(InputStream stream) {
+        return minified().decode(ConfigContext.INSTANCE, stream);
     }
 
     @Override
@@ -67,6 +77,11 @@ public class JSONCodec implements Codec {
             if (!context.isMap(section)) throw new IllegalArgumentException("Not a map: " + section);
 
             Collection<String> keys = context.getOrderedKeys(section);
+            if(keys.size() == 0) {
+                writer.write("{ }");
+                return;
+            }
+
             String nextPrefix = prefix + indent;
 
             writer.write("{");
@@ -166,7 +181,12 @@ public class JSONCodec implements Codec {
         private void skipWhitespace(BufferedReader reader) throws IOException {
             reader.mark(1);
 
-            while(reader.read() <= 32) {
+            int i;
+            while((i = reader.read()) <= 32) {
+                if(i == -1) {
+                    throw new DecodeException("Found EOF while attempting to parse JSON!");
+                }
+
                 reader.mark(1);
             }
             reader.reset();

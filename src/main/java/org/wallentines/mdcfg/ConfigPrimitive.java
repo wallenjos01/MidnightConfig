@@ -158,7 +158,7 @@ public class ConfigPrimitive implements ConfigObject {
         return Objects.hash(value);
     }
 
-    private static boolean isInteger(Number number) {
+    public static boolean isInteger(Number number) {
         return number instanceof Integer || number instanceof Long || number instanceof Short || number instanceof Byte || number instanceof BigInteger;
     }
 

@@ -3,6 +3,7 @@ import org.junit.jupiter.api.Test;
 import org.wallentines.mdcfg.ConfigList;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
+import org.wallentines.mdcfg.codec.DecodeException;
 import org.wallentines.mdcfg.codec.JSONCodec;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 
@@ -93,6 +94,25 @@ public class TestJSON {
             Assertions.fail();
             ex.printStackTrace();
         }
+    }
+
+    @Test
+    public void testReadEmpty() {
+
+        File f = new File("empty.json");
+
+        try(FileInputStream fis = new FileInputStream(f)) {
+
+            JSONCodec codec = new JSONCodec();
+            codec.decode(ConfigContext.INSTANCE, fis, StandardCharsets.UTF_8);
+
+        } catch (IOException ex) {
+            Assertions.fail();
+            ex.printStackTrace();
+        } catch (DecodeException ex) {
+            // Ignore: This is expected
+        }
+
     }
 
     @Test
