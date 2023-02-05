@@ -8,14 +8,26 @@ public class ConfigPrimitive implements ConfigObject {
 
     private final Object value;
 
+    /**
+     * Creates a ConfigPrimitive with the given Number value
+     * @param value The Number value
+     */
     public ConfigPrimitive(Number value) {
         this((Object) value);
     }
 
+    /**
+     * Creates a ConfigPrimitive with the given Boolean value
+     * @param value The Boolean value
+     */
     public ConfigPrimitive(Boolean value) {
         this((Object) value);
     }
 
+    /**
+     * Creates a ConfigPrimitive with the given String value
+     * @param value The String value
+     */
     public ConfigPrimitive(String value) {
         this((Object) value);
     }
@@ -25,34 +37,74 @@ public class ConfigPrimitive implements ConfigObject {
         this.value = value;
     }
 
+
+    /**
+     * Retrieves the value of this primitive as a byte
+     * @return The byte value of this primitive
+     * @throws IllegalStateException If the value is not a Number
+     */
     public byte asByte() {
         return asNumber().byteValue();
     }
 
+    /**
+     * Retrieves the value of this primitive as a char
+     * @return The char value of this primitive
+     * @throws IllegalStateException If the value is not a Number
+     */
     public char asChar() {
-        return (char) asNumber().byteValue();
+        return (char) asNumber().intValue();
     }
 
+    /**
+     * Retrieves the value of this primitive as a short
+     * @return The short value of this primitive
+     * @throws IllegalStateException If the value is not a Number
+     */
     public short asShort() {
         return asNumber().shortValue();
     }
 
+    /**
+     * Retrieves the value of this primitive as an int
+     * @return The int value of this primitive
+     * @throws IllegalStateException If the value is not a Number
+     */
     public int asInt() {
         return asNumber().intValue();
     }
 
+    /**
+     * Retrieves the value of this primitive as a long
+     * @return The long value of this primitive
+     * @throws IllegalStateException If the value is not a Number
+     */
     public long asLong() {
         return asNumber().longValue();
     }
 
+    /**
+     * Retrieves the value of this primitive as a float
+     * @return The float value of this primitive
+     * @throws IllegalStateException If the value is not a Number
+     */
     public float asFloat() {
         return asNumber().floatValue();
     }
 
+    /**
+     * Retrieves the value of this primitive as a double
+     * @return The double value of this primitive
+     * @throws IllegalStateException If the value is not a Number
+     */
     public double asDouble() {
         return asNumber().doubleValue();
     }
 
+    /**
+     * Retrieves the value of this primitive
+     * @return The value of this primitive. Will always be either a String, Number, or Boolean
+     */
     public Object getValue() {
         return value;
     }
@@ -88,17 +140,20 @@ public class ConfigPrimitive implements ConfigObject {
     }
 
     @Override
-    public Number asNumber() {
-        return (Number) value;
-    }
-
-    @Override
     public String asString() {
+        if(!isString()) throw new IllegalStateException("Cannot convert " + value + " to a String!");
         return (String) value;
     }
 
     @Override
+    public Number asNumber() {
+        if(!isNumber()) throw new IllegalStateException("Cannot convert " + value + " to a Number!");
+        return (Number) value;
+    }
+
+    @Override
     public Boolean asBoolean() {
+        if(!isBoolean()) throw new IllegalStateException("Cannot convert " + value + " to a Boolean!");
         return (Boolean) value;
     }
 
@@ -158,6 +213,11 @@ public class ConfigPrimitive implements ConfigObject {
         return Objects.hash(value);
     }
 
+    /**
+     * Determines if a Number object is a type of integer (long, int, short, etc.)
+     * @param number The number to check
+     * @return Whether the number is a type of integer
+     */
     public static boolean isInteger(Number number) {
         return number instanceof Integer || number instanceof Long || number instanceof Short || number instanceof Byte || number instanceof BigInteger;
     }

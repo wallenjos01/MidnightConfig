@@ -1,9 +1,6 @@
 package org.wallentines.mdcfg;
 
-import org.wallentines.mdcfg.serializer.ConfigContext;
-import org.wallentines.mdcfg.serializer.SerializeContext;
-import org.wallentines.mdcfg.serializer.SerializeResult;
-import org.wallentines.mdcfg.serializer.Serializer;
+import org.wallentines.mdcfg.serializer.*;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -15,8 +12,17 @@ public class ConfigSection implements ConfigObject {
     private final List<String> orderedKeys = new ArrayList<>();
     private final HashMap<String, Integer> indicesByKey = new HashMap<>();
 
+    /**
+     * Creates an empty ConfigSection
+     */
     public ConfigSection() { }
 
+    /**
+     * Associates the given value with the given key, overwriting any existing value if necessary
+     * @param key The key to associate the given value with
+     * @param value The value to put into the section. If null, the key will be removed from the map instead
+     * @return A reference to the previous object associated with the given key
+     */
     public ConfigObject set(String key, ConfigObject value) {
 
         if(value == null) {
@@ -44,23 +50,54 @@ public class ConfigSection implements ConfigObject {
         }
     }
 
-
+    /**
+     * Serializes an object, then associates it with the given key, overwriting any existing value if necessary
+     * @param key The key to associate the given value with
+     * @param value The object to serialize
+     * @param serializer The serializer to use to serialize the value
+     * @return A reference to the previous object associated with the given key
+     * @param <T> The type of object passed in to be serialized
+     */
     public <T> ConfigObject set(String key, T value, Serializer<T> serializer) {
+        if(value == null) return remove(key);
         return set(key, serializer.serialize(ConfigContext.INSTANCE, value).getOrThrow());
     }
 
+    /**
+     * Associates a given String with the given key
+     * @param key The key to associate the given String with
+     * @param value The String to put into the section.
+     * @return A reference to the previous object associated with the given key
+     */
     public ConfigObject set(String key, String value) {
         return set(key, new ConfigPrimitive(value));
     }
 
+    /**
+     * Associates a given Number with the given key
+     * @param key The key to associate the given Number with
+     * @param value The Number to put into the section.
+     * @return A reference to the previous object associated with the given key
+     */
     public ConfigObject set(String key, Number value) {
         return set(key, new ConfigPrimitive(value));
     }
 
+    /**
+     * Associates a given Boolean with the given key
+     * @param key The key to associate the given Boolean with
+     * @param value The Boolean to put into the section.
+     * @return A reference to the previous object associated with the given key
+     */
     public ConfigObject set(String key, Boolean value) {
         return set(key, new ConfigPrimitive(value));
     }
 
+    /**
+     * Gets a reference to the value associated with the given key, or null if not present
+     * @param key The key to lookup
+     * @return The value associated with the given key, or null
+     */
     public ConfigObject get(String key) {
 
         Integer index = indicesByKey.get(key);
@@ -69,75 +106,191 @@ public class ConfigSection implements ConfigObject {
         return values.get(index);
     }
 
-    public <T> T get(String key, Serializer<T> serializer) {
+    /**
+     * Gets a deserialized a value associated with a given key
+     * @param key The key to lookup
+     * @param serializer The serializer to use to deserialize the value
+     * @return An instance of T deserialized from the value in the section
+     * @param <T> The type of object to deserialize
+     * @throws SerializeException if the value is null or cannot be converted to the requested type
+     */
+    public <T> T get(String key, Serializer<T> serializer) throws SerializeException {
 
         ConfigObject out = get(key);
         return serializer.deserialize(ConfigContext.INSTANCE, out).getOrThrow();
     }
 
+    /**
+     * Gets a deserialized a value associated with a given key, or an empty optional if not found
+     * @param key key The key to lookup
+     * @param serializer The serializer to use to deserialize the value
+     * @return An optional containing an instance of T deserialized from the value in the section, or empty if it could not be serialized
+     * @param <T> The type of object to deserialize
+     */
     public <T> Optional<T> getOptional(String key, Serializer<T> serializer) {
 
         ConfigObject out = get(key);
         return serializer.deserialize(ConfigContext.INSTANCE, out).get();
     }
 
+    /**
+     * Gets a reference to the value associated with the given key, or an empty optional if not present
+     * @param key The key to lookup
+     * @return An optional containing the value associated with the given key, or empty
+     */
     public Optional<ConfigObject> getOptional(String key) {
         return Optional.ofNullable(get(key));
     }
 
+    /**
+     * Gets a reference to the String associated with the given key, or the provided default value
+     * @param key The key to lookup
+     * @param defaultValue The value to return if the given key could not be found or is not associated with a String
+     * @return The String associated with the given key, or the default value
+     */
     public String getOrDefault(String key, String defaultValue) {
         return getOptional(key).filter(ConfigObject::isString).map(ConfigObject::asString).orElse(defaultValue);
     }
 
+    /**
+     * Gets a reference to the Number associated with the given key, or the provided default value
+     * @param key The key to lookup
+     * @param defaultValue The value to return if the given key could not be found or is not associated with a Number
+     * @return The Number associated with the given key, or the default value
+     */
     public Number getOrDefault(String key, Number defaultValue) {
         return getOptional(key).filter(ConfigObject::isNumber).map(ConfigObject::asNumber).orElse(defaultValue);
     }
 
+    /**
+     * Gets a reference to the Boolean associated with the given key, or the provided default value
+     * @param key The key to lookup
+     * @param defaultValue The value to return if the given key could not be found or is not associated with a Boolean
+     * @return The Boolean associated with the given key, or the default value
+     */
     public Boolean getOrDefault(String key, Boolean defaultValue) {
         return getOptional(key).filter(ConfigObject::isBoolean).map(ConfigObject::asBoolean).orElse(defaultValue);
     }
 
-
+    /**
+     * Gets a reference to the String associated with the given key
+     * @param key The key to lookup
+     * @return The value associated with the given key
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a String
+     */
     public String getString(String key) {
-        return get(key).asPrimitive().asString();
+        return getOptional(key).orElseThrow().asPrimitive().asString();
     }
 
+    /**
+     * Gets a reference to the Number associated with the given key
+     * @param key The key to lookup
+     * @return The value associated with the given key
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a Number
+     */
     public Number getNumber(String key) {
-        return get(key).asPrimitive().asNumber();
+        return getOptional(key).orElseThrow().asPrimitive().asNumber();
     }
 
+    /**
+     * Gets the value of the Number associated with the given key as a byte
+     * @param key The key to lookup
+     * @return The value associated with the given key
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a Number
+     */
     public byte getByte(String key) {
         return getNumber(key).byteValue();
     }
 
+    /**
+     * Gets the value of the Number associated with the given key as a short
+     * @param key The key to lookup
+     * @return The value associated with the given key
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a Number
+     */
     public short getShort(String key) {
         return getNumber(key).shortValue();
     }
 
+    /**
+     * Gets the value of the Number associated with the given key as a int
+     * @param key The key to lookup
+     * @return The value associated with the given key
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a Number
+     */
     public int getInt(String key) {
         return getNumber(key).intValue();
     }
 
+    /**
+     * Gets the value of the Number associated with the given key as a long
+     * @param key The key to lookup
+     * @return The value associated with the given key
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a Number
+     */
     public long getLong(String key) {
         return getNumber(key).longValue();
     }
 
+    /**
+     * Gets the value of the Number associated with the given key as a float
+     * @param key The key to lookup
+     * @return The value associated with the given key
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a Number
+     */
     public float getFloat(String key) {
         return getNumber(key).floatValue();
     }
 
+    /**
+     * Gets the value of the Number associated with the given key as a double
+     * @param key The key to lookup
+     * @return The value associated with the given key
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a Number
+     */
     public double getDouble(String key) {
         return getNumber(key).doubleValue();
     }
 
+    /**
+     * Gets a reference to the Boolean associated with the given key
+     * @param key The key to lookup
+     * @return The value associated with the given key
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a Boolean
+     */
     public boolean getBoolean(String key) {
-        return get(key).asPrimitive().asBoolean();
+        return getOptional(key).orElseThrow().asPrimitive().asBoolean();
     }
 
+    /**
+     * Gets a reference to the ConfigList associated with the given key
+     * @param key The key to lookup
+     * @return The value associated with the given key
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a ConfigList
+     */
     public ConfigList getList(String key) {
-        return get(key).asList();
+        return getOptional(key).orElseThrow().asList();
     }
 
+    /**
+     * Gets a list associated with the given key, then makes a new list containing only values which can be serialized using the given serializer
+     * @param key The key to lookup
+     * @param serializer The serializer to use to deserialize the values in the list
+     * @return A new list with only elements of type T
+     * @param <T> The type of objects to put in the list
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a ConfigList
+     */
     public <T> List<T> getListFiltered(String key, Serializer<T> serializer) {
         ConfigList list = get(key).asList();
         List<T> out = new ArrayList<>();
@@ -148,10 +301,22 @@ public class ConfigSection implements ConfigObject {
         return out;
     }
 
+    /**
+     * Gets a reference to the ConfigSection associated with the given key
+     * @param key The key to lookup
+     * @return The value associated with the given key
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a ConfigSection
+     */
     public ConfigSection getSection(String key) {
         return get(key).asSection();
     }
 
+    /**
+     * Gets a reference to an existing ConfigSection associated with the given key, or creates a new one, puts it in the section, and returns it
+     * @param key The key to lookup
+     * @return An existing or newly created ConfigSection associated with the given key
+     */
     public ConfigSection getOrCreateSection(String key) {
         ConfigObject obj = get(key);
         if(obj == null) {
@@ -165,18 +330,65 @@ public class ConfigSection implements ConfigObject {
         throw new IllegalStateException("There is already a value with key " + key + ", and it is not a ConfigSection!");
     }
 
+    /**
+     * Determines whether there is any value associated with the given key
+     * @param key The key to lookup
+     * @return Whether there is any value associated with the given key
+     */
     public boolean has(String key) {
         return indicesByKey.containsKey(key);
     }
 
+    /**
+     * Determines whether there is a String value associated with the given key
+     * @param key The key to lookup
+     * @return Whether there is a String value associated with the given key
+     */
+    public boolean hasString(String key) {
+        return has(key) && values.get(indicesByKey.get(key)).isString();
+    }
+
+    /**
+     * Determines whether there is a Number value associated with the given key
+     * @param key The key to lookup
+     * @return Whether there is a Number value associated with the given key
+     */
+    public boolean hasNumber(String key) {
+        return has(key) && values.get(indicesByKey.get(key)).isNumber();
+    }
+
+    /**
+     * Determines whether there is a Boolean value associated with the given key
+     * @param key The key to lookup
+     * @return Whether there is a Boolean value associated with the given key
+     */
+    public boolean hasBoolean(String key) {
+        return has(key) && values.get(indicesByKey.get(key)).isBoolean();
+    }
+
+    /**
+     * Determines whether there is a ConfigList associated with the given key
+     * @param key The key to lookup
+     * @return Whether there is a ConfigList associated with the given key
+     */
     public boolean hasList(String key) {
         return has(key) && values.get(indicesByKey.get(key)).isList();
     }
 
+    /**
+     * Determines whether there is a ConfigSection associated with the given key
+     * @param key The key to lookup
+     * @return Whether there is a ConfigSection associated with the given key
+     */
     public boolean hasSection(String key) {
         return has(key) && values.get(indicesByKey.get(key)).isSection();
     }
 
+    /**
+     * Removes the value associated with the given key
+     * @param key The key to lookup and remove
+     * @return The value associated with the given key before removing, or null if there was none.
+     */
     public ConfigObject remove(String key) {
 
         Integer index = indicesByKey.get(key);
@@ -199,18 +411,114 @@ public class ConfigSection implements ConfigObject {
         return out;
     }
 
+    /**
+     * Copies all values from the other section if they do not exist in this section
+     * @param other The section to copy from
+     */
     public void fill(ConfigSection other) {
         for(String key : other.orderedKeys) {
-            if(!has(key)) set(key, other.get(key));
+            if(!has(key)) {
+                set(key, other.get(key).copy());
+            } else if(hasSection(key) && other.hasSection(key)) {
+                getSection(key).fill(other.getSection(key));
+            }
         }
     }
 
+    /**
+     * Copies all values from the other section
+     * @param other The section to copy from
+     */
     public void fillOverwrite(ConfigSection other) {
         for(String key : other.orderedKeys) {
-            set(key, other.get(key));
+            set(key, other.get(key).copy());
         }
     }
 
+    /**
+     * Determines the number of entries in the Section
+     * @return The number of entries in the Section
+     */
+    public int size() {
+
+        return values.size();
+    }
+
+    /**
+     * Creates a collection of keys in the Section
+     * @return The keys in the section
+     */
+    public Collection<String> getKeys() {
+        return List.copyOf(orderedKeys);
+    }
+
+    /**
+     * Associates the given value with the given key, overwriting any existing value if necessary, then returns a reference to self
+     * @param key The key to associate the given value with
+     * @param value The value to put into the section. If null, the key will be removed from the map instead
+     * @return A reference to self
+     */
+    public ConfigSection with(String key, ConfigObject value) {
+        set(key, value);
+        return this;
+    }
+
+    /**
+     * Serializes an object, then associates it with the given key, overwriting any existing value if necessary, then returns a reference to self
+     * @param key The key to associate the given value with
+     * @param value The object to serialize
+     * @param serializer The serializer to use to serialize the value
+     * @return A reference to self
+     * @param <T> The type of object passed in to be serialized
+     */
+    public <T> ConfigSection with(String key, T value, Serializer<T> serializer) {
+        set(key, value, serializer);
+        return this;
+    }
+
+    /**
+     * Associates a given String with the given key, then returns a reference to self
+     * @param key The key to associate the given String with
+     * @param value The String to put into the section.
+     * @return A reference to self
+     */
+    public ConfigSection with(String key, String value) {
+        set(key, value);
+        return this;
+    }
+
+    /**
+     * Associates a given Number with the given key, then returns a reference to self
+     * @param key The key to associate the given String with
+     * @param value The String to put into the section.
+     * @return A reference to self
+     */
+    public ConfigSection with(String key, Number value) {
+        set(key, value);
+        return this;
+    }
+
+    /**
+     * Associates a given Boolean with the given key, then returns a reference to self
+     * @param key The key to associate the given String with
+     * @param value The String to put into the section.
+     * @return A reference to self
+     */
+    public ConfigSection with(String key, Boolean value) {
+        set(key, value);
+        return this;
+    }
+
+    /**
+     * Creates a stream of each key-value pair in the ConfigSection
+     * @return A stream of the key-value pairs in the ConfigSection
+     */
+    public Stream<Tuples.T2<String, ConfigObject>> stream() {
+
+        return orderedKeys.stream().map(key -> new Tuples.T2<>(key, get(key)));
+    }
+
+    @Override
     public ConfigSection copy() {
 
         ConfigSection out = new ConfigSection();
@@ -218,45 +526,6 @@ public class ConfigSection implements ConfigObject {
             out.set(key, get(key).copy());
         }
         return out;
-    }
-
-    public int size() {
-
-        return values.size();
-    }
-
-    public Collection<String> getKeys() {
-        return List.copyOf(orderedKeys);
-    }
-
-    public ConfigSection with(String key, ConfigObject value) {
-        set(key, value);
-        return this;
-    }
-
-    public <T> ConfigSection with(String key, T value, Serializer<T> serializer) {
-        set(key, value, serializer);
-        return this;
-    }
-
-    public ConfigSection with(String key, String value) {
-        set(key, value);
-        return this;
-    }
-
-    public ConfigSection with(String key, Number value) {
-        set(key, value);
-        return this;
-    }
-
-    public ConfigSection with(String key, Boolean value) {
-        set(key, value);
-        return this;
-    }
-
-    public Stream<Tuples.T2<String, ConfigObject>> stream() {
-
-        return orderedKeys.stream().map(key -> new Tuples.T2<>(key, get(key)));
     }
 
     @Override
@@ -316,6 +585,12 @@ public class ConfigSection implements ConfigObject {
         return true;
     }
 
+    /**
+     * Attempts to construct a ConfigSection by converting the values in the given map to ConfigSection
+     * @param map The map to attempt to convert
+     * @return A new ConfigSection with the given values
+     * @throws IllegalArgumentException If the keys in the map are not Strings or the values cannot be converted to ConfigObjects
+     */
     public static ConfigSection of(Map<?, ?> map) {
 
         ConfigSection sec = new ConfigSection();
