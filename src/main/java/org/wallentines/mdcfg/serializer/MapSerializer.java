@@ -27,7 +27,7 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
             out.put(key, valueResult.getOrThrow());
         }
 
-        return SerializeResult.ofNullable(context.saveMap(out), "Unable to serialize map!");
+        return SerializeResult.ofNullable(context.toMap(out), "Unable to serialize map!");
     }
 
     @Override

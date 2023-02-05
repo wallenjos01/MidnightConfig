@@ -106,13 +106,13 @@ public class ConfigContext implements SerializeContext<ConfigObject> {
     }
 
     @Override
-    public ConfigObject saveList(Collection<ConfigObject> object) {
+    public ConfigObject toList(Collection<ConfigObject> object) {
         if(object == null) return null;
         return ConfigList.of(object);
     }
 
     @Override
-    public ConfigObject saveMap(Map<String, ConfigObject> object) {
+    public ConfigObject toMap(Map<String, ConfigObject> object) {
         if(object == null) return null;
         ConfigSection out = new ConfigSection();
         object.forEach(out::set);
@@ -120,16 +120,45 @@ public class ConfigContext implements SerializeContext<ConfigObject> {
     }
 
     @Override
+    public ConfigObject mergeList(Collection<ConfigObject> list, ConfigObject base) {
+        if(!base.isList()) return null;
+        if(list == null) return base;
+
+        ConfigList out = base.asList();
+        out.addAll(list);
+
+        return out;
+    }
+
+    @Override
     public ConfigObject fill(ConfigObject object, ConfigObject other) {
-        if(object == null || !object.isSection()) return null;
+        if(object == null || !object.isSection() || other == null || !other.isSection()) return null;
         object.asSection().fill(other.asSection());
         return object;
     }
 
     @Override
     public ConfigObject fillOverwrite(ConfigObject object, ConfigObject other) {
-        if(object == null || !object.isSection()) return null;
+        if(object == null || !object.isSection() || other == null || !other.isSection()) return null;
         object.asSection().fillOverwrite(other.asSection());
         return object;
+    }
+
+    @Override
+    public ConfigObject set(String key, ConfigObject value, ConfigObject object) {
+        if(object == null || !object.isSection()) return null;
+        object.asSection().set(key, value);
+        return object;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <O> O convert(SerializeContext<O> other, ConfigObject object) {
+
+        if(object != null && other instanceof ConfigContext) {
+            return (O) object;
+        }
+
+        return SerializeContext.super.convert(other, object);
     }
 }

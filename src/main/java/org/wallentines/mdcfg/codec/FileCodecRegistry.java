@@ -7,6 +7,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
+@SuppressWarnings("unused")
 public class FileCodecRegistry {
 
     private FileCodec defaultCodec;
@@ -52,13 +53,11 @@ public class FileCodecRegistry {
         return wrapper;
     }
 
-    public <T> FileWrapper<T> findOrCreate(SerializeContext<T> context, String prefix, File folder) {
-        return findOrCreate(context, prefix, folder, StandardCharsets.UTF_8);
+    public <T> FileWrapper<T> find(SerializeContext<T> context, String prefix, File folder) {
+        return find(context, prefix, folder, StandardCharsets.UTF_8);
     }
 
-    public <T> FileWrapper<T> findOrCreate(SerializeContext<T> context, String prefix, File folder, Charset charset) {
-
-        if(!folder.isDirectory()) return null;
+    public <T> FileWrapper<T> find(SerializeContext<T> context, String prefix, File folder, Charset charset) {
 
         File[] fs = folder.listFiles();
         if(fs != null) for(File file : fs) {
@@ -73,11 +72,22 @@ public class FileCodecRegistry {
             FileCodec codec = forFileExtension(extension);
 
             if(fileName.equals(prefix) && codec != null) {
-                FileWrapper<T> out = new FileWrapper<>(context, codec, file, charset);
-                out.load();
-                return out;
+                return new FileWrapper<>(context, codec, file, charset);
             }
         }
+
+        return null;
+    }
+
+    public <T> FileWrapper<T> findOrCreate(SerializeContext<T> context, String prefix, File folder) {
+        return findOrCreate(context, prefix, folder, StandardCharsets.UTF_8);
+    }
+
+    public <T> FileWrapper<T> findOrCreate(SerializeContext<T> context, String prefix, File folder, Charset charset) {
+
+        if(!folder.isDirectory()) throw new IllegalArgumentException("Attempt to find or create a file in non-directory " + folder + "!");
+        FileWrapper<T> out = find(context, prefix, folder, charset);
+        if(out != null) return out;
 
         FileCodec codec = defaultCodec;
 

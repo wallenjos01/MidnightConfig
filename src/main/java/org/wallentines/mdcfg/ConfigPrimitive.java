@@ -118,6 +118,11 @@ public class ConfigPrimitive implements ConfigObject {
     }
 
     @Override
+    public ConfigPrimitive copy() {
+        return this;
+    }
+
+    @Override
     public String toString() {
         return "ConfigPrimitive{" +
                 "value=" + value +

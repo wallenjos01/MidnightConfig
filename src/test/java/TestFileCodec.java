@@ -56,6 +56,7 @@ public class TestFileCodec {
 
         // Existing File
         FileWrapper<ConfigObject> wrapper = registry.findOrCreate(ConfigContext.INSTANCE, "test", of.toFile());
+        wrapper.load();
         TestJSON.testLoadedFile(wrapper.getRoot());
         Assertions.assertEquals("test.json", wrapper.getFile().getName());
 

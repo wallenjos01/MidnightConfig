@@ -22,7 +22,7 @@ public class ListSerializer<T> implements Serializer<Collection<T>> {
             out.add(res.getOrThrow());
         }
 
-        return SerializeResult.ofNullable(context.saveList(out));
+        return SerializeResult.ofNullable(context.toList(out));
     }
 
     @Override

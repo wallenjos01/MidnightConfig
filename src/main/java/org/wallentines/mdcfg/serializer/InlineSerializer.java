@@ -19,16 +19,15 @@ public interface InlineSerializer<T> extends Serializer<T> {
 
     String writeString(T value);
 
-    static <T> InlineSerializer<T> of(Function<String, T> create, Function<T, String> get) {
+    static <T> InlineSerializer<T> of(Function<T, String> serialize, Function<String, T> deserialize) {
         return new InlineSerializer<>() {
             @Override
-            public T readString(String str) {
-                return create.apply(str);
-            }
-
-            @Override
             public String writeString(T value) {
-                return get.apply(value);
+                return serialize.apply(value);
+            }
+            @Override
+            public T readString(String str) {
+                return deserialize.apply(str);
             }
         };
     }

@@ -1,5 +1,6 @@
 package org.wallentines.mdcfg.serializer;
 
+import java.util.UUID;
 import java.util.function.Function;
 
 @SuppressWarnings("unused")
@@ -58,5 +59,23 @@ public interface Serializer<T> {
     Serializer<Float> FLOAT = NumberSerializer.forFloat(Float.MIN_VALUE, Float.MAX_VALUE);
     Serializer<Double> DOUBLE = NumberSerializer.forDouble(Double.MIN_VALUE, Double.MAX_VALUE);
     Serializer<Boolean> BOOLEAN = BooleanSerializer.RAW.or(BooleanSerializer.NUMBER).or(BooleanSerializer.STRING);
+
+    Serializer<UUID> UUID = new Serializer<>() {
+        @Override
+        public <O> SerializeResult<O> serialize(SerializeContext<O> context, java.util.UUID value) {
+            return SerializeResult.ofNullable(value, "Unable to save " + value + " as a UUID!").map(uuid -> SerializeResult.ofNullable(context.toString(value.toString())));
+        }
+
+        @Override
+        public <O> SerializeResult<java.util.UUID> deserialize(SerializeContext<O> context, O value) {
+            return SerializeResult.ofNullable(context.asString(value)).map(str -> {
+                try {
+                    return SerializeResult.success(java.util.UUID.fromString(str));
+                } catch (IllegalArgumentException ex) {
+                    return SerializeResult.failure("Unable to parse " + str + " as a UUID!");
+                }
+            });
+        }
+    };
 
 }

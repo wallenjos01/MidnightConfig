@@ -47,7 +47,7 @@ public class TestSerializer {
     @Test
     public void testSingle() {
 
-        Serializer<TestSerializable> serializer = InlineSerializer.of(TestSerializable::new, ts -> ts.value);
+        Serializer<TestSerializable> serializer = InlineSerializer.of(ts -> ts.value, TestSerializable::new);
 
         ConfigPrimitive input = new ConfigPrimitive("Hello");
         TestSerializable ser = serializer.deserialize(ConfigContext.INSTANCE, input).getOrThrow();
@@ -184,7 +184,7 @@ public class TestSerializer {
                 Serializer.INT.entry("int", TestSerializableComplex::getIntValue),
                 Serializer.BOOLEAN.entry("bool", TestSerializableComplex::getBoolValue),
                 Serializer.STRING.listOf().entry("list", TestSerializableComplex::getListValue),
-                Serializer.STRING.mapOf(InlineSerializer.of(Integer::parseInt, Object::toString)).entry("map", TestSerializableComplex::getMapValue),
+                Serializer.STRING.mapOf(InlineSerializer.of(Object::toString, Integer::parseInt)).entry("map", TestSerializableComplex::getMapValue),
                 TestSerializableMulti.SERIALIZER.entry("class", TestSerializableComplex::getClassValue),
                 TestSerializableComplex::new
         );
@@ -292,7 +292,7 @@ public class TestSerializer {
         ConfigPrimitive rawInt = new ConfigPrimitive(1);
         ConfigPrimitive stringInt = new ConfigPrimitive("34");
 
-        Serializer<Integer> stringSerializer = InlineSerializer.of(Integer::parseInt, Object::toString);
+        Serializer<Integer> stringSerializer = InlineSerializer.of(Object::toString, Integer::parseInt);
         Serializer<Integer> intSerializer = Serializer.INT;
 
         Assertions.assertEquals(34, stringSerializer.deserialize(ConfigContext.INSTANCE, stringInt).getOrThrow());
@@ -302,6 +302,58 @@ public class TestSerializer {
 
         Assertions.assertEquals(1, compoundSerializer.deserialize(ConfigContext.INSTANCE, rawInt).getOrThrow());
         Assertions.assertEquals(34, compoundSerializer.deserialize(ConfigContext.INSTANCE, stringInt).getOrThrow());
+
+    }
+
+    @Test
+    public void testOptional() {
+
+        Serializer<TestSerializableMulti> optionalSerializer = ObjectSerializer.create(
+                Serializer.STRING.entry("string", TestSerializableMulti::getStrValue),
+                Serializer.INT.entry("int", TestSerializableMulti::getIntValue),
+                Serializer.BOOLEAN.entry("bool", TestSerializableMulti::getBoolValue).optional(),
+                TestSerializableMulti::new
+        );
+
+        ConfigSection serialized = new ConfigSection().with("string", "value").with("int", 33);
+        SerializeResult<TestSerializableMulti> result = optionalSerializer.deserialize(ConfigContext.INSTANCE, serialized);
+        Assertions.assertTrue(result.isComplete());
+
+        TestSerializableMulti multi = result.getOrThrow();
+
+        Assertions.assertEquals("value", multi.getStrValue());
+        Assertions.assertEquals(33, multi.getIntValue());
+        Assertions.assertNull(multi.getBoolValue());
+
+        SerializeResult<ConfigObject> sResult = optionalSerializer.serialize(ConfigContext.INSTANCE, multi);
+        Assertions.assertTrue(sResult.isComplete());
+        Assertions.assertEquals(2, sResult.getOrThrow().asSection().size());
+
+    }
+
+    @Test
+    public void testDefault() {
+
+        Serializer<TestSerializableMulti> defaultSerializer = ObjectSerializer.create(
+                Serializer.STRING.entry("string", TestSerializableMulti::getStrValue),
+                Serializer.INT.entry("int", TestSerializableMulti::getIntValue).orElse(12),
+                Serializer.BOOLEAN.entry("bool", TestSerializableMulti::getBoolValue),
+                TestSerializableMulti::new
+        );
+
+        ConfigSection serialized = new ConfigSection().with("string", "value").with("bool", true);
+        SerializeResult<TestSerializableMulti> result = defaultSerializer.deserialize(ConfigContext.INSTANCE, serialized);
+        Assertions.assertTrue(result.isComplete());
+
+        TestSerializableMulti multi = result.getOrThrow();
+
+        Assertions.assertEquals("value", multi.getStrValue());
+        Assertions.assertEquals(12, multi.getIntValue());
+        Assertions.assertEquals(true, multi.getBoolValue());
+
+        SerializeResult<ConfigObject> sResult = defaultSerializer.serialize(ConfigContext.INSTANCE, multi);
+        Assertions.assertTrue(sResult.isComplete());
+        Assertions.assertEquals(3, sResult.getOrThrow().asSection().size());
 
     }
 

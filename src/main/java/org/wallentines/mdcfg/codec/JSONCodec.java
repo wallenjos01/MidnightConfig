@@ -252,7 +252,7 @@ public class JSONCodec implements Codec {
 
             // Handle empty maps
             if(c == '}') {
-                return context.saveMap(values);
+                return context.toMap(values);
             }
             reader.reset();
 
@@ -264,7 +264,7 @@ public class JSONCodec implements Codec {
 
             if(c != '}') throw new DecodeException("Found junk data after value with key \"" + lastKey + "\"");
 
-            return context.saveMap(values);
+            return context.toMap(values);
         }
 
         private String decodeMapEntry(BufferedReader reader, Map<String, T> output) throws IOException {
@@ -298,7 +298,7 @@ public class JSONCodec implements Codec {
 
             // Handle empty lists
             if(c == ']') {
-                return context.saveList(values);
+                return context.toList(values);
             }
             reader.reset();
 
@@ -314,7 +314,7 @@ public class JSONCodec implements Codec {
 
             if(c != ']') throw new DecodeException("Found junk data after list");
 
-            return context.saveList(values);
+            return context.toList(values);
         }
 
         private String readString(BufferedReader reader) throws IOException {

@@ -1,5 +1,10 @@
 package org.wallentines.mdcfg;
 
+import org.wallentines.mdcfg.serializer.ConfigContext;
+import org.wallentines.mdcfg.serializer.SerializeContext;
+import org.wallentines.mdcfg.serializer.SerializeResult;
+import org.wallentines.mdcfg.serializer.Serializer;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -28,6 +33,8 @@ public interface ConfigObject {
     ConfigList asList();
 
     ConfigSection asSection();
+
+    ConfigObject copy();
 
     default String asString() {
         return asPrimitive().asString();
@@ -72,5 +79,16 @@ public interface ConfigObject {
 
         throw new IllegalArgumentException("Unable to convert " + obj + " to a config object!");
     }
+
+    Serializer<ConfigObject> SERIALIZER = new Serializer<>() {
+        @Override
+        public <O> SerializeResult<O> serialize(SerializeContext<O> context, ConfigObject value) {
+            return SerializeResult.ofNullable(ConfigContext.INSTANCE.convert(context, value), "Could not convert " + value + " to ConfigObject!");
+        }
+        @Override
+        public <O> SerializeResult<ConfigObject> deserialize(SerializeContext<O> context, O value) {
+            return SerializeResult.ofNullable(context.convert(ConfigContext.INSTANCE, value), "Could not read " + value + " as ConfigObject!");
+        }
+    };
 
 }

@@ -67,7 +67,14 @@ public class ObjectSerializer {
 
             T out = getValue(object);
             if(out == null) {
-                return SerializeResult.failure(key + " could not be found!");
+                if(!optional) {
+                        return SerializeResult.failure("A value for " + key + " could not be obtained from object!");
+                }
+                if(defaultValue != null) {
+                    return SerializeResult.success(new Tuples.T2<>(key, serializer.serialize(context, defaultValue).getOrThrow()));
+                }
+
+                return SerializeResult.success(new Tuples.T2<>(key, null));
             }
 
             return SerializeResult.success(new Tuples.T2<>(key, serializer.serialize(context, out).getOrThrow()));
@@ -96,7 +103,7 @@ public class ObjectSerializer {
         return new Serializer<>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-                return saveEntries(List.of(ent1.resolve(context, value))).map(map -> SerializeResult.success(context.saveMap(map)));
+                return saveEntries(List.of(ent1.resolve(context, value))).map(map -> SerializeResult.success(context.toMap(map)));
             }
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
@@ -109,7 +116,7 @@ public class ObjectSerializer {
         return new Serializer<>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.saveMap(map)));
+                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.toMap(map)));
             }
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
@@ -122,7 +129,7 @@ public class ObjectSerializer {
         return new Serializer<>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.saveMap(map)));
+                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.toMap(map)));
             }
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
@@ -135,7 +142,7 @@ public class ObjectSerializer {
         return new Serializer<>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.saveMap(map)));
+                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.toMap(map)));
             }
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
@@ -148,7 +155,7 @@ public class ObjectSerializer {
         return new Serializer<>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.saveMap(map)));
+                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.toMap(map)));
             }
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
@@ -161,7 +168,7 @@ public class ObjectSerializer {
         return new Serializer<>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.saveMap(map)));
+                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.toMap(map)));
             }
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
@@ -174,7 +181,7 @@ public class ObjectSerializer {
         return new Serializer<>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.saveMap(map)));
+                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.toMap(map)));
             }
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
@@ -187,7 +194,7 @@ public class ObjectSerializer {
         return new Serializer<>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value), ent8.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.saveMap(map)));
+                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value), ent8.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.toMap(map)));
             }
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
@@ -200,7 +207,7 @@ public class ObjectSerializer {
         return new Serializer<>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value), ent8.resolve(context, value), ent9.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.saveMap(map)));
+                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value), ent8.resolve(context, value), ent9.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.toMap(map)));
             }
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
@@ -213,7 +220,7 @@ public class ObjectSerializer {
         return new Serializer<>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value), ent8.resolve(context, value), ent9.resolve(context, value), ent10.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.saveMap(map)));
+                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value), ent8.resolve(context, value), ent9.resolve(context, value), ent10.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.toMap(map)));
             }
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
@@ -226,7 +233,7 @@ public class ObjectSerializer {
         return new Serializer<>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value), ent8.resolve(context, value), ent9.resolve(context, value), ent10.resolve(context, value), ent11.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.saveMap(map)));
+                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value), ent8.resolve(context, value), ent9.resolve(context, value), ent10.resolve(context, value), ent11.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.toMap(map)));
             }
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
@@ -239,7 +246,7 @@ public class ObjectSerializer {
         return new Serializer<>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value), ent8.resolve(context, value), ent9.resolve(context, value), ent10.resolve(context, value), ent11.resolve(context, value), ent12.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.saveMap(map)));
+                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value), ent8.resolve(context, value), ent9.resolve(context, value), ent10.resolve(context, value), ent11.resolve(context, value), ent12.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.toMap(map)));
             }
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
@@ -252,7 +259,7 @@ public class ObjectSerializer {
         return new Serializer<>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value), ent8.resolve(context, value), ent9.resolve(context, value), ent10.resolve(context, value), ent11.resolve(context, value), ent12.resolve(context, value), ent13.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.saveMap(map)));
+                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value), ent8.resolve(context, value), ent9.resolve(context, value), ent10.resolve(context, value), ent11.resolve(context, value), ent12.resolve(context, value), ent13.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.toMap(map)));
             }
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
@@ -265,7 +272,7 @@ public class ObjectSerializer {
         return new Serializer<>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value), ent8.resolve(context, value), ent9.resolve(context, value), ent10.resolve(context, value), ent11.resolve(context, value), ent12.resolve(context, value), ent13.resolve(context, value), ent14.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.saveMap(map)));
+                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value), ent8.resolve(context, value), ent9.resolve(context, value), ent10.resolve(context, value), ent11.resolve(context, value), ent12.resolve(context, value), ent13.resolve(context, value), ent14.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.toMap(map)));
             }
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
@@ -278,7 +285,7 @@ public class ObjectSerializer {
         return new Serializer<>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value), ent8.resolve(context, value), ent9.resolve(context, value), ent10.resolve(context, value), ent11.resolve(context, value), ent12.resolve(context, value), ent13.resolve(context, value), ent14.resolve(context, value), ent15.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.saveMap(map)));
+                return saveEntries(List.of(ent1.resolve(context, value), ent2.resolve(context, value), ent3.resolve(context, value), ent4.resolve(context, value), ent5.resolve(context, value), ent6.resolve(context, value), ent7.resolve(context, value), ent8.resolve(context, value), ent9.resolve(context, value), ent10.resolve(context, value), ent11.resolve(context, value), ent12.resolve(context, value), ent13.resolve(context, value), ent14.resolve(context, value), ent15.resolve(context, value))).map(map -> SerializeResult.ofNullable(context.toMap(map)));
             }
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {

@@ -1,6 +1,7 @@
 package org.wallentines.mdcfg;
 
 import org.wallentines.mdcfg.serializer.ConfigContext;
+import org.wallentines.mdcfg.serializer.SerializeResult;
 import org.wallentines.mdcfg.serializer.Serializer;
 
 import java.util.*;
@@ -136,8 +137,31 @@ public class ConfigSection implements ConfigObject {
         return get(key).asList();
     }
 
+    public <T> List<T> getListFiltered(String key, Serializer<T> serializer) {
+        ConfigList list = get(key).asList();
+        List<T> out = new ArrayList<>();
+        for(ConfigObject obj : list.values()) {
+            SerializeResult<T> res = serializer.deserialize(ConfigContext.INSTANCE, obj);
+            if(res.isComplete()) out.add(res.getOrThrow());
+        }
+        return out;
+    }
+
     public ConfigSection getSection(String key) {
         return get(key).asSection();
+    }
+
+    public ConfigSection getOrCreateSection(String key) {
+        ConfigObject obj = get(key);
+        if(obj == null) {
+            ConfigSection out = new ConfigSection();
+            set(key, out);
+            return out;
+        }
+        if(obj.isSection()) {
+            return obj.asSection();
+        }
+        throw new IllegalStateException("There is already a value with key " + key + ", and it is not a ConfigSection!");
     }
 
     public boolean has(String key) {
@@ -176,13 +200,7 @@ public class ConfigSection implements ConfigObject {
 
     public void fill(ConfigSection other) {
         for(String key : other.orderedKeys) {
-            if(has(key)) {
-                if(get(key).isSection() && other.get(key).isSection()) {
-                    get(key).asSection().fill(other.get(key).asSection());
-                }
-            } else {
-                set(key, other.get(key));
-            }
+            if(!has(key)) set(key, other.get(key));
         }
     }
 
@@ -190,6 +208,15 @@ public class ConfigSection implements ConfigObject {
         for(String key : other.orderedKeys) {
             set(key, other.get(key));
         }
+    }
+
+    public ConfigSection copy() {
+
+        ConfigSection out = new ConfigSection();
+        for(String key : orderedKeys) {
+            out.set(key, get(key).copy());
+        }
+        return out;
     }
 
     public int size() {

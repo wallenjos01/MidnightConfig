@@ -45,4 +45,12 @@ public class FileWrapper<T> {
     public File getFile() {
         return file;
     }
+
+    public FileCodec getCodec() {
+        return codec;
+    }
+
+    public Charset getCharset() {
+        return charset;
+    }
 }

@@ -51,6 +51,10 @@ public class ConfigList implements ConfigObject {
         return this;
     }
 
+    public void addAll(Collection<ConfigObject> objects) {
+        objects.forEach(this::add);
+    }
+
     public int size() {
         return values.size();
     }
@@ -124,6 +128,15 @@ public class ConfigList implements ConfigObject {
     @Override
     public ConfigSection asSection() {
         throw new IllegalStateException("Cannot convert a list to a section!");
+    }
+
+    @Override
+    public ConfigList copy() {
+        ConfigList out = new ConfigList();
+        for(ConfigObject obj : values) {
+            out.add(obj.copy());
+        }
+        return out;
     }
 
     @Override

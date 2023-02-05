@@ -28,11 +28,15 @@ public interface SerializeContext<T> {
     T toString(String object);
     T toNumber(Number object);
     T toBoolean(Boolean object);
-    T saveList(Collection<T> list);
-    T saveMap(Map<String, T> map);
+    T toList(Collection<T> list);
+    T toMap(Map<String, T> map);
+
+    T mergeList(Collection<T> list, T object);
 
     T fill(T value, T other);
     T fillOverwrite(T value, T other);
+
+    T set(String key, T value, T object);
 
     default <O> O convert(SerializeContext<O> other, T object) {
 
@@ -48,12 +52,13 @@ public interface SerializeContext<T> {
             return other.toBoolean(asBoolean(object));
         }
         if(isList(object)) {
-            return other.saveList(asList(object).stream()
+            return other.toList(asList(object).stream()
                     .map(t -> convert(other, t)).collect(Collectors.toList()));
         }
         if(isMap(object)) {
-            return other.saveMap(asMap(object).entrySet().stream()
+            return other.toMap(asMap(object).entrySet().stream()
                     .map(ent -> new Tuples.T2<>(ent.getKey(), convert(other, ent.getValue())))
+                    .filter(t2 -> t2.p1 != null && t2.p2 != null)
                     .collect(Collectors.toMap(t2 -> t2.p1, t2 -> t2.p2)));
         }
 

@@ -14,6 +14,8 @@ public class BooleanSerializer implements Serializer<Boolean> {
     public <O> SerializeResult<O> serialize(SerializeContext<O> context, Boolean value) {
 
         String error = "Unable to save " + value + " as a boolean!";
+
+        if(value == null) return SerializeResult.failure(error);
         switch(type) {
             case BOOLEAN:
                 return SerializeResult.ofNullable(context.toBoolean(value), error);
