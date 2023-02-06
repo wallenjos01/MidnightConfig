@@ -7,9 +7,15 @@ import java.util.List;
 public class ListSerializer<T> implements Serializer<Collection<T>> {
 
     private final Serializer<T> base;
+    private final boolean ignoreErrors;
 
     public ListSerializer(Serializer<T> base) {
+        this(base, false);
+    }
+
+    public ListSerializer(Serializer<T> base, boolean ignoreErrors) {
         this.base = base;
+        this.ignoreErrors = ignoreErrors;
     }
 
     @Override
@@ -18,8 +24,10 @@ public class ListSerializer<T> implements Serializer<Collection<T>> {
         List<O> out = new ArrayList<>();
         for(T t : value) {
             SerializeResult<O> res = base.serialize(context, t);
-            if(!res.isComplete()) return res;
-            out.add(res.getOrThrow());
+            if(res.isComplete()) {
+                out.add(res.getOrThrow());
+
+            } else if(!ignoreErrors) return SerializeResult.failure("Unable to serialize value " + t + " into a list! " + res.getError());
         }
 
         return SerializeResult.ofNullable(context.toList(out));
@@ -34,8 +42,9 @@ public class ListSerializer<T> implements Serializer<Collection<T>> {
         List<T> out = new ArrayList<>();
         for(O o : list) {
             SerializeResult<T> res = base.deserialize(context, o);
-            if(!res.isComplete()) return SerializeResult.failure(res.getError());
-            out.add(res.getOrThrow());
+            if(res.isComplete()) {
+                out.add(res.getOrThrow());
+            } else if(!ignoreErrors) return SerializeResult.failure("Unable to deserialize value " + o + " from a list! " + res.getError());
         }
         return SerializeResult.success(out);
     }

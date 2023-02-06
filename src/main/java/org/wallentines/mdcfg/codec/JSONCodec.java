@@ -139,7 +139,7 @@ public class JSONCodec implements Codec {
                 return;
             }
             if (context.isString(value)) {
-                writer.write("\"" + context.asString(value) + "\"");
+                writer.write("\"" + context.asString(value).replace("\"", "\\\"") + "\"");
                 return;
             }
             if (context.isNumber(value)) {
@@ -233,7 +233,7 @@ public class JSONCodec implements Codec {
                 return null;
             }
 
-            String validDigits = "0123456789.";
+            String validDigits = "0123456789.-E";
 
             // Number
             if(value.endsWith(".") || value.split("\\.").length > 2 || hasInvalidChars(value, validDigits)) {
@@ -341,12 +341,18 @@ public class JSONCodec implements Codec {
             StringBuilder output = new StringBuilder();
             boolean escaped = false;
             int c;
-            while((c = reader.read()) != '"' && !escaped) {
+            while((c = reader.read()) != '"' || escaped) {
 
                 if(c == '\\') {
-                    escaped = true;
+                    if(escaped) {
+                        output.appendCodePoint(c);
+                    } else {
+                        escaped = true;
+                    }
+                } else {
+                    output.appendCodePoint(c);
+                    escaped = false;
                 }
-                output.appendCodePoint(c);
             }
             return output.toString();
         }

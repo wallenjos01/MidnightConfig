@@ -70,6 +70,7 @@ public class ConfigSection implements ConfigObject {
      * @return A reference to the previous object associated with the given key
      */
     public ConfigObject set(String key, String value) {
+        if(value == null) return remove(key);
         return set(key, new ConfigPrimitive(value));
     }
 
@@ -80,6 +81,7 @@ public class ConfigSection implements ConfigObject {
      * @return A reference to the previous object associated with the given key
      */
     public ConfigObject set(String key, Number value) {
+        if(value == null) return remove(key);
         return set(key, new ConfigPrimitive(value));
     }
 
@@ -90,6 +92,7 @@ public class ConfigSection implements ConfigObject {
      * @return A reference to the previous object associated with the given key
      */
     public ConfigObject set(String key, Boolean value) {
+        if(value == null) return remove(key);
         return set(key, new ConfigPrimitive(value));
     }
 
@@ -280,6 +283,25 @@ public class ConfigSection implements ConfigObject {
      */
     public ConfigList getList(String key) {
         return getOptional(key).orElseThrow().asList();
+    }
+
+    /**
+     * Gets a list associated with the given key, then makes a new list containing only values of type T
+     * @param key The key to lookup
+     * @param serializer The serializer to use to deserialize the values in the list
+     * @return A new list with only elements of type T
+     * @param <T> The type of objects to put in the list
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a ConfigList
+     * @throws SerializeException If any object cannot be deserialized using the given serializer
+     */
+    public <T> List<T> getList(String key, Serializer<T> serializer) {
+        ConfigList list = get(key).asList();
+        List<T> out = new ArrayList<>();
+        for(ConfigObject obj : list.values()) {
+            out.add(serializer.deserialize(ConfigContext.INSTANCE, obj).getOrThrow());
+        }
+        return out;
     }
 
     /**

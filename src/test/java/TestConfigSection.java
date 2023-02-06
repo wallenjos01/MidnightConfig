@@ -1,5 +1,6 @@
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.wallentines.mdcfg.ConfigList;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigPrimitive;
 import org.wallentines.mdcfg.ConfigSection;
@@ -98,6 +99,27 @@ public class TestConfigSection {
         TestSerializable deserialized = section.get("Test", serializer);
 
         Assertions.assertEquals(test, deserialized);
+
+    }
+
+    @Test
+    public void testCopying() {
+
+        ConfigSection sec1 = new ConfigSection()
+                .with("key1", "value1")
+                .with("key2", 2)
+                .with("key3", true)
+                .with("key4", new ConfigList())
+                .with("key5", new ConfigSection());
+
+        ConfigSection copy = sec1.copy();
+
+        Assertions.assertEquals(sec1, copy);
+
+        copy.set("Hello", "World");
+        Assertions.assertNotEquals(sec1, copy);
+        Assertions.assertEquals(5, sec1.size());
+        Assertions.assertEquals(6, copy.size());
 
     }
 

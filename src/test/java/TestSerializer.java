@@ -35,6 +35,8 @@ public class TestSerializer {
         Assertions.assertEquals(float64, Serializer.DOUBLE.deserialize(ctx, Serializer.DOUBLE.serialize(ctx, float64).getOrThrow()).getOrThrow());
 
         Assertions.assertEquals(bool, Serializer.BOOLEAN.deserialize(ctx, Serializer.BOOLEAN.serialize(ctx, bool).getOrThrow()).getOrThrow());
+
+        Assertions.assertEquals(0.0f, Serializer.FLOAT.deserialize(ctx, new ConfigPrimitive(0.0f)).getOrThrow());
     }
 
     static class TestSerializable {

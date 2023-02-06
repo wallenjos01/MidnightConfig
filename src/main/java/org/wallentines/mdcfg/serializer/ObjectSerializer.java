@@ -68,7 +68,7 @@ public class ObjectSerializer {
             T out = getValue(object);
             if(out == null) {
                 if(!optional) {
-                        return SerializeResult.failure("A value for " + key + " could not be obtained from object!");
+                    return SerializeResult.failure("A value for " + key + " could not be obtained from object!");
                 }
                 if(defaultValue != null) {
                     return SerializeResult.success(new Tuples.T2<>(key, serializer.serialize(context, defaultValue).getOrThrow()));

@@ -1,5 +1,7 @@
 package org.wallentines.mdcfg.serializer;
 
+import org.wallentines.mdcfg.ConfigPrimitive;
+
 import java.util.function.Function;
 
 public class NumberSerializer<T extends Number> implements Serializer<T> {
@@ -18,7 +20,7 @@ public class NumberSerializer<T extends Number> implements Serializer<T> {
 
         if(value == null) return SerializeResult.failure("Unable to validate null number!");
 
-        if(value.equals(value.longValue())) {
+        if(ConfigPrimitive.isInteger(value)) {
             long lng = value.longValue();
             if(lng < lowerBound.longValue() || lng > upperBound.longValue()) {
                 return SerializeResult.failure("Value " + value + " is outside of bound [" + lowerBound + "," + upperBound + "]");

@@ -1,7 +1,12 @@
 package org.wallentines.mdcfg;
 
+import org.wallentines.mdcfg.serializer.ConfigContext;
+import org.wallentines.mdcfg.serializer.Serializer;
+import org.wallentines.mdcfg.serializer.SerializeException;
+
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
@@ -28,6 +33,19 @@ public class ConfigList implements ConfigObject {
      */
     public boolean add(ConfigObject value) {
         return values.add(value);
+    }
+
+    /**
+     * Serializes a value, then adds it to the list
+     * @param value The value to serialize
+     * @param serializer The serializer to use to serialize the given value
+     * @return Whether the value was successfully added
+     * @param <T> The type of object the serializer will create
+     */
+    public <T> boolean add(T value, Serializer<T> serializer) {
+
+        Optional<ConfigObject> serialized = serializer.serialize(ConfigContext.INSTANCE, value).get();
+        return serialized.filter(values::add).isPresent();
     }
 
     /**
@@ -121,6 +139,56 @@ public class ConfigList implements ConfigObject {
      */
     public ConfigObject get(int index) {
         return values.get(index);
+    }
+
+    /**
+     * Deserializes a value at the given index, then returns it
+     * @param index The index to lookup
+     * @param serializer The serializer to use to deserialize the given value
+     * @return The deserialized value at the given index
+     * @param <T> The type of object the serializer will parse
+     * @throws IndexOutOfBoundsException If there is no value at the given index
+     * @throws SerializeException If the value at the given index could not be deserialized
+     */
+    public <T> T get(int index, Serializer<T> serializer) {
+
+        return serializer.deserialize(ConfigContext.INSTANCE, values.get(index)).getOrThrow();
+    }
+
+    /**
+     * Determines whether the list contains any values equivalent to the given object
+     * @param object The object to search for
+     * @return Whether the list contains any values equivalent to the given object
+     */
+    public boolean contains(ConfigObject object) {
+        return values.contains(object);
+    }
+
+    /**
+     * Determines whether the list contains any values equivalent to the given String
+     * @param object The String to search for
+     * @return Whether the list contains any values equivalent to the given String
+     */
+    public boolean contains(String object) {
+        return values.contains(new ConfigPrimitive(object));
+    }
+
+    /**
+     * Determines whether the list contains any values equivalent to the given Number
+     * @param object The String to search for
+     * @return Whether the list contains any values equivalent to the given Number
+     */
+    public boolean contains(Number object) {
+        return values.contains(new ConfigPrimitive(object));
+    }
+
+    /**
+     * Determines whether the list contains any values equivalent to the given Boolean
+     * @param object The String to search for
+     * @return Whether the list contains any values equivalent to the given Boolean
+     */
+    public boolean contains(Boolean object) {
+        return values.contains(new ConfigPrimitive(object));
     }
 
     /**

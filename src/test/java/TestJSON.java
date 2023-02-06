@@ -180,7 +180,18 @@ public class TestJSON {
         Assertions.assertTrue(obj.asSection().getSection("Object").getSection("Subobject").get("Value").isPrimitive());
         Assertions.assertTrue(obj.asSection().getSection("Object").getSection("Subobject").get("Value").asPrimitive().isString());
         Assertions.assertEquals("!", obj.asSection().getSection("Object").getSection("Subobject").getString("Value"));
+    }
 
+    @Test
+    public void testQuotes() {
+
+        ConfigSection sec = new ConfigSection().with("Key", "\"Quoted String\"");
+        String encoded = JSONCodec.minified().encodeToString(ConfigContext.INSTANCE, sec);
+        Assertions.assertEquals("{\"Key\":\"\\\"Quoted String\\\"\"}", encoded);
+
+        ConfigObject obj = JSONCodec.loadConfig(encoded);
+        Assertions.assertTrue(obj.isSection());
+        Assertions.assertEquals("\"Quoted String\"", obj.asSection().getString("Key"));
 
     }
 

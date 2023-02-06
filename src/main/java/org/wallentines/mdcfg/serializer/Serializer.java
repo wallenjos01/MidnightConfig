@@ -44,6 +44,15 @@ public interface Serializer<T> {
     }
 
     /**
+     * Creates a list serializer from this serializer which does not require all contained objects to (de-)serialize successfully
+     * @return A serializer for a list of objects with type T
+     */
+    default ListSerializer<T> filteredListOf() {
+        return new ListSerializer<>(this, true);
+    }
+
+
+    /**
      * Creates a map serializer from this serializer
      * @return A serializer for a map with string keys and T values
      */
@@ -96,8 +105,8 @@ public interface Serializer<T> {
     Serializer<Short> SHORT = NumberSerializer.forShort(Short.MIN_VALUE, Short.MAX_VALUE);
     Serializer<Integer> INT = NumberSerializer.forInt(Integer.MIN_VALUE, Integer.MAX_VALUE);
     Serializer<Long> LONG = NumberSerializer.forLong(Long.MIN_VALUE, Long.MAX_VALUE);
-    Serializer<Float> FLOAT = NumberSerializer.forFloat(Float.MIN_VALUE, Float.MAX_VALUE);
-    Serializer<Double> DOUBLE = NumberSerializer.forDouble(Double.MIN_VALUE, Double.MAX_VALUE);
+    Serializer<Float> FLOAT = NumberSerializer.forFloat(-Float.MAX_VALUE, Float.MAX_VALUE);
+    Serializer<Double> DOUBLE = NumberSerializer.forDouble(-Double.MAX_VALUE, Double.MAX_VALUE);
     Serializer<Boolean> BOOLEAN = BooleanSerializer.RAW.or(BooleanSerializer.NUMBER).or(BooleanSerializer.STRING);
 
     Serializer<UUID> UUID = new Serializer<>() {
