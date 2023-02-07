@@ -3,6 +3,7 @@ package org.wallentines.mdcfg;
 import org.wallentines.mdcfg.serializer.*;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
@@ -296,12 +297,9 @@ public class ConfigSection implements ConfigObject {
      * @throws SerializeException If any object cannot be deserialized using the given serializer
      */
     public <T> List<T> getList(String key, Serializer<T> serializer) {
+
         ConfigList list = get(key).asList();
-        List<T> out = new ArrayList<>();
-        for(ConfigObject obj : list.values()) {
-            out.add(serializer.deserialize(ConfigContext.INSTANCE, obj).getOrThrow());
-        }
-        return out;
+        return new ArrayList<>(serializer.listOf().deserialize(ConfigContext.INSTANCE, list).getOrThrow());
     }
 
     /**
@@ -314,13 +312,25 @@ public class ConfigSection implements ConfigObject {
      * @throws IllegalStateException If the value associated with the key is not a ConfigList
      */
     public <T> List<T> getListFiltered(String key, Serializer<T> serializer) {
+
         ConfigList list = get(key).asList();
-        List<T> out = new ArrayList<>();
-        for(ConfigObject obj : list.values()) {
-            SerializeResult<T> res = serializer.deserialize(ConfigContext.INSTANCE, obj);
-            if(res.isComplete()) out.add(res.getOrThrow());
-        }
-        return out;
+        return new ArrayList<>(serializer.filteredListOf().deserialize(ConfigContext.INSTANCE, list).getOrThrow());
+    }
+
+    /**
+     * Gets a list associated with the given key, then makes a new list containing only values which can be serialized using the given serializer
+     * @param key The key to lookup
+     * @param serializer The serializer to use to deserialize the values in the list
+     * @param onError A callback to send error text whenever an object fails to serialize
+     * @return A new list with only elements of type T
+     * @param <T> The type of objects to put in the list
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a ConfigList
+     */
+    public <T> List<T> getListFiltered(String key, Serializer<T> serializer, Consumer<String> onError) {
+
+        ConfigList list = get(key).asList();
+        return new ArrayList<>(serializer.filteredListOf(onError).deserialize(ConfigContext.INSTANCE, list).getOrThrow());
     }
 
     /**

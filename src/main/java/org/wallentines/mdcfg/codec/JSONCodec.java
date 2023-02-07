@@ -77,14 +77,15 @@ public class JSONCodec implements Codec {
             if (!context.isMap(section)) throw new IllegalArgumentException("Not a map: " + section);
 
             Collection<String> keys = context.getOrderedKeys(section);
-            if(keys.size() == 0) {
-                writer.write("{ }");
-                return;
-            }
-
             String nextPrefix = prefix + indent;
 
             writer.write("{");
+            if(keys.size() == 0) {
+                if(shouldIndent) writer.write(" ");
+                writer.write("}");
+                return;
+            }
+
             if(shouldIndent) writer.write("\n");
             int index = 0;
 
@@ -112,6 +113,12 @@ public class JSONCodec implements Codec {
             Collection<T> collection = context.asList(value);
 
             writer.write("[");
+            if(collection.isEmpty()) {
+                if(shouldIndent) writer.write(" ");
+                writer.write("]");
+                return;
+            }
+
             if(shouldIndent) writer.write("\n");
 
             int index = 0;

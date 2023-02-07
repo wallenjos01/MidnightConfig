@@ -1,6 +1,7 @@
 package org.wallentines.mdcfg.serializer;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 @SuppressWarnings("unused")
@@ -48,7 +49,16 @@ public interface Serializer<T> {
      * @return A serializer for a list of objects with type T
      */
     default ListSerializer<T> filteredListOf() {
-        return new ListSerializer<>(this, true);
+        return new ListSerializer<>(this, (err) -> {});
+    }
+
+    /**
+     * Creates a list serializer from this serializer which does not require all contained objects to (de-)serialize successfully
+     * @param onError A callback to send error text whenever an object fails to serialize
+     * @return A serializer for a list of objects with type T
+     */
+    default ListSerializer<T> filteredListOf(Consumer<String> onError) {
+        return new ListSerializer<>(this, onError);
     }
 
 

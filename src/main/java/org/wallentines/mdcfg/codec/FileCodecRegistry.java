@@ -64,7 +64,7 @@ public class FileCodecRegistry {
 
             String name = file.getName();
             int index = name.lastIndexOf('.');
-            if(index == -1) return null;
+            if(index == -1) continue;
 
             String fileName = name.substring(0, index);
             String extension = name.substring(index + 1);

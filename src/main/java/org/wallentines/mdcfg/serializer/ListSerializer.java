@@ -3,19 +3,20 @@ package org.wallentines.mdcfg.serializer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class ListSerializer<T> implements Serializer<Collection<T>> {
 
     private final Serializer<T> base;
-    private final boolean ignoreErrors;
+    private final Consumer<String> onError;
 
     public ListSerializer(Serializer<T> base) {
-        this(base, false);
+        this(base, null);
     }
 
-    public ListSerializer(Serializer<T> base, boolean ignoreErrors) {
+    public ListSerializer(Serializer<T> base, Consumer<String> onError) {
         this.base = base;
-        this.ignoreErrors = ignoreErrors;
+        this.onError = onError;
     }
 
     @Override
@@ -27,7 +28,10 @@ public class ListSerializer<T> implements Serializer<Collection<T>> {
             if(res.isComplete()) {
                 out.add(res.getOrThrow());
 
-            } else if(!ignoreErrors) return SerializeResult.failure("Unable to serialize value " + t + " into a list! " + res.getError());
+            } else {
+                if(onError == null) return SerializeResult.failure("Unable to serialize value " + t + " into a list! " + res.getError());
+                onError.accept(res.getError());
+            }
         }
 
         return SerializeResult.ofNullable(context.toList(out));
@@ -44,7 +48,11 @@ public class ListSerializer<T> implements Serializer<Collection<T>> {
             SerializeResult<T> res = base.deserialize(context, o);
             if(res.isComplete()) {
                 out.add(res.getOrThrow());
-            } else if(!ignoreErrors) return SerializeResult.failure("Unable to deserialize value " + o + " from a list! " + res.getError());
+            } else {
+                if(onError == null) return SerializeResult.failure("Unable to deserialize value " + o + " from a list! " + res.getError());
+                onError.accept(res.getError());
+            }
+
         }
         return SerializeResult.success(out);
     }

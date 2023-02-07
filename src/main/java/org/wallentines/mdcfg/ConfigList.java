@@ -116,6 +116,20 @@ public class ConfigList implements ConfigObject {
     }
 
     /**
+     * Serializes a value, then adds it to the list, returning a reference to self
+     * @param value The value to serialize
+     * @param serializer The serializer to use to serialize the given value
+     * @return A reference to self
+     * @param <T> The type of object the serializer will create
+     */
+    public <T> ConfigList append(T value, Serializer<T> serializer) {
+
+        Optional<ConfigObject> serialized = serializer.serialize(ConfigContext.INSTANCE, value).get();
+        serialized.ifPresent(this::add);
+        return this;
+    }
+
+    /**
      * Adds a group of objects to the list
      * @param objects The objects to add
      */
