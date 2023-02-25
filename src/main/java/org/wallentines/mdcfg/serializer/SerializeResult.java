@@ -129,6 +129,16 @@ public class SerializeResult<T> {
     }
 
     /**
+     * Creates a new SerializeResult of the same type if this one was unsuccessful
+     * @param function The function to use to create a new SerializeResult if this one was unsuccessful
+     * @return This result, if successful, or newly created one
+     */
+    public SerializeResult<T> mapError(Function<String, SerializeResult<T>> function) {
+        if(!success) return function.apply(error);
+        return this;
+    }
+
+    /**
      * Creates a new SerializeResult containing a tuple of all the parameter types. It will only be successful if all other results are successful
      * @return A new SerializeResult
      */

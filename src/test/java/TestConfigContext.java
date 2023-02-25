@@ -118,4 +118,21 @@ public class TestConfigContext {
         Assertions.assertEquals("Value2", section.getString("Key2"));
     }
 
+    @Test
+    public void testMerge() {
+
+        ConfigContext ctx = ConfigContext.INSTANCE;
+
+        ConfigSection sec = new ConfigSection().with("Key1", "Value1");
+        ConfigSection sec2 = new ConfigSection().with("Key1", "Other").with("Key2", "Value2");
+
+        ConfigObject merged = ctx.merge(sec, sec2);
+
+        Assertions.assertTrue(merged.isSection());
+        Assertions.assertEquals(2, merged.asSection().size());
+        Assertions.assertEquals("Value1", merged.asSection().getString("Key1"));
+        Assertions.assertEquals("Value2", merged.asSection().getString("Key2"));
+
+    }
+
 }

@@ -357,6 +357,11 @@ public class JSONCodec implements Codec {
                         escaped = true;
                     }
                 } else {
+
+                    if(escaped && c != '"') {
+                        output.append('\\');
+                    }
+
                     output.appendCodePoint(c);
                     escaped = false;
                 }

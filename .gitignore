@@ -44,3 +44,4 @@ bin/
 
 /run/test/test_write.json
 /run/test/test_created.json
+/run/test/test_defaults.json

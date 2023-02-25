@@ -195,4 +195,16 @@ public class TestJSON {
 
     }
 
+    @Test
+    public void testEscape() {
+
+        String json = "{\"key\":\"Value\\nNewline\"}";
+        ConfigObject obj = JSONCodec.loadConfig(json);
+
+        Assertions.assertTrue(obj.isSection());
+        Assertions.assertEquals("Value\\nNewline", obj.asSection().getString("key"));
+
+
+    }
+
 }

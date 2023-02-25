@@ -99,6 +99,20 @@ public interface Serializer<T> {
         };
     }
 
+    default <O> Serializer<O> map(Function<O, T> getter, Function<T, O> construct) {
+        return new Serializer<>() {
+            @Override
+            public <O1> SerializeResult<O1> serialize(SerializeContext<O1> context, O value) {
+                return Serializer.this.serialize(context, getter.apply(value));
+            }
+
+            @Override
+            public <O1> SerializeResult<O> deserialize(SerializeContext<O1> context, O1 value) {
+                return Serializer.this.deserialize(context, value).flatMap(construct);
+            }
+        };
+    }
+
     // Default Serializers
     Serializer<String> STRING = new Serializer<>() {
         @Override

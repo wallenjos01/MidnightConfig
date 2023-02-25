@@ -54,6 +54,21 @@ public interface SerializeContext<T> {
         }
         return value;
     }
+    default T merge(T value, T other) {
+
+        if(isMap(other)) {
+            if(!isMap(value)) return other;
+            return mergeMap(value, other);
+        }
+        if(isList(value) && isList(other) ||
+            isString(value) && isString(other) ||
+            isNumber(value) && isNumber(other) ||
+            isBoolean(value) && isBoolean(other)) {
+            return value;
+        }
+
+        return other;
+    }
 
     T set(String key, T value, T object);
 

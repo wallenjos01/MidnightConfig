@@ -359,4 +359,30 @@ public class TestSerializer {
 
     }
 
+    static class StringWrapper {
+        String str;
+
+        public StringWrapper(String str) {
+            this.str = str;
+        }
+
+        public String getStr() {
+            return str;
+        }
+    }
+
+    @Test
+    public void testMap() {
+
+        Serializer<StringWrapper> serializer = Serializer.STRING.map(StringWrapper::getStr, StringWrapper::new);
+
+        ConfigPrimitive prim = new ConfigPrimitive("Hello");
+        StringWrapper wrapper = serializer.deserialize(ConfigContext.INSTANCE, prim).getOrThrow();
+
+        Assertions.assertEquals("Hello", wrapper.getStr());
+
+        String serialized = serializer.serialize(ConfigContext.INSTANCE, wrapper).getOrThrow().asString();
+        Assertions.assertEquals("Hello", serialized);
+    }
+
 }

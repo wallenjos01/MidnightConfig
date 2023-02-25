@@ -72,7 +72,10 @@ public class FileCodecRegistry {
             FileCodec codec = forFileExtension(extension);
 
             if(fileName.equals(prefix) && codec != null) {
-                return new FileWrapper<>(context, codec, file, charset);
+                FileWrapper<T> out = new FileWrapper<>(context, codec, file, charset);
+                out.load();
+
+                return out;
             }
         }
 
@@ -84,17 +87,30 @@ public class FileCodecRegistry {
     }
 
     public <T> FileWrapper<T> findOrCreate(SerializeContext<T> context, String prefix, File folder, Charset charset) {
+        return findOrCreate(context, prefix, folder, charset, null);
+    }
+
+    public <T> FileWrapper<T> findOrCreate(SerializeContext<T> context, String prefix, File folder, T defaults) {
+        return findOrCreate(context, prefix, folder, StandardCharsets.UTF_8, defaults);
+    }
+
+    public <T> FileWrapper<T> findOrCreate(SerializeContext<T> context, String prefix, File folder, Charset charset, T defaults) {
 
         if(!folder.isDirectory()) throw new IllegalArgumentException("Attempt to find or create a file in non-directory " + folder + "!");
         FileWrapper<T> out = find(context, prefix, folder, charset);
-        if(out != null) return out;
+        if(out == null) {
 
-        FileCodec codec = defaultCodec;
+            FileCodec codec = defaultCodec;
 
-        String newFileName = prefix + "." + codec.getDefaultExtension();
-        File newFile = new File(folder, newFileName);
+            String newFileName = prefix + "." + codec.getDefaultExtension();
+            File newFile = new File(folder, newFileName);
 
-        return new FileWrapper<>(context, codec, newFile, charset);
+            out = new FileWrapper<>(context, codec, newFile, charset);
+            out.load();
+        }
+
+        out.setRoot(context.merge(out.getRoot(), defaults));
+        return out;
     }
 
 }

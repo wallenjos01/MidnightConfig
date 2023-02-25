@@ -72,6 +72,15 @@ public class TestFileCodec {
 
         Assertions.assertTrue(f.exists());
 
+        wrapper = registry.findOrCreate(ConfigContext.INSTANCE, "test_defaults", of.toFile(), new ConfigSection().with("key", "value"));
+        Assertions.assertNotNull(wrapper.getRoot());
+        Assertions.assertTrue(wrapper.getRoot().isSection());
+        Assertions.assertEquals("value", wrapper.getRoot().asSection().getString("key"));
+
+        wrapper.save();
+
+        Assertions.assertTrue(f.exists());
+
     }
 
 
