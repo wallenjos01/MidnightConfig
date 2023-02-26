@@ -185,6 +185,7 @@ public class TestJSON {
     @Test
     public void testQuotes() {
 
+        // Quoted Values
         ConfigSection sec = new ConfigSection().with("Key", "\"Quoted String\"");
         String encoded = JSONCodec.minified().encodeToString(ConfigContext.INSTANCE, sec);
         Assertions.assertEquals("{\"Key\":\"\\\"Quoted String\\\"\"}", encoded);
@@ -192,6 +193,15 @@ public class TestJSON {
         ConfigObject obj = JSONCodec.loadConfig(encoded);
         Assertions.assertTrue(obj.isSection());
         Assertions.assertEquals("\"Quoted String\"", obj.asSection().getString("Key"));
+
+        // Quoted Keys
+        sec = new ConfigSection().with("\"Quoted Key\"", "Value");
+        encoded = JSONCodec.minified().encodeToString(ConfigContext.INSTANCE, sec);
+        Assertions.assertEquals("{\"\\\"Quoted Key\\\"\":\"Value\"}", encoded);
+
+        obj = JSONCodec.loadConfig(encoded);
+        Assertions.assertTrue(obj.isSection());
+        Assertions.assertEquals("Value", obj.asSection().getString("\"Quoted Key\""));
 
     }
 

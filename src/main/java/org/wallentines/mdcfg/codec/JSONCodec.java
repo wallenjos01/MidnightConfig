@@ -97,7 +97,7 @@ public class JSONCodec implements Codec {
                 }
 
                 T value = context.get(key, section);
-                writer.write(nextPrefix + "\"" + key + "\":");
+                writer.write(nextPrefix + "\"" + key.replace("\"", "\\\"") + "\":");
                 if(shouldIndent) writer.write(" ");
                 encode(value, nextPrefix, writer);
             }

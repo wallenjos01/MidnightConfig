@@ -14,8 +14,12 @@ public class FileCodecRegistry {
     private final HashMap<String, FileCodec> codecs = new HashMap<>();
 
     public void registerFileCodec(FileCodec codec) {
+        registerFileCodec(codec, false);
+    }
 
-        if(defaultCodec == null) {
+    public void registerFileCodec(FileCodec codec, boolean setAsDefault) {
+
+        if(defaultCodec == null || setAsDefault) {
             this.defaultCodec = codec;
         }
 
