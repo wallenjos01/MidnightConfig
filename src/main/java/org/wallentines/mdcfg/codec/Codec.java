@@ -16,6 +16,11 @@ public interface Codec {
     <T> T decode(SerializeContext<T> context, InputStream stream, Charset charset);
 
 
+    default <T> void encode(SerializeContext<T> context, T input, OutputStream stream) {
+
+        encode(context, input, stream, StandardCharsets.UTF_8);
+    }
+
     default <T, O> void encode(SerializeContext<T> context, Serializer<O> serializer, O data, OutputStream stream) {
 
         encode(context, serializer.serialize(context, data).getOrThrow(), stream, StandardCharsets.UTF_8);
