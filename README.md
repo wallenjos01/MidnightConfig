@@ -93,23 +93,23 @@ class MyClass {
 }
 ```
 
-Using that serializer to store objects in a `ConfigSection`
+Using that serializer to store objects in a `ConfigSection`:
 ```
 MyClass myObj = new MyClass("Hello", 17);
 config.set("my_object", myObj, MyClass.SERIALIZER);
 ```
 
-Using that serializer to retrieve objects from a `ConfigSection`
+Using that serializer to retrieve objects from a `ConfigSection`:
 ```
 MyClass deserialized = config.get("my_object", MyClass.SERIALIZER);
 ```
 
-Saving a `ConfigSection` to a JSON string.
+Saving a `ConfigSection` to a JSON string:
 ```
 String json = JSONCodec.readable().encodeToString(ConfigContext.INSTANCE, config);
 ```
 
-Loading a `ConfigSection` from a JSON string.
+Loading a `ConfigSection` from a JSON string:
 ```
 ConfigSection decoded = JSONCodec.readable().decode(ConfigContext.INSTANCE, json).asSection();
 ```
