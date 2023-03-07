@@ -106,7 +106,40 @@ public class JSONCodec implements Codec {
         }
 
         private String encodeString(String s) {
-            return s.replace("\\", "\\\\").replace("\"", "\\\"");
+
+            StringBuilder builder = new StringBuilder();
+            PrimitiveIterator.OfInt it = ((CharSequence) s).chars().iterator();
+
+            while(it.hasNext()) {
+                int c = it.nextInt();
+                switch (c) {
+                    case '\\':
+                        builder.append("\\\\");
+                        break;
+                    case '"':
+                        builder.append("\\\"");
+                        break;
+                    case '\n':
+                        builder.append("\\n");
+                        break;
+                    case '\r':
+                        builder.append("\\r");
+                        break;
+                    case '\f':
+                        builder.append("\\f");
+                        break;
+                    case '\b':
+                        builder.append("\\b");
+                        break;
+                    case '\t':
+                        builder.append("\\t");
+                        break;
+                    default:
+                        builder.appendCodePoint(c);
+                }
+            }
+
+            return builder.toString();
         }
 
         private void encodeList(T value, String prefix, BufferedWriter writer) throws IOException {
