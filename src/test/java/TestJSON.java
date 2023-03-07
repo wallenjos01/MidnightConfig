@@ -212,7 +212,36 @@ public class TestJSON {
         ConfigObject obj = JSONCodec.loadConfig(json);
 
         Assertions.assertTrue(obj.isSection());
-        Assertions.assertEquals("Value\\nNewline", obj.asSection().getString("key"));
+        Assertions.assertEquals("Value\nNewline", obj.asSection().getString("key"));
+
+        json = "{\"key\":\"Value\\\\Hello\"}";
+        obj = JSONCodec.loadConfig(json);
+
+        Assertions.assertTrue(obj.isSection());
+        Assertions.assertEquals("Value\\Hello", obj.asSection().getString("key"));
+    }
+
+    @Test
+    public void testUnicode() {
+
+        String json = "{\"key\":\"Unicode \\u0123\"}";
+        ConfigObject obj = JSONCodec.loadConfig(json);
+
+        Assertions.assertTrue(obj.isSection());
+        Assertions.assertEquals("Unicode \u0123", obj.asSection().getString("key"));
+
+
+        json = "{\"key\":\"Unicode \\uuuu5432\"}";
+        obj = JSONCodec.loadConfig(json);
+
+        Assertions.assertTrue(obj.isSection());
+        Assertions.assertEquals("Unicode \u5432", obj.asSection().getString("key"));
+
+        json = "{\"key\":\"Unicode \\u0123\\u5432\"}";
+        obj = JSONCodec.loadConfig(json);
+
+        Assertions.assertTrue(obj.isSection());
+        Assertions.assertEquals("Unicode \u0123\u5432", obj.asSection().getString("key"));
 
 
     }

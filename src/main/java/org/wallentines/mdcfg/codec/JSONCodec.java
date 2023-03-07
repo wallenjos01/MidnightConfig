@@ -97,12 +97,16 @@ public class JSONCodec implements Codec {
                 }
 
                 T value = context.get(key, section);
-                writer.write(nextPrefix + "\"" + key.replace("\"", "\\\"") + "\":");
+                writer.write(nextPrefix + "\"" + encodeString(key) + "\":");
                 if(shouldIndent) writer.write(" ");
                 encode(value, nextPrefix, writer);
             }
             if(shouldIndent) writer.write("\n");
             writer.write(prefix + "}");
+        }
+
+        private String encodeString(String s) {
+            return s.replace("\\", "\\\\").replace("\"", "\\\"");
         }
 
         private void encodeList(T value, String prefix, BufferedWriter writer) throws IOException {
@@ -146,7 +150,7 @@ public class JSONCodec implements Codec {
                 return;
             }
             if (context.isString(value)) {
-                writer.write("\"" + context.asString(value).replace("\"", "\\\"") + "\"");
+                writer.write("\"" + encodeString(context.asString(value)) + "\"");
                 return;
             }
             if (context.isNumber(value)) {
@@ -350,22 +354,69 @@ public class JSONCodec implements Codec {
             int c;
             while((c = reader.read()) != '"' || escaped) {
 
-                if(c == '\\') {
-                    if(escaped) {
-                        output.appendCodePoint(c);
-                    } else {
-                        escaped = true;
+                if (escaped) {
+
+                    switch (c) {
+                        case '\\':
+                        case '"':
+                            output.appendCodePoint(c);
+                            break;
+                        case 'n':
+                            output.append("\n");
+                            break;
+                        case 'r':
+                            output.append("\r");
+                            break;
+                        case 'f':
+                            output.append("\f");
+                            break;
+                        case 'b':
+                            output.append("\b");
+                            break;
+                        case 't':
+                            output.append("\t");
+                            break;
+                        case 'u':
+                            reader.mark(1);
+                            while (reader.read() == 'u') {
+                                // Skip all additional u's
+                                reader.mark(1);
+                            }
+                            reader.reset();
+
+                            char[] codePoint = new char[4];
+                            if (reader.read(codePoint, 0, 4) != 4) {
+                                throw new DecodeException("Not enough data to decode a unicode code point!");
+                            }
+                            String codePointStr = new String(codePoint);
+
+                            try {
+                                int codePointValue = Integer.parseUnsignedInt(codePointStr, 16);
+                                output.appendCodePoint(codePointValue);
+
+                            } catch (NumberFormatException nfe) {
+
+                                throw new DecodeException("Unable to decode unicode code point: " + codePointStr);
+                            }
+                            break;
+
+                        default:
+                            throw new DecodeException("Invalid escape character " + c + "!");
                     }
+
+                    escaped = false;
+
                 } else {
 
-                    if(escaped && c != '"') {
-                        output.append('\\');
+                    if (c == '\\') {
+                        escaped = true;
+                    } else {
+                        output.appendCodePoint(c);
                     }
-
-                    output.appendCodePoint(c);
-                    escaped = false;
                 }
             }
+
+
             return output.toString();
         }
 

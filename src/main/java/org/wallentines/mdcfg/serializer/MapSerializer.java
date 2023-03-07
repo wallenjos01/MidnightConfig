@@ -40,7 +40,7 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
         for(Map.Entry<String, O> entry : in.entrySet()) {
 
             K key = keySerializer.readString(entry.getKey());
-            if(key == null) return SerializeResult.failure("Unable to convert deserialize map key " + entry.getKey() + "!");
+            if(key == null) return SerializeResult.failure("Unable to deserialize map key " + entry.getKey() + "!");
 
             SerializeResult<V> valueResult = valueSerializer.deserialize(context, entry.getValue());
             if(!valueResult.isComplete()) return SerializeResult.failure("Unable to deserialize map value " + entry.getValue() + " with key " + key + "! " + valueResult.getError());
