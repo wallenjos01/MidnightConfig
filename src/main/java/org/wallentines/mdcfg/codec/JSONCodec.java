@@ -391,6 +391,7 @@ public class JSONCodec implements Codec {
 
                     switch (c) {
                         case '\\':
+                        case '/':
                         case '"':
                             output.appendCodePoint(c);
                             break;
