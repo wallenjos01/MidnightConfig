@@ -81,6 +81,24 @@ public interface Serializer<T> {
     }
 
     /**
+     * Creates a map serializer from this serializer which does not require all contained objects to (de-)serialize successfully
+     * @return A serializer for a map with string keys and T values
+     */
+    default MapSerializer<String, T> filteredMapOf() {
+        return filteredMapOf(InlineSerializer.RAW);
+    }
+
+    /**
+     * Creates a map serializer from this serializer using the given key serializer which does not require all contained objects to (de-)serialize successfully
+     * @param keySerializer The serializer to use to serialize the keys in the map to Strings
+     * @return A serializer for map with K keys and T values
+     * @param <K> The type of values for the keys in the map
+     */
+    default <K> MapSerializer<K, T> filteredMapOf(InlineSerializer<K> keySerializer) {
+        return new MapSerializer<>(keySerializer, this, true);
+    }
+
+    /**
      * Creates a new serializer with a fallback serializer. If serialization fails, the fallback will be used instead
      * @param other The fallback serializer
      * @return A new serializer with the given fallback.

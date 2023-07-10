@@ -7,10 +7,16 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
 
     private final InlineSerializer<K> keySerializer;
     private final Serializer<V> valueSerializer;
+    private final boolean allowPartial;
 
     public MapSerializer(InlineSerializer<K> keySerializer, Serializer<V> valueSerializer) {
+        this(keySerializer, valueSerializer, false);
+    }
+
+    public MapSerializer(InlineSerializer<K> keySerializer, Serializer<V> valueSerializer, boolean allowPartial) {
         this.keySerializer = keySerializer;
         this.valueSerializer = valueSerializer;
+        this.allowPartial = allowPartial;
     }
 
     @Override
@@ -22,9 +28,11 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
             if(key == null) return SerializeResult.failure("Unable to serialize key " + ent.getKey() + " as a String!");
 
             SerializeResult<O> valueResult = valueSerializer.serialize(context, ent.getValue());
-            if(!valueResult.isComplete()) return valueResult;
+            if(!valueResult.isComplete() && !allowPartial) {
+                return valueResult;
+            }
 
-            out.put(key, valueResult.getOrThrow());
+            out.put(key, valueResult.get().orElse(null));
         }
 
         return SerializeResult.ofNullable(context.toMap(out), "Unable to serialize map!");
@@ -43,9 +51,11 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
             if(key == null) return SerializeResult.failure("Unable to deserialize map key " + entry.getKey() + "!");
 
             SerializeResult<V> valueResult = valueSerializer.deserialize(context, entry.getValue());
-            if(!valueResult.isComplete()) return SerializeResult.failure("Unable to deserialize map value " + entry.getValue() + " with key " + key + "! " + valueResult.getError());
+            if(!valueResult.isComplete() && !allowPartial) {
+                return SerializeResult.failure("Unable to deserialize map value " + entry.getValue() + " with key " + key + "! " + valueResult.getError());
+            }
 
-            out.put(key, valueResult.getOrThrow());
+            out.put(key, valueResult.get().orElse(null));
         }
 
         return SerializeResult.success(out);
