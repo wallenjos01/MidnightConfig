@@ -236,7 +236,7 @@ public class JSONCodec implements Codec {
             reader.reset();
         }
 
-        private T decodeElement(BufferedReader reader) throws IOException{
+        private T decodeElement(BufferedReader reader) throws IOException {
 
             skipWhitespace(reader);
 
@@ -386,6 +386,10 @@ public class JSONCodec implements Codec {
             boolean escaped = false;
             int c;
             while((c = reader.read()) != '"' || escaped) {
+
+                if(c == -1) {
+                    throw new DecodeException("Found EOF while parsing a String!");
+                }
 
                 if (escaped) {
 

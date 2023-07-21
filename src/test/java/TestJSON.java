@@ -243,6 +243,21 @@ public class TestJSON {
         Assertions.assertTrue(obj.isSection());
         Assertions.assertEquals("Unicode \u0123\u5432", obj.asSection().getString("key"));
 
+    }
+
+    @Test
+    public void testInvalid() {
+
+        String invalid = "{\"key\":\"Invalid Value}";
+
+        boolean caught = false;
+        try {
+            JSONCodec.loadConfig(invalid);
+        } catch (DecodeException ex) {
+            caught = true;
+        }
+
+        Assertions.assertTrue(caught);
 
     }
 
