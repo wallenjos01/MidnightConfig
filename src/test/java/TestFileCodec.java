@@ -9,6 +9,7 @@ import org.wallentines.mdcfg.codec.JSONCodec;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
@@ -18,9 +19,13 @@ public class TestFileCodec {
     public void testFileCodec() {
 
         FileCodec json = JSONCodec.fileCodec();
-        ConfigObject obj = json.loadFromFile(ConfigContext.INSTANCE, new File("test.json"), StandardCharsets.UTF_8);
+        try {
+            ConfigObject obj = json.loadFromFile(ConfigContext.INSTANCE, new File("test.json"), StandardCharsets.UTF_8);
+            TestJSON.testLoadedFile(obj);
+        } catch (IOException ex) {
+            Assertions.fail();
+        }
 
-        TestJSON.testLoadedFile(obj);
     }
 
     @Test

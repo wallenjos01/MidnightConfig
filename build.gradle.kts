@@ -7,18 +7,24 @@ plugins {
 }
 
 group = "org.wallentines"
-version = "1.0.1"
+version = "1.1.0-SNAPSHOT"
 
-java.sourceCompatibility = JavaVersion.VERSION_11
-java.targetCompatibility = JavaVersion.VERSION_11
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 
-java.withSourcesJar()
+    withSourcesJar()
+}
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
+
+    compileOnly(libs.jetbrains.annotations)
+    implementation(libs.slf4j.api)
+
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
 }

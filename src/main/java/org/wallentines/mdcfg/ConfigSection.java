@@ -1,5 +1,7 @@
 package org.wallentines.mdcfg;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.wallentines.mdcfg.serializer.*;
 
 import java.util.*;
@@ -24,7 +26,7 @@ public class ConfigSection implements ConfigObject {
      * @param value The value to put into the section. If null, the key will be removed from the map instead
      * @return A reference to the previous object associated with the given key
      */
-    public ConfigObject set(String key, ConfigObject value) {
+    public ConfigObject set(String key, @Nullable ConfigObject value) {
 
         if(value == null) {
 
@@ -102,12 +104,22 @@ public class ConfigSection implements ConfigObject {
      * @param key The key to lookup
      * @return The value associated with the given key, or null
      */
+    @Nullable
     public ConfigObject get(String key) {
 
         Integer index = indicesByKey.get(key);
         if(index == null) return null;
 
         return values.get(index);
+    }
+    /**
+     * Gets a reference to the value associated with the given key
+     * @param key The key to lookup
+     * @return The value associated with the given key
+     * @throws NoSuchElementException If there is no value associated with the given key
+     */
+    public ConfigObject getOrThrow(String key) {
+        return getOptional(key).orElseThrow();
     }
 
     /**
@@ -118,7 +130,7 @@ public class ConfigSection implements ConfigObject {
      * @param <T> The type of object to deserialize
      * @throws SerializeException if the value is null or cannot be converted to the requested type
      */
-    public <T> T get(String key, Serializer<T> serializer) throws SerializeException {
+    public <T> T get(String key, @NotNull Serializer<T> serializer) throws SerializeException {
 
         ConfigObject out = get(key);
         return serializer.deserialize(ConfigContext.INSTANCE, out).getOrThrow();
@@ -131,10 +143,9 @@ public class ConfigSection implements ConfigObject {
      * @return An optional containing an instance of T deserialized from the value in the section, or empty if it could not be serialized
      * @param <T> The type of object to deserialize
      */
-    public <T> Optional<T> getOptional(String key, Serializer<T> serializer) {
+    public <T> Optional<T> getOptional(String key, @NotNull Serializer<T> serializer) {
 
-        ConfigObject out = get(key);
-        return serializer.deserialize(ConfigContext.INSTANCE, out).get();
+        return Optional.ofNullable(get(key)).flatMap(v -> serializer.deserialize(ConfigContext.INSTANCE, v).get());
     }
 
     /**
@@ -296,9 +307,9 @@ public class ConfigSection implements ConfigObject {
      * @throws IllegalStateException If the value associated with the key is not a ConfigList
      * @throws SerializeException If any object cannot be deserialized using the given serializer
      */
-    public <T> List<T> getList(String key, Serializer<T> serializer) {
+    public <T> List<T> getList(String key, @NotNull Serializer<T> serializer) {
 
-        ConfigList list = get(key).asList();
+        ConfigList list = getList(key);
         return new ArrayList<>(serializer.listOf().deserialize(ConfigContext.INSTANCE, list).getOrThrow());
     }
 
@@ -311,9 +322,9 @@ public class ConfigSection implements ConfigObject {
      * @throws NoSuchElementException If there is no value associated with the key
      * @throws IllegalStateException If the value associated with the key is not a ConfigList
      */
-    public <T> List<T> getListFiltered(String key, Serializer<T> serializer) {
+    public <T> List<T> getListFiltered(String key, @NotNull Serializer<T> serializer) {
 
-        ConfigList list = get(key).asList();
+        ConfigList list = getList(key);
         return new ArrayList<>(serializer.filteredListOf().deserialize(ConfigContext.INSTANCE, list).getOrThrow());
     }
 
@@ -327,9 +338,9 @@ public class ConfigSection implements ConfigObject {
      * @throws NoSuchElementException If there is no value associated with the key
      * @throws IllegalStateException If the value associated with the key is not a ConfigList
      */
-    public <T> List<T> getListFiltered(String key, Serializer<T> serializer, Consumer<String> onError) {
+    public <T> List<T> getListFiltered(String key, @NotNull Serializer<T> serializer, Consumer<String> onError) {
 
-        ConfigList list = get(key).asList();
+        ConfigList list = getList(key);
         return new ArrayList<>(serializer.filteredListOf(onError).deserialize(ConfigContext.INSTANCE, list).getOrThrow());
     }
 
@@ -341,13 +352,14 @@ public class ConfigSection implements ConfigObject {
      * @throws IllegalStateException If the value associated with the key is not a ConfigSection
      */
     public ConfigSection getSection(String key) {
-        return get(key).asSection();
+        return getOptional(key).orElseThrow().asSection();
     }
 
     /**
      * Gets a reference to an existing ConfigSection associated with the given key, or creates a new one, puts it in the section, and returns it
      * @param key The key to lookup
      * @return An existing or newly created ConfigSection associated with the given key
+     * @throws IllegalStateException If there is already a non-ConfigSection value at the given key
      */
     public ConfigSection getOrCreateSection(String key) {
         ConfigObject obj = get(key);
@@ -377,7 +389,7 @@ public class ConfigSection implements ConfigObject {
      * @return Whether there is a String value associated with the given key
      */
     public boolean hasString(String key) {
-        return has(key) && values.get(indicesByKey.get(key)).isString();
+        return getOptional(key).filter(ConfigObject::isString).isPresent();
     }
 
     /**
@@ -386,7 +398,7 @@ public class ConfigSection implements ConfigObject {
      * @return Whether there is a Number value associated with the given key
      */
     public boolean hasNumber(String key) {
-        return has(key) && values.get(indicesByKey.get(key)).isNumber();
+        return getOptional(key).filter(ConfigObject::isNumber).isPresent();
     }
 
     /**
@@ -395,7 +407,7 @@ public class ConfigSection implements ConfigObject {
      * @return Whether there is a Boolean value associated with the given key
      */
     public boolean hasBoolean(String key) {
-        return has(key) && values.get(indicesByKey.get(key)).isBoolean();
+        return getOptional(key).filter(ConfigObject::isBoolean).isPresent();
     }
 
     /**
@@ -404,7 +416,7 @@ public class ConfigSection implements ConfigObject {
      * @return Whether there is a ConfigList associated with the given key
      */
     public boolean hasList(String key) {
-        return has(key) && values.get(indicesByKey.get(key)).isList();
+        return getOptional(key).filter(ConfigObject::isList).isPresent();
     }
 
     /**
@@ -413,7 +425,7 @@ public class ConfigSection implements ConfigObject {
      * @return Whether there is a ConfigSection associated with the given key
      */
     public boolean hasSection(String key) {
-        return has(key) && values.get(indicesByKey.get(key)).isSection();
+        return getOptional(key).filter(ConfigObject::isSection).isPresent();
     }
 
     /**
@@ -450,7 +462,7 @@ public class ConfigSection implements ConfigObject {
     public void fill(ConfigSection other) {
         for(String key : other.orderedKeys) {
             if(!has(key)) {
-                set(key, other.get(key).copy());
+                set(key, other.getOrThrow(key).copy());
             } else if(hasSection(key) && other.hasSection(key)) {
                 getSection(key).fill(other.getSection(key));
             }
@@ -463,7 +475,7 @@ public class ConfigSection implements ConfigObject {
      */
     public void fillOverwrite(ConfigSection other) {
         for(String key : other.orderedKeys) {
-            set(key, other.get(key).copy());
+            set(key, other.getOrThrow(key).copy());
         }
     }
 
@@ -555,7 +567,7 @@ public class ConfigSection implements ConfigObject {
 
         ConfigSection out = new ConfigSection();
         for(String key : orderedKeys) {
-            out.set(key, get(key).copy());
+            out.set(key, getOrThrow(key).copy());
         }
         return out;
     }
@@ -611,7 +623,7 @@ public class ConfigSection implements ConfigObject {
             ConfigObject obj = get(key);
             ConfigObject otherObj = otherSection.get(key);
 
-            if(!obj.equals(otherObj)) return false;
+            if(!Objects.equals(obj, otherObj)) return false;
         }
 
         return true;

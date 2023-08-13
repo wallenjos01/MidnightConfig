@@ -1,5 +1,8 @@
 package org.wallentines.mdcfg;
 
+/**
+ * Contains classes for functions with up to 15 values
+ */
 public class Tuples {
 
     public static class T2<P1,P2> {

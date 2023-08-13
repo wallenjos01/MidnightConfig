@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * A utility for easily creating complex serializers for objects
+ */
 @SuppressWarnings("unused")
 public class ObjectSerializer {
 

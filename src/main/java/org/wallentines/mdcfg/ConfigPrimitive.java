@@ -11,6 +11,7 @@ public class ConfigPrimitive implements ConfigObject {
     /**
      * Creates a ConfigPrimitive with the given Number value
      * @param value The Number value
+     * @throws IllegalArgumentException If the value is null
      */
     public ConfigPrimitive(Number value) {
         this((Object) value);
@@ -19,6 +20,7 @@ public class ConfigPrimitive implements ConfigObject {
     /**
      * Creates a ConfigPrimitive with the given Boolean value
      * @param value The Boolean value
+     * @throws IllegalArgumentException If the value is null
      */
     public ConfigPrimitive(Boolean value) {
         this((Object) value);
@@ -27,6 +29,7 @@ public class ConfigPrimitive implements ConfigObject {
     /**
      * Creates a ConfigPrimitive with the given String value
      * @param value The String value
+     * @throws IllegalArgumentException If the value is null
      */
     public ConfigPrimitive(String value) {
         this((Object) value);

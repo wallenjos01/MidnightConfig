@@ -69,7 +69,7 @@ public interface ConfigObject {
     /**
      * Casts this object to a ConfigSection and returns it
      * @return This object as a ConfigSection
-     * @throws IllegalStateException If the value is not a list
+     * @throws IllegalStateException If the value is not a section
      */
     ConfigSection asSection();
 

@@ -1,5 +1,6 @@
 package org.wallentines.mdcfg;
 
+import org.jetbrains.annotations.NotNull;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.serializer.Serializer;
 import org.wallentines.mdcfg.serializer.SerializeException;
@@ -42,7 +43,7 @@ public class ConfigList implements ConfigObject {
      * @return Whether the value was successfully added
      * @param <T> The type of object the serializer will create
      */
-    public <T> boolean add(T value, Serializer<T> serializer) {
+    public <T> boolean add(T value, @NotNull Serializer<T> serializer) {
 
         Optional<ConfigObject> serialized = serializer.serialize(ConfigContext.INSTANCE, value).get();
         return serialized.filter(values::add).isPresent();
@@ -79,6 +80,7 @@ public class ConfigList implements ConfigObject {
      * Adds a value to the list, returning a reference to self
      * @param value The value to add
      * @return A reference to self
+     * @throws IllegalArgumentException If the value could not be added
      */
     public ConfigList append(ConfigObject value) {
         if(!add(value)) throw new IllegalArgumentException("Unable to add " + value + " to a list!");
@@ -89,6 +91,7 @@ public class ConfigList implements ConfigObject {
      * Adds a String to the list, returning a reference to self
      * @param value The String to add
      * @return A reference to self
+     * @throws IllegalArgumentException If the value could not be added
      */
     public ConfigList append(String value) {
         if(!add(value)) throw new IllegalArgumentException("Unable to add " + value + " to a list!");
@@ -99,6 +102,7 @@ public class ConfigList implements ConfigObject {
      * Adds a Number to the list, returning a reference to self
      * @param value The Number to add
      * @return A reference to self
+     * @throws IllegalArgumentException If the value could not be added
      */
     public ConfigList append(Number value) {
         if(!add(value)) throw new IllegalArgumentException("Unable to add " + value + " to a list!");
@@ -109,6 +113,7 @@ public class ConfigList implements ConfigObject {
      * Adds a Boolean to the list, returning a reference to self
      * @param value The Boolean to add
      * @return A reference to self
+     * @throws IllegalArgumentException If the value could not be added
      */
     public ConfigList append(Boolean value) {
         if(!add(value)) throw new IllegalArgumentException("Unable to add " + value + " to a list!");
@@ -122,7 +127,7 @@ public class ConfigList implements ConfigObject {
      * @return A reference to self
      * @param <T> The type of object the serializer will create
      */
-    public <T> ConfigList append(T value, Serializer<T> serializer) {
+    public <T> ConfigList append(T value, @NotNull Serializer<T> serializer) {
 
         Optional<ConfigObject> serialized = serializer.serialize(ConfigContext.INSTANCE, value).get();
         serialized.ifPresent(this::add);
@@ -132,9 +137,10 @@ public class ConfigList implements ConfigObject {
     /**
      * Adds a group of objects to the list
      * @param objects The objects to add
+     * @throws IllegalArgumentException If any of the values could not be added
      */
     public void addAll(Collection<ConfigObject> objects) {
-        objects.forEach(this::add);
+        objects.forEach(this::append);
     }
 
     /**
@@ -164,7 +170,7 @@ public class ConfigList implements ConfigObject {
      * @throws IndexOutOfBoundsException If there is no value at the given index
      * @throws SerializeException If the value at the given index could not be deserialized
      */
-    public <T> T get(int index, Serializer<T> serializer) {
+    public <T> T get(int index, @NotNull Serializer<T> serializer) {
 
         return serializer.deserialize(ConfigContext.INSTANCE, values.get(index)).getOrThrow();
     }
@@ -215,6 +221,7 @@ public class ConfigList implements ConfigObject {
     /**
      * Removes the value at the given index
      * @param index The index to lookup and remove
+     * @throws IndexOutOfBoundsException If there is no object at the given index
      */
     public void remove(int index) {
         values.remove(index);
@@ -223,9 +230,10 @@ public class ConfigList implements ConfigObject {
     /**
      * Removes the given value from the list
      * @param value The value to lookup and remove
+     * @return true if the item was present and was removed
      */
-    public void remove(ConfigObject value) {
-        values.remove(value);
+    public boolean remove(ConfigObject value) {
+        return values.remove(value);
     }
 
     /**

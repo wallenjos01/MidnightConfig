@@ -4,6 +4,10 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * An interface for serializing data into an encode-able format
+ * @param <T> The type of data to serialize
+ */
 @SuppressWarnings("unused")
 public interface Serializer<T> {
 

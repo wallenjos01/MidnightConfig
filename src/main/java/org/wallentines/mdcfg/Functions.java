@@ -1,5 +1,8 @@
 package org.wallentines.mdcfg;
 
+/**
+ * Contains interfaces for functions with up to 15 parameters
+ */
 public class Functions {
 
     public interface F1<P1,R> {

@@ -1,5 +1,7 @@
 package org.wallentines.mdcfg.codec;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.serializer.SerializeContext;
@@ -9,35 +11,78 @@ import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.util.*;
 
+/**
+ * A {@link Codec Codec} for JSON data
+ */
 public class JSONCodec implements Codec {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger("JSONCodec");
 
     private final boolean shouldIndent;
     private final String indent;
 
+    /**
+     * Creates a JSON codec which does not indent or add newlines
+     */
     public JSONCodec() {
         this(0);
     }
+
+    /**
+     * Creates a JSON codec which adds newlines and indents a with a given amount of spaces
+     * @param indentAmount The amount of spaces to indent each new level with
+     */
     public JSONCodec(int indentAmount) {
         this.indent = indentAmount <= 0 ? "" : " ".repeat(indentAmount);
         this.shouldIndent = indentAmount > 0;
     }
 
+    /**
+     * Creates a JSON codec which does not indent or add newlines
+     * @return A new JSON codec
+     */
     public static JSONCodec minified() {
         return new JSONCodec(0);
     }
 
+    /**
+     * Creates a JSON codec which adds newlines and indents with 4 spaces
+     * @return A new JSON codec
+     */
     public static JSONCodec readable() {
         return new JSONCodec(4);
     }
 
+    /**
+     * Creates a JSON file codec using only the ".json" extension and a readable codec
+     */
     public static FileCodec fileCodec() {
-        return new FileCodec(readable(), "json");
+        return fileCodec(readable());
     }
 
+    /**
+     * Creates a JSON file codec using only the ".json" extension and the given JSON codec
+     */
+    public static FileCodec fileCodec(JSONCodec codec) {
+        return new FileCodec(codec, "json");
+    }
+
+    /**
+     * Loads data as a ConfigObject from the given String
+     * @param string The encoded data to read
+     * @return A decoded ConfigObject
+     * @throws DecodeException If the data could not be decoded
+     */
     public static ConfigObject loadConfig(String string) {
         return minified().decode(ConfigContext.INSTANCE, string);
     }
 
+    /**
+     * Loads data as a ConfigObject from the given input stream
+     * @param stream The encoded data to read
+     * @return A decoded ConfigObject
+     * @throws DecodeException If the data could not be decoded
+     */
     public static ConfigObject loadConfig(InputStream stream) {
         return minified().decode(ConfigContext.INSTANCE, stream);
     }
@@ -68,7 +113,7 @@ public class JSONCodec implements Codec {
                 writer.close();
 
             } catch (IOException ex) {
-                ex.printStackTrace();
+                LOGGER.error("An exception occurred while writing JSON to a stream!", ex);
             }
         }
 
@@ -216,7 +261,7 @@ public class JSONCodec implements Codec {
                 return out;
 
             } catch (IOException ex) {
-                ex.printStackTrace();
+                LOGGER.error("An exception occurred while reading JSON from a stream!", ex);
             }
 
             return null;

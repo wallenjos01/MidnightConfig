@@ -6,8 +6,11 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * A data type representing the result of a (de)serialization attempt by a {@link Serializer Serializer}
+ * @param <T> The type of data which was being (de)serialized
+ */
 public class SerializeResult<T> {
-
 
     private final T value;
     private final String error;
