@@ -31,13 +31,22 @@ such as Strings, Integers, Doubles, Booleans, and more.
 ### Codec
 - A `Codec` object is responsible for taking configuration data and encoding it into a byte stream which can be
 stored on disk, and the reverse.
-- By default, there is one `Codec` implementation: The `JSONCodec` class, which can save configuration data in 
-JSON format.
-- The `JSONCodec` class contains two variations, constructable via static methods: `readable()` and `minified()`
-  - The `readable()` function will return a JSON Codec which adds a newline and indent after each value. It is, as
+- By default, there are three `Codec` implementations: 
+  - The `JSONCodec` class located in the `codec-json` submodule, which can save configuration data in JSON format.
+    - The `JSONCodec` class contains two variations, constructable via static methods: `readable()` and `minified()`
+    - The `readable()` function will return a JSON Codec which adds a newline and indent after each value. It is, as
   the name suggests, meant for writing files that will be edited by users.
-  - The `minified()` function will return a JSON Codec with no whitespace. It uses space most efficiently, but is hard
+    - The `minified()` function will return a JSON Codec with no whitespace. It uses space most efficiently, but is hard
   to read. It is meant for data that will be not be edited by users.
+  - The `GsonCodec` class located in the `codec-gson` submodule, which can save configuration data in JSON format using 
+    Google's [Gson](https://github.com/google/gson/) ([Lisence](https://github.com/google/gson/blob/main/LICENSE)).
+    - The `GsonCodec` class contains the same two variations as the JSON Codec
+    - The `codec-gson` submodule also contains a `GsonContext` class, which allows converting `ConfigSection` objects 
+    to Gson primitives
+  - The `BinaryCodec` class located in the `codec-binary` submodule, which is designed to save optionally-compressed,
+    quick to decode binary forms of config objects
+    - The `BinaryCodec` class supports two different types of compression. Deflate, which uses Java's built-in deflate
+      algorithm, and Zstd, which uses [zstd-jni](https://github.com/luben/zstd-jni) ([Lisence](https://github.com/luben/zstd-jni/blob/master/LICENSE))
 
 <br>
 
@@ -112,4 +121,10 @@ String json = JSONCodec.readable().encodeToString(ConfigContext.INSTANCE, config
 Loading a `ConfigSection` from a JSON string:
 ```
 ConfigSection decoded = JSONCodec.readable().decode(ConfigContext.INSTANCE, json).asSection();
+```
+
+Saving a `ConfigSection` in a compressed binary format:
+```
+FileCodec codec = BinaryCodec.fileCodec(BinaryCodec.Compression.ZSTD);
+codec.saveToFile(ConfigContext.INSTANCE, section, new File("test.mdb"), null);
 ```

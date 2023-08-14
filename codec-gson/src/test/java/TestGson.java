@@ -92,7 +92,7 @@ public class TestGson {
         encoded = GsonCodec.minified().encodeToString(ConfigContext.INSTANCE, sec);
         Assertions.assertEquals("{\"\\\"Quoted Key\\\"\":\"Value\"}", encoded);
 
-        obj = GsonCodec.minified().decode(GsonContext.INSTANCE, encoded);;
+        obj = GsonCodec.minified().decode(GsonContext.INSTANCE, encoded);
         Assertions.assertTrue(obj.isJsonObject());
         Assertions.assertEquals("Value", obj.getAsJsonObject().get("\"Quoted Key\"").getAsString());
 
