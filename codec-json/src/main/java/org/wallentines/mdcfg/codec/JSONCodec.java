@@ -1,5 +1,6 @@
 package org.wallentines.mdcfg.codec;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wallentines.mdcfg.ConfigObject;
@@ -83,19 +84,20 @@ public class JSONCodec implements Codec {
      * @return A decoded ConfigObject
      * @throws DecodeException If the data could not be decoded
      */
-    public static ConfigObject loadConfig(InputStream stream) {
+    public static ConfigObject loadConfig(InputStream stream) throws IOException {
         return minified().decode(ConfigContext.INSTANCE, stream);
     }
 
     @Override
-    public <T> T decode(SerializeContext<T> context, InputStream stream, Charset charset) {
-        return new Decoder<>(context).decode(stream, charset);
+    public <T> void encode(@NotNull SerializeContext<T> context, T input, @NotNull OutputStream stream, Charset charset) throws EncodeException, IOException {
+        new Encoder<>(context).encode(input, stream, charset);
     }
 
     @Override
-    public <T> void encode(SerializeContext<T> context, T input, OutputStream stream, Charset charset) {
-        new Encoder<>(context).encode(input, stream, charset);
+    public <T> T decode(@NotNull SerializeContext<T> context, @NotNull InputStream stream, Charset charset) throws DecodeException, IOException {
+        return new Decoder<>(context).decode(stream, charset);
     }
+
 
     private class Encoder<T> {
         private final SerializeContext<T> context;
@@ -104,17 +106,12 @@ public class JSONCodec implements Codec {
             this.context = context;
         }
 
-        public void encode(T section, OutputStream stream, Charset charset) {
+        public void encode(T section, OutputStream stream, Charset charset) throws IOException {
 
-            try {
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, charset));
+            encode(section, "", writer);
+            writer.close();
 
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, charset));
-                encode(section, "", writer);
-                writer.close();
-
-            } catch (IOException ex) {
-                LOGGER.error("An exception occurred while writing JSON to a stream!", ex);
-            }
         }
 
         private void encodeMap(T section, String prefix, BufferedWriter writer) throws IOException {
@@ -189,7 +186,7 @@ public class JSONCodec implements Codec {
 
         private void encodeList(T value, String prefix, BufferedWriter writer) throws IOException {
 
-            if (!context.isList(value)) throw new IllegalArgumentException("Not a list: " + value);
+            if (!context.isList(value)) throw new EncodeException("Not a list: " + value);
             String nextPrefix = prefix + indent;
 
             Collection<T> collection = context.asList(value);
@@ -239,7 +236,7 @@ public class JSONCodec implements Codec {
                 writer.write(context.asBoolean(value).toString());
                 return;
             }
-            throw new IllegalStateException("Unable to serialize " + value + "!");
+            throw new EncodeException("Unable to serialize " + value + "!");
 
         }
     }
@@ -252,19 +249,12 @@ public class JSONCodec implements Codec {
             this.context = context;
         }
 
-        public T decode(InputStream data, Charset charset) {
+        public T decode(InputStream data, Charset charset) throws IOException {
 
-            try {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(data, charset));
-                T out = decodeElement(reader);
-                reader.close();
-                return out;
-
-            } catch (IOException ex) {
-                LOGGER.error("An exception occurred while reading JSON from a stream!", ex);
-            }
-
-            return null;
+            BufferedReader reader = new BufferedReader(new InputStreamReader(data, charset));
+            T out = decodeElement(reader);
+            reader.close();
+            return out;
         }
 
         private void skipWhitespace(BufferedReader reader) throws IOException {

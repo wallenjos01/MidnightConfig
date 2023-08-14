@@ -1,10 +1,10 @@
 package org.wallentines.mdcfg.codec;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jetbrains.annotations.NotNull;
 import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -17,8 +17,6 @@ import java.util.zip.InflaterInputStream;
  * meant to be easily human-editable
  */
 public class BinaryCodec implements Codec {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger("BinaryCodec");
 
     private static final String HEADER = "MDCB";
 
@@ -49,22 +47,17 @@ public class BinaryCodec implements Codec {
     }
 
     @Override
-    public <T> void encode(SerializeContext<T> context, T input, OutputStream stream, Charset charset) {
+    public <T> void encode(@NotNull SerializeContext<T> context, T input, @NotNull OutputStream stream, Charset charset) throws IOException, EncodeException {
 
-        try {
-            stream.write(HEADER.getBytes(StandardCharsets.US_ASCII));
-            stream.write(compression.index());
-        } catch (IOException ex) {
-            LOGGER.error("An exception occurred while writing config binary to a stream!", ex);
+        stream.write(HEADER.getBytes(StandardCharsets.US_ASCII));
+        stream.write(compression.index());
+
+        if(input == null) {
+            throw new EncodeException("Unable to encode null input!");
         }
 
         try(DataOutputStream dos = compression.createOutputStream(stream)) {
-
             encodeValue(context, input, dos);
-
-        } catch (IOException ex) {
-
-            LOGGER.error("An exception occurred while writing config binary to a stream!", ex);
         }
 
     }
@@ -141,6 +134,11 @@ public class BinaryCodec implements Codec {
             stream.writeByte(Type.DOUBLE.index());
             stream.writeDouble(number.doubleValue());
 
+        } else if(number instanceof BigDecimal) {
+
+            stream.writeByte(Type.BIG_DECIMAL.index());
+            writeString(number.toString(), stream);
+
         } else {
 
             double floatingValue = number.doubleValue();
@@ -163,22 +161,16 @@ public class BinaryCodec implements Codec {
 
 
     @Override
-    public <T> T decode(SerializeContext<T> context, InputStream stream, Charset charset) throws DecodeException {
+    public <T> T decode(@NotNull SerializeContext<T> context, @NotNull InputStream stream, Charset charset) throws DecodeException, IOException {
 
-        Compression compression;
-        try {
-            String header = new String(stream.readNBytes(HEADER.length()), StandardCharsets.US_ASCII);
-            if(!header.equals(HEADER)) {
-                throw new DecodeException("Unable to decode config binary! Missing or invalid header!");
-            }
+        String header = new String(stream.readNBytes(HEADER.length()), StandardCharsets.US_ASCII);
+        if(!header.equals(HEADER)) {
+            throw new DecodeException("Unable to decode config binary! Missing or invalid header!");
+        }
 
-            compression = Compression.byIndex(stream.read());
-            if(compression == null) {
-                throw new DecodeException("Unable to decode config binary! Unknown compression type!");
-            }
-
-        } catch (IOException ex) {
-            throw new DecodeException("An exception occurred while writing config binary to a stream! " + ex.getMessage());
+        Compression compression = Compression.byIndex(stream.read());
+        if(compression == null) {
+            throw new DecodeException("Unable to decode config binary! Unknown compression type!");
         }
 
         try(DataInputStream dis = compression.createInputStream(stream)) {
@@ -190,9 +182,6 @@ public class BinaryCodec implements Codec {
 
             return out;
 
-        } catch (IOException ex) {
-
-            throw new DecodeException("Unable to decode config binary! IOException: " + ex.getMessage());
         }
     }
 
@@ -215,6 +204,7 @@ public class BinaryCodec implements Codec {
             case BYTE:
             case FLOAT:
             case DOUBLE:
+            case BIG_DECIMAL:
                 return context.toNumber(decodeNumber(t, stream));
 
             case STRING:
@@ -261,6 +251,8 @@ public class BinaryCodec implements Codec {
                 return stream.readFloat();
             case DOUBLE:
                 return stream.readDouble();
+            case BIG_DECIMAL:
+                return new BigDecimal(readString(stream));
         }
 
         throw new DecodeException("Invalid number type!");
@@ -284,6 +276,7 @@ public class BinaryCodec implements Codec {
         BYTE,
         FLOAT,
         DOUBLE,
+        BIG_DECIMAL,
         STRING,
         BOOLEAN,
         LIST,
