@@ -8,12 +8,13 @@ repositories {
 
 dependencies {
 
-    compileOnlyApi(libs.jetbrains.annotations)
+    api(project(":api"))
+    api(libs.zstd.jni)
+
     implementation(libs.slf4j.api)
 
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
-
     testImplementation(project(":codec-json"))
 }
 
@@ -22,7 +23,7 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = group as String
             version = version as String
-            artifactId = "midnightcfg"
+            artifactId = "midnightcfg-binary-codec"
             from(components["java"])
         }
     }

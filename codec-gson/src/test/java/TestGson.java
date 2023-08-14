@@ -1,13 +1,15 @@
+import com.google.gson.JsonElement;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.wallentines.mdcfg.ConfigList;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.codec.DecodeException;
-import org.wallentines.mdcfg.codec.JSONCodec;
 import org.wallentines.mdcfg.serializer.ConfigContext;
+import org.wallentines.mdcfg.codec.GsonCodec;
+import org.wallentines.mdcfg.serializer.GsonContext;
 
-public class TestJSON {
+public class TestGson {
 
     @Test
     public void testEncode() {
@@ -19,19 +21,19 @@ public class TestJSON {
         test.set("Section", new ConfigSection().with("Hello", "World"));
 
         // Non-indented
-        JSONCodec codec = JSONCodec.minified();
+        GsonCodec codec = GsonCodec.minified();
         Assertions.assertEquals("{\"String\":\"Hello, World\",\"Number\":42,\"List\":[\"String\",69,112.4],\"Section\":{\"Hello\":\"World\"}}", codec.encodeToString(ConfigContext.INSTANCE, test));
 
         // Indented
-        codec = JSONCodec.readable();
-        Assertions.assertEquals("{\n    \"String\": \"Hello, World\",\n    \"Number\": 42,\n    \"List\": [\n        \"String\",\n        69,\n        112.4\n    ],\n    \"Section\": {\n        \"Hello\": \"World\"\n    }\n}", codec.encodeToString(ConfigContext.INSTANCE, test));
+        codec = GsonCodec.readable();
+        Assertions.assertEquals("{\n  \"String\": \"Hello, World\",\n  \"Number\": 42,\n  \"List\": [\n    \"String\",\n    69,\n    112.4\n  ],\n  \"Section\": {\n    \"Hello\": \"World\"\n  }\n}", codec.encodeToString(ConfigContext.INSTANCE, test));
 
     }
 
     @Test
     public void testDecode() {
 
-        JSONCodec codec = new JSONCodec();
+        GsonCodec codec = GsonCodec.minified();
 
         String encodedPrimitive = "\"Hello\"";
         ConfigObject primitive = codec.decode(ConfigContext.INSTANCE, encodedPrimitive);
@@ -45,7 +47,7 @@ public class TestJSON {
 
         Assertions.assertTrue(number.isPrimitive());
         Assertions.assertTrue(number.asPrimitive().isNumber());
-        Assertions.assertEquals(1000, number.asPrimitive().asNumber());
+        Assertions.assertEquals(1000, number.asPrimitive().asNumber().intValue());
 
 
         String encodedList = "[111,43.435,\"String\"]";
@@ -78,21 +80,21 @@ public class TestJSON {
 
         // Quoted Values
         ConfigSection sec = new ConfigSection().with("Key", "\"Quoted String\"");
-        String encoded = JSONCodec.minified().encodeToString(ConfigContext.INSTANCE, sec);
+        String encoded = GsonCodec.minified().encodeToString(ConfigContext.INSTANCE, sec);
         Assertions.assertEquals("{\"Key\":\"\\\"Quoted String\\\"\"}", encoded);
 
-        ConfigObject obj = JSONCodec.loadConfig(encoded);
-        Assertions.assertTrue(obj.isSection());
-        Assertions.assertEquals("\"Quoted String\"", obj.asSection().getString("Key"));
+        JsonElement obj = GsonCodec.minified().decode(GsonContext.INSTANCE, encoded);
+        Assertions.assertTrue(obj.isJsonObject());
+        Assertions.assertEquals("\"Quoted String\"", obj.getAsJsonObject().get("Key").getAsString());
 
         // Quoted Keys
         sec = new ConfigSection().with("\"Quoted Key\"", "Value");
-        encoded = JSONCodec.minified().encodeToString(ConfigContext.INSTANCE, sec);
+        encoded = GsonCodec.minified().encodeToString(ConfigContext.INSTANCE, sec);
         Assertions.assertEquals("{\"\\\"Quoted Key\\\"\":\"Value\"}", encoded);
 
-        obj = JSONCodec.loadConfig(encoded);
-        Assertions.assertTrue(obj.isSection());
-        Assertions.assertEquals("Value", obj.asSection().getString("\"Quoted Key\""));
+        obj = GsonCodec.minified().decode(GsonContext.INSTANCE, encoded);;
+        Assertions.assertTrue(obj.isJsonObject());
+        Assertions.assertEquals("Value", obj.getAsJsonObject().get("\"Quoted Key\"").getAsString());
 
     }
 
@@ -100,39 +102,39 @@ public class TestJSON {
     public void testEscape() {
 
         String json = "{\"key\":\"Value\\nNewline\"}";
-        ConfigObject obj = JSONCodec.loadConfig(json);
+        JsonElement obj = GsonCodec.minified().decode(GsonContext.INSTANCE, json);
 
-        Assertions.assertTrue(obj.isSection());
-        Assertions.assertEquals("Value\nNewline", obj.asSection().getString("key"));
+        Assertions.assertTrue(obj.isJsonObject());
+        Assertions.assertEquals("Value\nNewline", obj.getAsJsonObject().get("key").getAsString());
 
         json = "{\"key\":\"Value\\\\Hello\"}";
-        obj = JSONCodec.loadConfig(json);
+        obj = GsonCodec.minified().decode(GsonContext.INSTANCE, json);
 
-        Assertions.assertTrue(obj.isSection());
-        Assertions.assertEquals("Value\\Hello", obj.asSection().getString("key"));
+        Assertions.assertTrue(obj.isJsonObject());
+        Assertions.assertEquals("Value\\Hello", obj.getAsJsonObject().get("key").getAsString());
     }
 
     @Test
     public void testUnicode() {
 
         String json = "{\"key\":\"Unicode \\u0123\"}";
-        ConfigObject obj = JSONCodec.loadConfig(json);
+        JsonElement obj = GsonCodec.minified().decode(GsonContext.INSTANCE, json);
 
-        Assertions.assertTrue(obj.isSection());
-        Assertions.assertEquals("Unicode \u0123", obj.asSection().getString("key"));
+        Assertions.assertTrue(obj.isJsonObject());
+        Assertions.assertEquals("Unicode \u0123", obj.getAsJsonObject().get("key").getAsString());
 
 
-        json = "{\"key\":\"Unicode \\uuuu5432\"}";
-        obj = JSONCodec.loadConfig(json);
+        json = "{\"key\":\"Unicode \\u5432\"}";
+        obj = GsonCodec.minified().decode(GsonContext.INSTANCE, json);
 
-        Assertions.assertTrue(obj.isSection());
-        Assertions.assertEquals("Unicode \u5432", obj.asSection().getString("key"));
+        Assertions.assertTrue(obj.isJsonObject());
+        Assertions.assertEquals("Unicode \u5432", obj.getAsJsonObject().get("key").getAsString());
 
         json = "{\"key\":\"Unicode \\u0123\\u5432\"}";
-        obj = JSONCodec.loadConfig(json);
+        obj = GsonCodec.minified().decode(GsonContext.INSTANCE, json);
 
-        Assertions.assertTrue(obj.isSection());
-        Assertions.assertEquals("Unicode \u0123\u5432", obj.asSection().getString("key"));
+        Assertions.assertTrue(obj.isJsonObject());
+        Assertions.assertEquals("Unicode \u0123\u5432", obj.getAsJsonObject().get("key").getAsString());
 
     }
 
@@ -143,7 +145,7 @@ public class TestJSON {
 
         boolean caught = false;
         try {
-            JSONCodec.loadConfig(invalid);
+            GsonCodec.minified().decode(GsonContext.INSTANCE, invalid);
         } catch (DecodeException ex) {
             caught = true;
         }
@@ -151,5 +153,5 @@ public class TestJSON {
         Assertions.assertTrue(caught);
 
     }
-
+    
 }

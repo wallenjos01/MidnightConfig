@@ -3,7 +3,9 @@ package org.wallentines.mdcfg.serializer;
 import org.wallentines.mdcfg.Tuples;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
@@ -228,7 +230,7 @@ public interface SerializeContext<T> {
     default <O> O convert(SerializeContext<O> other, T object) {
 
         if(object == null) return null;
-        if(other == this) return (O) object;
+        if(other.getClass() == getClass()) return (O) object;
 
         if(isString(object)) {
             return other.toString(asString(object));
@@ -244,10 +246,15 @@ public interface SerializeContext<T> {
                     .map(t -> convert(other, t)).collect(Collectors.toList()));
         }
         if(isMap(object)) {
-            return other.toMap(asMap(object).entrySet().stream()
+            return other.toMap(asOrderedMap(object).entrySet().stream()
                     .map(ent -> new Tuples.T2<>(ent.getKey(), convert(other, ent.getValue())))
                     .filter(t2 -> t2.p1 != null && t2.p2 != null)
-                    .collect(Collectors.toMap(t2 -> t2.p1, t2 -> t2.p2)));
+                    .collect(Collectors.toMap(
+                            t2 -> t2.p1, // Key mapper
+                            t2 -> t2.p2, // Value mapper
+                            (v1,v2) -> { throw new IllegalStateException("Found duplicate keys for values " + v1 + " and " + v2 + "!"); }, // Duplicate handler
+                            LinkedHashMap::new // Map factory
+                    )));
         }
 
         throw new SerializeException("Don't know how to convert " + object + " to another context!");

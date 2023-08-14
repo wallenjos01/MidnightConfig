@@ -6,3 +6,5 @@ pluginManagement {
 
 include("api")
 include("codec-json")
+include("codec-gson")
+include("codec-binary")

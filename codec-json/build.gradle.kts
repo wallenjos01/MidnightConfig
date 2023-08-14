@@ -10,7 +10,6 @@ dependencies {
 
     api(project(":api"))
 
-    compileOnly(libs.jetbrains.annotations)
     implementation(libs.slf4j.api)
 
     testImplementation(platform(libs.junit.bom))

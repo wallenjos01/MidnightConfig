@@ -45,3 +45,7 @@ bin/
 /api/run/test/test_write.json
 /api/run/test/test_created.json
 /api/run/test/test_defaults.json
+
+/codec-binary/run
+/codec-json/run
+/codec-gson/run
