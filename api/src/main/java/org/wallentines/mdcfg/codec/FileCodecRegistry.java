@@ -1,5 +1,6 @@
 package org.wallentines.mdcfg.codec;
 
+import org.jetbrains.annotations.NotNull;
 import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.io.File;
@@ -21,7 +22,7 @@ public class FileCodecRegistry {
      * the default
      * @param codec The codec to register
      */
-    public void registerFileCodec(FileCodec codec) {
+    public void registerFileCodec(@NotNull FileCodec codec) {
         registerFileCodec(codec, defaultCodec == null);
     }
 
@@ -30,7 +31,7 @@ public class FileCodecRegistry {
      * @param codec The codec to register
      * @param setAsDefault Whether the codec should be set as the default codec
      */
-    public void registerFileCodec(FileCodec codec, boolean setAsDefault) {
+    public void registerFileCodec(@NotNull FileCodec codec, boolean setAsDefault) {
 
         if(setAsDefault) {
             this.defaultCodec = codec;
@@ -46,7 +47,7 @@ public class FileCodecRegistry {
      * @param file The file to inspect
      * @return A codec which supports the file's extension, or null if none of them do
      */
-    public FileCodec forFile(File file) {
+    public FileCodec forFile(@NotNull File file) {
 
         String name = file.getName();
         int index = name.lastIndexOf('.');
@@ -72,7 +73,7 @@ public class FileCodecRegistry {
      * @return A new file wrapper
      * @param <T> The type of values to read
      */
-    public <T> FileWrapper<T> fromFile(SerializeContext<T> context, File file) {
+    public <T> FileWrapper<T> fromFile(@NotNull SerializeContext<T> context, @NotNull File file) {
         return fromFile(context, file, StandardCharsets.UTF_8);
     }
 
@@ -84,7 +85,7 @@ public class FileCodecRegistry {
      * @return A new file wrapper
      * @param <T> The type of values to read/write
      */
-    public <T> FileWrapper<T> fromFile(SerializeContext<T> context, File file, Charset charset) {
+    public <T> FileWrapper<T> fromFile(@NotNull SerializeContext<T> context, @NotNull File file, Charset charset) {
 
         FileCodec codec = forFile(file);
         if(codec == null) return null;
@@ -104,7 +105,7 @@ public class FileCodecRegistry {
      * @return A wrapper for the found file, or null if none is found
      * @param <T> The type of values to read/write
      */
-    public <T> FileWrapper<T> find(SerializeContext<T> context, String prefix, File folder) {
+    public <T> FileWrapper<T> find(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull File folder) {
         return find(context, prefix, folder, StandardCharsets.UTF_8);
     }
 
@@ -118,7 +119,7 @@ public class FileCodecRegistry {
      * @return A wrapper for the found file, or null if none is found
      * @param <T> The type of values to read/write
      */
-    public <T> FileWrapper<T> find(SerializeContext<T> context, String prefix, File folder, Charset charset) {
+    public <T> FileWrapper<T> find(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull File folder, Charset charset) {
 
         File[] fs = folder.listFiles();
         if(fs != null) for(File file : fs) {
@@ -151,8 +152,9 @@ public class FileCodecRegistry {
      * @param folder The folder to search in
      * @return A wrapper for the found file
      * @param <T> The type of values to read/write
+     * @throws IllegalArgumentException If the specified directory does not exist
      */
-    public <T> FileWrapper<T> findOrCreate(SerializeContext<T> context, String prefix, File folder) {
+    public <T> FileWrapper<T> findOrCreate(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull File folder) {
         return findOrCreate(context, prefix, folder, StandardCharsets.UTF_8);
     }
 
@@ -165,8 +167,9 @@ public class FileCodecRegistry {
      * @param charset The charset to interpret/write data as
      * @return A wrapper for the found file
      * @param <T> The type of values to read/write
+     * @throws IllegalArgumentException If the specified directory does not exist
      */
-    public <T> FileWrapper<T> findOrCreate(SerializeContext<T> context, String prefix, File folder, Charset charset) {
+    public <T> FileWrapper<T> findOrCreate(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull File folder, Charset charset) {
         return findOrCreate(context, prefix, folder, charset, null);
     }
 
@@ -178,8 +181,9 @@ public class FileCodecRegistry {
      * @param folder The folder to search in
      * @return A wrapper for the found file
      * @param <T> The type of values to read/write
+     * @throws IllegalArgumentException If the specified directory does not exist
      */
-    public <T> FileWrapper<T> findOrCreate(SerializeContext<T> context, String prefix, File folder, T defaults) {
+    public <T> FileWrapper<T> findOrCreate(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull File folder, T defaults) {
         return findOrCreate(context, prefix, folder, StandardCharsets.UTF_8, defaults);
     }
 
@@ -192,8 +196,9 @@ public class FileCodecRegistry {
      * @param charset The charset to interpret/write data as
      * @return A wrapper for the found file
      * @param <T> The type of values to read/write
+     * @throws IllegalArgumentException If the specified directory does not exist
      */
-    public <T> FileWrapper<T> findOrCreate(SerializeContext<T> context, String prefix, File folder, Charset charset, T defaults) {
+    public <T> FileWrapper<T> findOrCreate(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull File folder, Charset charset, T defaults) {
 
         if(!folder.isDirectory()) throw new IllegalArgumentException("Attempt to find or create a file in non-directory " + folder + "!");
         FileWrapper<T> out = find(context, prefix, folder, charset);

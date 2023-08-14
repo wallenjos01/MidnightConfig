@@ -5,6 +5,9 @@ import org.wallentines.mdcfg.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * A {@link SerializeContext SerializeContext} for {@link ConfigObject ConfigObjects}
+ */
 public class ConfigContext implements SerializeContext<ConfigObject> {
 
     public static final ConfigContext INSTANCE = new ConfigContext();

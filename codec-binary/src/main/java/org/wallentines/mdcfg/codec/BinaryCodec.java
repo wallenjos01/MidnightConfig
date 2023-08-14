@@ -1,6 +1,7 @@
 package org.wallentines.mdcfg.codec;
 
 import org.jetbrains.annotations.NotNull;
+import org.wallentines.mdcfg.ConfigPrimitive;
 import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.io.*;
@@ -141,13 +142,10 @@ public class BinaryCodec implements Codec {
 
         } else {
 
-            double floatingValue = number.doubleValue();
-            long decimalValue = number.longValue();
-
-            if(Math.abs(floatingValue - decimalValue) > 0.0000001) {
-                stream.writeDouble(floatingValue);
-            } else {
+            if(ConfigPrimitive.isInteger(number)) {
                 stream.writeLong(number.longValue());
+            } else {
+                stream.writeDouble(number.doubleValue());
             }
         }
     }

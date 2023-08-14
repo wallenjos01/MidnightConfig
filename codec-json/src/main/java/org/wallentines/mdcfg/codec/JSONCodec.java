@@ -1,8 +1,6 @@
 package org.wallentines.mdcfg.codec;
 
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.serializer.SerializeContext;
@@ -16,8 +14,6 @@ import java.util.*;
  * A {@link Codec Codec} for JSON data
  */
 public class JSONCodec implements Codec {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger("JSONCodec");
 
     private final boolean shouldIndent;
     private final String indent;

@@ -4,12 +4,22 @@ import org.wallentines.mdcfg.ConfigPrimitive;
 
 import java.util.function.Function;
 
+/**
+ * A Serializer for numeric types
+ * @param <T> The type of number to serialize
+ */
 public class NumberSerializer<T extends Number> implements Serializer<T> {
 
     private final Function<Number, T> converter;
     private final T lowerBound;
     private final T upperBound;
 
+    /**
+     * Creates a number serializer using the given converter and bounds
+     * @param converter The function to use to convert Number objects to the serializer's number type
+     * @param lowerValue The (inclusive) lower bound which will be considered valid
+     * @param upperValue The (inclusive) upper bound which will be considered valid
+     */
     public NumberSerializer(Function<Number, T> converter, T lowerValue, T upperValue) {
         this.converter = converter;
         this.lowerBound = lowerValue;
@@ -46,21 +56,62 @@ public class NumberSerializer<T extends Number> implements Serializer<T> {
         return SerializeResult.ofNullable(context.asNumber(value), "Unable to read " + value + " as a number!").map(this::validate);
     }
 
+    /**
+     * Creates a byte serializer with the given lower and upper bounds
+     * @param lowerBound The lower bound (inclusive)
+     * @param upperBound The upper bound (inclusive)
+     * @return A new number serializer
+     */
     public static NumberSerializer<Byte> forByte(Byte lowerBound, Byte upperBound) {
         return new NumberSerializer<>(Number::byteValue, lowerBound, upperBound);
     }
+
+    /**
+     * Creates a short serializer with the given lower and upper bounds
+     * @param lowerBound The lower bound (inclusive)
+     * @param upperBound The upper bound (inclusive)
+     * @return A new number serializer
+     */
     public static NumberSerializer<Short> forShort(Short lowerBound, Short upperBound) {
         return new NumberSerializer<>(Number::shortValue, lowerBound, upperBound);
     }
+
+    /**
+     * Creates an integer serializer with the given lower and upper bounds
+     * @param lowerBound The lower bound (inclusive)
+     * @param upperBound The upper bound (inclusive)
+     * @return A new number serializer
+     */
     public static NumberSerializer<Integer> forInt(Integer lowerBound, Integer upperBound) {
         return new NumberSerializer<>(Number::intValue, lowerBound, upperBound);
     }
+
+    /**
+     * Creates a long serializer with the given lower and upper bounds
+     * @param lowerBound The lower bound (inclusive)
+     * @param upperBound The upper bound (inclusive)
+     * @return A new number serializer
+     */
     public static NumberSerializer<Long> forLong(Long lowerBound, Long upperBound) {
         return new NumberSerializer<>(Number::longValue, lowerBound, upperBound);
     }
+
+    /**
+     * Creates a float serializer with the given lower and upper bounds
+     * @param lowerBound The lower bound (inclusive)
+     * @param upperBound The upper bound (inclusive)
+     * @return A new number serializer
+     */
     public static NumberSerializer<Float> forFloat(Float lowerBound, Float upperBound) {
         return new NumberSerializer<>(Number::floatValue, lowerBound, upperBound);
     }
+
+    /**
+     * Creates a double serializer with the given lower and upper bounds
+     * @param lowerBound The lower bound (inclusive)
+     * @param upperBound The upper bound (inclusive)
+     * @return A new number serializer
+     */
     public static NumberSerializer<Double> forDouble(Double lowerBound, Double upperBound) {
         return new NumberSerializer<>(Number::doubleValue, lowerBound, upperBound);
     }

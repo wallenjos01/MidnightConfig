@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Random;
 
 public class TestBinary {
 
@@ -49,13 +50,15 @@ public class TestBinary {
 
         ConfigSection section = new ConfigSection();
 
+        Random rand = new Random();
+
         for(int i = 0 ; i < 10000 ; i++) {
-                section.with("String" + i, "String")
-                    .with("Integer" + i, i)
-                    .with("Long" + i, 33L)
-                    .with("Float" + i, 152.455f)
-                    .with("List" + i, new ConfigList().append(128).append("String"))
-                    .with("Section" + i, new ConfigSection().with("Key", "Value"));
+                section.with("S" + i, "V" + i)
+                    .with("I" + i, i)
+                    .with("L" + i, rand.nextLong())
+                    .with("F" + i, rand.nextFloat())
+                    .with("LS" + i, new ConfigList().append(rand.nextInt()).append("S" + i))
+                    .with("SN" + i, new ConfigSection().with("K" + i, "V" + i));
         }
 
         FileCodec codec = BinaryCodec.fileCodec();
@@ -82,5 +85,4 @@ public class TestBinary {
         }
 
     }
-
 }

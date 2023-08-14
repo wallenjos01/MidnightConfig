@@ -53,7 +53,7 @@ public interface Serializer<T> {
      * @return A serializer for a list of objects with type T
      */
     default ListSerializer<T> filteredListOf() {
-        return new ListSerializer<>(this, (err) -> {});
+        return new ListSerializer<>(this, (err) -> false);
     }
 
     /**
@@ -62,7 +62,10 @@ public interface Serializer<T> {
      * @return A serializer for a list of objects with type T
      */
     default ListSerializer<T> filteredListOf(Consumer<String> onError) {
-        return new ListSerializer<>(this, onError);
+        return new ListSerializer<>(this, str -> {
+            onError.accept(str);
+            return false;
+        });
     }
 
 
@@ -99,7 +102,7 @@ public interface Serializer<T> {
      * @param <K> The type of values for the keys in the map
      */
     default <K> MapSerializer<K, T> filteredMapOf(InlineSerializer<K> keySerializer) {
-        return new MapSerializer<>(keySerializer, this, true);
+        return new MapSerializer<>(keySerializer, this, str -> false);
     }
 
     /**

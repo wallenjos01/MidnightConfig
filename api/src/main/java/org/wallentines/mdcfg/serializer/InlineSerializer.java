@@ -2,6 +2,9 @@ package org.wallentines.mdcfg.serializer;
 
 import java.util.function.Function;
 
+/**
+ * Serializes data to and from Strings
+ */
 public interface InlineSerializer<T> extends Serializer<T> {
 
     @Override
@@ -15,10 +18,27 @@ public interface InlineSerializer<T> extends Serializer<T> {
         return Serializer.STRING.deserialize(context, value).map(str -> SerializeResult.ofNullable(readString(str)));
     }
 
+    /**
+     * Parses a value from a String
+     * @param str The string to parse
+     * @return A parsed value, or null if parsing fails
+     */
     T readString(String str);
 
+    /**
+     * Writes a value to a String
+     * @param value The string to write
+     * @return A serialized value, or null if serialization fails
+     */
     String writeString(T value);
 
+    /**
+     * Creates a new inline serializer using the given functions
+     * @param serialize The function to use to turn a value into a String
+     * @param deserialize The function to use to turn a String into a value
+     * @return A new Serializer
+     * @param <T> The type of data to serialize
+     */
     static <T> InlineSerializer<T> of(Function<T, String> serialize, Function<String, T> deserialize) {
         return new InlineSerializer<>() {
             @Override
