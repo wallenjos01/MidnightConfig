@@ -10,5 +10,6 @@ junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 google-gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 zstd-jni = { module = "com.github.luben:zstd-jni", version.ref = "zstd" }

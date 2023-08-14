@@ -1,5 +1,7 @@
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.wallentines.mdcfg.ConfigList;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
@@ -15,6 +17,8 @@ import java.nio.charset.StandardCharsets;
 
 public class TestFiles {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger("TestFiles");
+
     @Test
     public void testReadFile() {
 
@@ -27,8 +31,8 @@ public class TestFiles {
             testLoadedFile(obj);
 
         } catch (IOException ex) {
+            LOGGER.error("An IOException occurred while reading a file!", ex);
             Assertions.fail();
-            ex.printStackTrace();
         }
     }
 
@@ -43,8 +47,8 @@ public class TestFiles {
             codec.decode(ConfigContext.INSTANCE, fis, StandardCharsets.UTF_8);
 
         } catch (IOException ex) {
+            LOGGER.error("An IOException occurred while reading a file!", ex);
             Assertions.fail();
-            ex.printStackTrace();
         } catch (DecodeException ex) {
             // Ignore: This is expected
         }
@@ -69,7 +73,7 @@ public class TestFiles {
             codec.encode(ConfigContext.INSTANCE, section, fos, StandardCharsets.UTF_8);
 
         } catch (IOException ex) {
-            ex.printStackTrace();
+            LOGGER.error("An IOException occurred while writing a file!", ex);
             Assertions.fail();
         }
 
@@ -80,7 +84,7 @@ public class TestFiles {
             Assertions.assertEquals(section, obj);
 
         } catch (IOException ex) {
-            ex.printStackTrace();
+            LOGGER.error("An IOException occurred while reading a file!", ex);
             Assertions.fail();
         }
     }
@@ -112,8 +116,8 @@ public class TestFiles {
         Assertions.assertEquals(1, obj.asSection().getSection("Object").size());
         Assertions.assertTrue(obj.asSection().getSection("Object").hasSection("Subobject"));
         Assertions.assertEquals(1, obj.asSection().getSection("Object").getSection("Subobject").size());
-        Assertions.assertTrue(obj.asSection().getSection("Object").getSection("Subobject").get("Value").isPrimitive());
-        Assertions.assertTrue(obj.asSection().getSection("Object").getSection("Subobject").get("Value").asPrimitive().isString());
+        Assertions.assertTrue(obj.asSection().getSection("Object").getSection("Subobject").getOrThrow("Value").isPrimitive());
+        Assertions.assertTrue(obj.asSection().getSection("Object").getSection("Subobject").getOrThrow("Value").asPrimitive().isString());
         Assertions.assertEquals("!", obj.asSection().getSection("Object").getSection("Subobject").getString("Value"));
     }
 
