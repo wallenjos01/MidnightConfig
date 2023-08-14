@@ -15,13 +15,15 @@ import java.nio.file.Path;
 
 public class TestFileCodec {
 
+
+
     @Test
     public void testFileCodec() {
 
         FileCodec json = JSONCodec.fileCodec();
         try {
             ConfigObject obj = json.loadFromFile(ConfigContext.INSTANCE, new File("test.json"), StandardCharsets.UTF_8);
-            TestJSON.testLoadedFile(obj);
+            TestFiles.testLoadedFile(obj);
         } catch (IOException ex) {
             Assertions.fail();
         }
@@ -35,7 +37,7 @@ public class TestFileCodec {
         FileWrapper<ConfigObject> wrapper = new FileWrapper<>(ConfigContext.INSTANCE, json, new File("test.json"));
         wrapper.load();
 
-        TestJSON.testLoadedFile(wrapper.getRoot());
+        TestFiles.testLoadedFile(wrapper.getRoot());
     }
 
     @Test
@@ -47,7 +49,7 @@ public class TestFileCodec {
         registry.registerFileCodec(json);
 
         FileWrapper<ConfigObject> wrapper = registry.fromFile(ConfigContext.INSTANCE, new File("test.json"));
-        TestJSON.testLoadedFile(wrapper.getRoot());
+        TestFiles.testLoadedFile(wrapper.getRoot());
         
     }
 
@@ -62,7 +64,7 @@ public class TestFileCodec {
         // Existing File
         FileWrapper<ConfigObject> wrapper = registry.findOrCreate(ConfigContext.INSTANCE, "test", of.toFile());
         wrapper.load();
-        TestJSON.testLoadedFile(wrapper.getRoot());
+        TestFiles.testLoadedFile(wrapper.getRoot());
         Assertions.assertEquals("test.json", wrapper.getFile().getName());
 
         // Non-existing File
