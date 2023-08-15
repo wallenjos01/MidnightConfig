@@ -232,7 +232,7 @@ public class ConfigSection implements ConfigObject {
     }
 
     /**
-     * Gets the value of the Number associated with the given key as a int
+     * Gets the value of the Number associated with the given key as an int
      * @param key The key to lookup
      * @return The value associated with the given key
      * @throws NoSuchElementException If there is no value associated with the key

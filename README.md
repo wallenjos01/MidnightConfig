@@ -39,14 +39,14 @@ stored on disk, and the reverse.
     - The `minified()` function will return a JSON Codec with no whitespace. It uses space most efficiently, but is hard
   to read. It is meant for data that will be not be edited by users.
   - The `GsonCodec` class located in the `codec-gson` submodule, which can save configuration data in JSON format using 
-    Google's [Gson](https://github.com/google/gson/) ([Lisence](https://github.com/google/gson/blob/main/LICENSE)).
+    Google's [Gson](https://github.com/google/gson/) ([License](https://github.com/google/gson/blob/main/LICENSE)).
     - The `GsonCodec` class contains the same two variations as the JSON Codec
     - The `codec-gson` submodule also contains a `GsonContext` class, which allows converting `ConfigSection` objects 
     to Gson primitives
   - The `BinaryCodec` class located in the `codec-binary` submodule, which is designed to save optionally-compressed,
     quick to decode binary forms of config objects
     - The `BinaryCodec` class supports two different types of compression. Deflate, which uses Java's built-in deflate
-      algorithm, and Zstd, which uses [zstd-jni](https://github.com/luben/zstd-jni) ([Lisence](https://github.com/luben/zstd-jni/blob/master/LICENSE))
+      algorithm, and Zstd, which uses [zstd-jni](https://github.com/luben/zstd-jni) ([License](https://github.com/luben/zstd-jni/blob/master/LICENSE))
 
 <br>
 

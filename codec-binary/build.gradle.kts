@@ -15,6 +15,5 @@ dependencies {
 
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
-    testImplementation(project(":codec-json"))
     testRuntimeOnly(libs.slf4j.simple)
 }
