@@ -118,7 +118,7 @@ public class JSONCodec implements Codec {
             String nextPrefix = prefix + indent;
 
             writer.write("{");
-            if(keys.size() == 0) {
+            if(keys.isEmpty()) {
                 if(shouldIndent) writer.write(" ");
                 writer.write("}");
                 return;
@@ -446,15 +446,16 @@ public class JSONCodec implements Codec {
                             output.append("\t");
                             break;
                         case 'u':
-                            reader.mark(1);
-                            while (reader.read() == 'u') {
+
+                            int lastRead;
+                            do {
                                 // Skip all additional u's
-                                reader.mark(1);
-                            }
-                            reader.reset();
+                                lastRead = reader.read();
+                            } while (lastRead == 'u');
 
                             char[] codePoint = new char[4];
-                            if (reader.read(codePoint, 0, 4) != 4) {
+                            codePoint[0] = (char) lastRead;
+                            if (reader.read(codePoint, 1, 3) != 3) {
                                 throw new DecodeException("Not enough data to decode a unicode code point!");
                             }
                             String codePointStr = new String(codePoint);
