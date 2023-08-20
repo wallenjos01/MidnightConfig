@@ -1,0 +1,8 @@
+[
+  {
+    "lines": [ "all" ],
+    "type": "replace",
+    "find": "Serializer<ConfigObject> SERIALIZER = new Serializer<>() {",
+    "replace": "Serializer<ConfigObject> SERIALIZER = new Serializer<ConfigObject>() {"
+  }
+]

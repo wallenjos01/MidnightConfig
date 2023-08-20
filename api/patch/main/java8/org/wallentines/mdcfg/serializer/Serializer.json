@@ -1,0 +1,34 @@
+[
+  {
+    "lines": [
+      {
+        "find": "default Serializer<T> or(",
+        "offset": 1
+      }
+    ],
+    "type": "replace",
+    "find": "return new Serializer<>",
+    "replace": "return new Serializer<T>"
+  },
+  {
+    "lines": [
+      {
+        "find": "default <O> Serializer<O> map(",
+        "offset": 1
+      }
+    ],
+    "type": "replace",
+    "find": "return new Serializer<>",
+    "replace": "return new Serializer<O>"
+  },
+  {
+    "lines": [
+      {
+        "find_regex": "Serializer<[A-Za-z]+> [A-Z_]+ = new Serializer<>()"
+      }
+    ],
+    "type": "replace_regex",
+    "find": "Serializer<([A-Za-z]+)> ([A-Z_]+) = new Serializer<>",
+    "replace": "Serializer<$1> $2 = new Serializer<$1>"
+  }
+]

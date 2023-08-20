@@ -1,0 +1,12 @@
+[
+  {
+    "lines": [
+      {
+        "find": "return os.toString(StandardCharsets.UTF_8);"
+      }
+    ],
+    "type": "replace",
+    "find": "StandardCharsets.UTF_8",
+    "replace": "String.valueOf(StandardCharsets.UTF_8.toString())"
+  }
+]

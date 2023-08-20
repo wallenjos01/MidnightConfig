@@ -1,0 +1,10 @@
+[
+  {
+    "lines": [
+      { "find":  "\" \".repeat(indentAmount);"}
+    ],
+    "type": "replace",
+    "find": "\" \".repeat(indentAmount);",
+    "replace": "org.wallentines.mdcfg.util.Java8StringUtil.repeat(\" \", indentAmount);"
+  }
+]

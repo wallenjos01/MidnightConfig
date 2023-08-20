@@ -5,8 +5,13 @@ plugins {
 }
 
 java {
-    toolchain.languageVersion.set(JavaLanguageVersion.of(11))
+    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
     withSourcesJar()
+}
+
+tasks.named<JavaCompile>("compileJava") {
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
 }
 
 tasks.test {

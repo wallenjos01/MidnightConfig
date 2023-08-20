@@ -6,10 +6,7 @@ import org.wallentines.mdcfg.ConfigPrimitive;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TestConfigContext {
 
@@ -73,13 +70,13 @@ public class TestConfigContext {
         Assertions.assertEquals(42, ctx.toNumber(42).asNumber());
         Assertions.assertEquals(true, ctx.toBoolean(true).asBoolean());
 
-        ConfigObject list = ctx.toList(List.of(ctx.toString("Hello"), ctx.toString("Goodbye")));
+        ConfigObject list = ctx.toList(Arrays.asList(ctx.toString("Hello"), ctx.toString("Goodbye")));
         Assertions.assertTrue(list.isList());
         Assertions.assertEquals(2, list.asList().size());
         Assertions.assertEquals("Hello", list.asList().get(0).asString());
         Assertions.assertEquals("Goodbye", list.asList().get(1).asString());
 
-        ConfigObject map = ctx.toMap(Map.of("Key", ctx.toString("Value")));
+        ConfigObject map = ctx.toMap(makeMap("Key", ctx.toString("Value")));
         Assertions.assertTrue(map.isSection());
         Assertions.assertEquals(1, map.asSection().size());
         Assertions.assertEquals("Value", map.asSection().getString("Key"));
@@ -92,7 +89,7 @@ public class TestConfigContext {
         ConfigContext ctx = ConfigContext.INSTANCE;
 
         ConfigSection section = new ConfigSection().with("Key1", "Value1");
-        ConfigObject obj = ctx.mergeMap(section, ctx.toMap(Map.of("Key2", ctx.toString("Value2"))));
+        ConfigObject obj = ctx.mergeMap(section, ctx.toMap(makeMap("Key2", ctx.toString("Value2"))));
 
         // Fill
         Assertions.assertSame(section, obj);
@@ -102,7 +99,7 @@ public class TestConfigContext {
         Assertions.assertEquals("Value2", section.getString("Key2"));
 
         // Overwriting
-        obj = ctx.mergeMapOverwrite(section, ctx.toMap(Map.of("Key1", ctx.toString("Value3"))));
+        obj = ctx.mergeMapOverwrite(section, ctx.toMap(makeMap("Key1", ctx.toString("Value3"))));
         Assertions.assertSame(section, obj);
         Assertions.assertTrue(section.isSection());
         Assertions.assertEquals(2, section.size());
@@ -110,7 +107,7 @@ public class TestConfigContext {
         Assertions.assertEquals("Value2", section.getString("Key2"));
 
         // Non-destructive fill
-        obj = ctx.mergeMap(section, ctx.toMap(Map.of("Key1", ctx.toString("Value4"))));
+        obj = ctx.mergeMap(section, ctx.toMap(makeMap("Key1", ctx.toString("Value4"))));
         Assertions.assertSame(section, obj);
         Assertions.assertTrue(section.isSection());
         Assertions.assertEquals(2, section.size());
@@ -133,6 +130,14 @@ public class TestConfigContext {
         Assertions.assertEquals("Value1", merged.asSection().getString("Key1"));
         Assertions.assertEquals("Value2", merged.asSection().getString("Key2"));
 
+    }
+
+    private <K,V> Map<K,V> makeMap(K key, V value) {
+
+        HashMap<K, V> out = new HashMap<>();
+        out.put(key, value);
+
+        return out;
     }
 
 }

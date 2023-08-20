@@ -1,6 +1,11 @@
 rootProject.name = "midnightcfg"
 
 pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenLocal()
+    }
+
     includeBuild("gradle/plugins")
 }
 

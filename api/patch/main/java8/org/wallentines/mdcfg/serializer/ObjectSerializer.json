@@ -1,0 +1,31 @@
+[
+  {
+    "lines": [
+      {
+        "find_regex": "public static <[T,P0-9]+> Serializer<T> create\\(",
+        "offset": 1
+      }
+    ],
+    "type": "replace",
+    "find": "return new Serializer<>()",
+    "replace": "return new Serializer<T>()"
+  },
+  {
+    "lines": [
+      {
+        "find": "package org.wallentines.mdcfg.serializer;",
+        "offset": 1
+      }
+    ],
+    "type": "insert",
+    "value": "import java.util.Arrays;"
+  },
+  {
+    "lines": [
+      "all"
+    ],
+    "type": "replace",
+    "find": "List.of(",
+    "replace": "Arrays.asList("
+  }
+]

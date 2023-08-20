@@ -161,8 +161,8 @@ public class BinaryCodec implements Codec {
     @Override
     public <T> T decode(@NotNull SerializeContext<T> context, @NotNull InputStream stream, Charset charset) throws DecodeException, IOException {
 
-        String header = new String(stream.readNBytes(HEADER.length()), StandardCharsets.US_ASCII);
-        if(!header.equals(HEADER)) {
+        byte[] headerBytes = new byte[HEADER.length()];
+        if(stream.read(headerBytes) != headerBytes.length || !new String(headerBytes, StandardCharsets.US_ASCII).equals(HEADER)) {
             throw new DecodeException("Unable to decode config binary! Missing or invalid header!");
         }
 
@@ -259,7 +259,10 @@ public class BinaryCodec implements Codec {
     private String readString(DataInputStream stream) throws IOException{
 
         int length = stream.readInt();
-        byte[] data = stream.readNBytes(length);
+        byte[] data = new byte[length];
+        if(stream.read(data) != length) {
+            throw new DecodeException("Unexpected EOF encountered while reading a String!");
+        }
 
         return new String(data, StandardCharsets.UTF_8);
     }

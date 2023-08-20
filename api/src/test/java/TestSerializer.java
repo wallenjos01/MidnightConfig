@@ -177,8 +177,8 @@ public class TestSerializer {
                 "Hello",
                 42,
                 true,
-                List.of("Hello", "World"),
-                Map.of(12, "Yes", 33, "No"),
+                Arrays.asList("Hello", "World"),
+                makeMap(12, "Yes", 33, "No"),
                 new TestSerializableMulti("str", 11, false));
 
         Serializer<TestSerializableComplex> serializer = ObjectSerializer.create(
@@ -383,6 +383,15 @@ public class TestSerializer {
 
         String serialized = serializer.serialize(ConfigContext.INSTANCE, wrapper).getOrThrow().asString();
         Assertions.assertEquals("Hello", serialized);
+    }
+
+    private <K,V> Map<K,V> makeMap(K key, V value, K key2, V value2) {
+
+        HashMap<K, V> out = new HashMap<>();
+        out.put(key, value);
+        out.put(key2, value2);
+
+        return out;
     }
 
 }

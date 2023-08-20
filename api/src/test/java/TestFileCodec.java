@@ -11,7 +11,6 @@ import org.wallentines.mdcfg.serializer.ConfigContext;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 
 public class TestFileCodec {
 
@@ -59,10 +58,10 @@ public class TestFileCodec {
         FileCodec json = JSONCodec.fileCodec();
         FileCodecRegistry registry = new FileCodecRegistry();
         registry.registerFileCodec(json);
-        Path of = Path.of(".");
+        File cwd = new File(System.getProperty("user.dir"));
 
         // Existing File
-        FileWrapper<ConfigObject> wrapper = registry.findOrCreate(ConfigContext.INSTANCE, "test", of.toFile());
+        FileWrapper<ConfigObject> wrapper = registry.findOrCreate(ConfigContext.INSTANCE, "test", cwd);
         wrapper.load();
         TestFiles.testLoadedFile(wrapper.getRoot());
         Assertions.assertEquals("test.json", wrapper.getFile().getName());
@@ -71,7 +70,7 @@ public class TestFileCodec {
         File f = new File("test_created.json");
         Assertions.assertTrue(!f.exists() || f.delete());
 
-        wrapper = registry.findOrCreate(ConfigContext.INSTANCE, "test_created", of.toFile());
+        wrapper = registry.findOrCreate(ConfigContext.INSTANCE, "test_created", cwd);
         Assertions.assertNull(wrapper.getRoot());
 
         wrapper.setRoot(new ConfigSection().with("Key", "Value"));
@@ -79,7 +78,7 @@ public class TestFileCodec {
 
         Assertions.assertTrue(f.exists());
 
-        wrapper = registry.findOrCreate(ConfigContext.INSTANCE, "test_defaults", of.toFile(), new ConfigSection().with("key", "value"));
+        wrapper = registry.findOrCreate(ConfigContext.INSTANCE, "test_defaults", cwd, new ConfigSection().with("key", "value"));
         Assertions.assertNotNull(wrapper.getRoot());
         Assertions.assertTrue(wrapper.getRoot().isSection());
         Assertions.assertEquals("value", wrapper.getRoot().asSection().getString("key"));

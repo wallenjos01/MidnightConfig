@@ -58,34 +58,34 @@ public class TestConfigSection {
 
     }
 
+    private static class TestSerializable {
+
+        final String strValue;
+        final int numValue;
+
+        public TestSerializable(String strValue, int numValue) {
+            this.strValue = strValue;
+            this.numValue = numValue;
+        }
+
+        public String getStrValue() {
+            return strValue;
+        }
+
+        public int getNumValue() {
+            return numValue;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if(obj == null || obj.getClass() != getClass()) return false;
+
+            return ((TestSerializable) obj).strValue.equals(strValue)  && ((TestSerializable) obj).numValue == numValue;
+        }
+    }
+
     @Test
     public void testBySerializer() {
-
-        class TestSerializable {
-
-            final String strValue;
-            final int numValue;
-
-            public TestSerializable(String strValue, int numValue) {
-                this.strValue = strValue;
-                this.numValue = numValue;
-            }
-
-            public String getStrValue() {
-                return strValue;
-            }
-
-            public int getNumValue() {
-                return numValue;
-            }
-
-            @Override
-            public boolean equals(Object obj) {
-                if(obj == null || obj.getClass() != getClass()) return false;
-
-                return ((TestSerializable) obj).strValue.equals(strValue)  && ((TestSerializable) obj).numValue == numValue;
-            }
-        }
 
         Serializer<TestSerializable> serializer = ObjectSerializer.create(
                 Serializer.STRING.entry("strValue", TestSerializable::getStrValue),

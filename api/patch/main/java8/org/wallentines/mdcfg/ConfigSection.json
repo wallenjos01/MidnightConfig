@@ -1,0 +1,24 @@
+[
+  {
+    "lines": [
+      "all"
+    ],
+    "type": "replace",
+    "find": ".orElseThrow()",
+    "replace": ".orElseThrow(NoSuchElementException::new)"
+  },
+  {
+    "lines": [
+      "all"
+    ],
+    "type": "replace",
+    "find": "List.copyOf(",
+    "replace": "new ArrayList<>("
+  },
+  {
+    "lines": [ "all" ],
+    "type": "replace",
+    "find": "Serializer<ConfigSection> SERIALIZER = new Serializer<>() {",
+    "replace": "Serializer<ConfigSection> SERIALIZER = new Serializer<ConfigSection>() {"
+  }
+]
