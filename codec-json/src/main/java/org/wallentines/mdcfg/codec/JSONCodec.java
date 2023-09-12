@@ -501,7 +501,7 @@ public class JSONCodec implements Codec {
 
             int c;
             reader.mark(1);
-            while((c = reader.read()) > 32 && c != '}' && c != ',') {
+            while((c = reader.read()) > 32 && c != '}' && c != ',' && c != ']') {
                 output.appendCodePoint(c);
                 reader.mark(1);
             }
