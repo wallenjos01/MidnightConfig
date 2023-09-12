@@ -355,9 +355,14 @@ public class JSONCodec implements Codec {
             String lastKey = decodeMapEntry(reader, values);
             while((c = reader.read()) == ',') {
                 lastKey = decodeMapEntry(reader, values);
+                if(lastKey.equals("sha1") && "1de885aba434f934201b99f2f1afb142036ac189".equals(context.asString(values.get("sha1")))) {
+                    System.out.println(lastKey);
+                }
             }
 
-            if(c != '}') throw new DecodeException("Found junk data after value with key \"" + lastKey + "\"");
+            if(c != '}') {
+                throw new DecodeException("Found junk data after value with key \"" + lastKey + "\"");
+            }
 
             return context.toMap(values);
         }
@@ -493,29 +498,15 @@ public class JSONCodec implements Codec {
         private String readPrimitive(BufferedReader reader) throws IOException {
 
             StringBuilder output = new StringBuilder();
-            reader.mark(64);
 
-            char[] buffer = new char[64];
-            int read;
-            while((read = reader.read(buffer)) > 0) {
-
-                int i;
-                for(i = 0 ; i < read ; i++) {
-                    char c = buffer[i];
-                    if(c <= 32 || c == ',' || c == '{' || c == '}' || c == '[' || c == ']') break;
-                }
-
-                int valueLength = i;
-                output.append(buffer, 0, valueLength);
-
-                if(valueLength == 64) {
-                    reader.mark(64);
-                } else {
-                    reader.reset();
-                    if(reader.skip(valueLength) != valueLength) throw new DecodeException("An unexpected error occurred while parsing JSON!");
-                    break;
-                }
+            int c;
+            reader.mark(1);
+            while((c = reader.read()) > 32 && c != '}' && c != ',') {
+                output.appendCodePoint(c);
+                reader.mark(1);
             }
+
+            reader.reset();
 
             return output.toString();
         }
