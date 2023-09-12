@@ -9,11 +9,6 @@ java {
     withSourcesJar()
 }
 
-tasks.named<JavaCompile>("compileJava") {
-    sourceCompatibility = "17"
-    targetCompatibility = "17"
-}
-
 tasks.test {
     useJUnitPlatform()
     workingDir("run/test")

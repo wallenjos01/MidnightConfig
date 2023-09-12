@@ -94,17 +94,17 @@ public class GsonContext implements SerializeContext<JsonElement> {
 
     @Override
     public JsonElement toString(String object) {
-        return new JsonPrimitive(object);
+        return object == null ? null : new JsonPrimitive(object);
     }
 
     @Override
     public JsonElement toNumber(Number object) {
-        return new JsonPrimitive(object);
+        return object == null ? null : new JsonPrimitive(object);
     }
 
     @Override
     public JsonElement toBoolean(Boolean object) {
-        return new JsonPrimitive(object);
+        return object == null ? null : new JsonPrimitive(object);
     }
 
     @Override
@@ -158,7 +158,11 @@ public class GsonContext implements SerializeContext<JsonElement> {
     @Override
     public JsonElement set(String key, JsonElement value, JsonElement object) {
         if(object == null || !object.isJsonObject()) return null;
-        object.getAsJsonObject().add(key, value);
+        if(value == null) {
+            object.getAsJsonObject().remove(key);
+        } else {
+            object.getAsJsonObject().add(key, value);
+        }
         return object;
     }
 

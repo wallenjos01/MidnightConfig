@@ -53,10 +53,6 @@ public class BinaryCodec implements Codec {
         stream.write(HEADER.getBytes(StandardCharsets.US_ASCII));
         stream.write(compression.index());
 
-        if(input == null) {
-            throw new EncodeException("Unable to encode null input!");
-        }
-
         try(DataOutputStream dos = compression.createOutputStream(stream)) {
             encodeValue(context, input, dos);
         }
@@ -65,7 +61,10 @@ public class BinaryCodec implements Codec {
 
     private <T> void encodeValue(SerializeContext<T> context, T input, DataOutputStream dos) throws IOException {
 
-        if (context.isNumber(input)) {
+        if(input == null) {
+            dos.writeByte(Type.NONE.index());
+
+        } else if (context.isNumber(input)) {
 
             encodeNumber(context.asNumber(input), dos);
 
@@ -172,14 +171,7 @@ public class BinaryCodec implements Codec {
         }
 
         try(DataInputStream dis = compression.createInputStream(stream)) {
-
-            T out = decodeValue(context, dis);
-            if(out == null) {
-                throw new DecodeException("Unexpected none type found while decoding config binary!");
-            }
-
-            return out;
-
+            return decodeValue(context, dis);
         }
     }
 
