@@ -28,6 +28,8 @@ public class ConfigSection implements ConfigObject {
      */
     public ConfigObject set(String key, @Nullable ConfigObject value) {
 
+        if(key == null) return null;
+
         if(value == null) {
 
             // Return early if removing
@@ -434,6 +436,8 @@ public class ConfigSection implements ConfigObject {
      * @return The value associated with the given key before removing, or null if there was none.
      */
     public ConfigObject remove(String key) {
+
+        if(key == null) return null;
 
         Integer index = indicesByKey.get(key);
         if(index == null) return null;

@@ -146,6 +146,8 @@ public class JSONCodec implements Codec {
         private String encodeString(String s) {
 
             StringBuilder builder = new StringBuilder();
+            if(s == null) return builder.toString();
+
             PrimitiveIterator.OfInt it = ((CharSequence) s).chars().iterator();
 
             while(it.hasNext()) {
@@ -355,9 +357,6 @@ public class JSONCodec implements Codec {
             String lastKey = decodeMapEntry(reader, values);
             while((c = reader.read()) == ',') {
                 lastKey = decodeMapEntry(reader, values);
-                if(lastKey.equals("sha1") && "1de885aba434f934201b99f2f1afb142036ac189".equals(context.asString(values.get("sha1")))) {
-                    System.out.println(lastKey);
-                }
             }
 
             if(c != '}') {
