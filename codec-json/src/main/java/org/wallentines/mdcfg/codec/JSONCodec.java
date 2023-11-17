@@ -422,6 +422,13 @@ public class JSONCodec implements Codec {
 
             StringBuilder base = new StringBuilder();
 
+            // Handle empty strings
+            reader.mark(1);
+            if(reader.read() == '\"') {
+                return "";
+            }
+            reader.reset();
+
             boolean reading = true;
             while (reading) {
 

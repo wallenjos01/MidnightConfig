@@ -78,6 +78,18 @@ public class TestJSON {
     }
 
     @Test
+    public void testEmpty() {
+
+        String encoded = "{\"Key\":\"\"}";
+
+        ConfigObject decoded = JSONCodec.loadConfig(encoded);
+        Assertions.assertTrue(decoded.isSection());
+
+        Assertions.assertEquals("", decoded.asSection().getString("Key"));
+
+    }
+
+    @Test
     public void testQuotes() {
 
         // Quoted Values
