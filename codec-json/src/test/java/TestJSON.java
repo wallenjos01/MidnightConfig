@@ -7,29 +7,11 @@ import org.wallentines.mdcfg.codec.DecodeException;
 import org.wallentines.mdcfg.codec.JSONCodec;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 
-import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 
 public class TestJSON {
-
-    @Test
-    public void testMinecraft() {
-
-        try {
-            URL actualUrl = new URL("https://piston-meta.mojang.com/v1/packages/81c8d6bd1112e2d16dfa6ae50962caab2acd225f/1.20.1.json");
-            URLConnection conn = actualUrl.openConnection();
-            JSONCodec.loadConfig(new BufferedInputStream(conn.getInputStream()));
-
-        } catch (IOException ex) {
-            Assertions.fail("IOException!");
-        } catch (DecodeException ex) {
-            Assertions.fail("DecodeException: ", ex);
-        } catch (IllegalStateException ex) {
-            Assertions.fail("Object was not a ConfigSection!");
-        }
-    }
 
     @Test
     public void testEncode() {
@@ -156,6 +138,18 @@ public class TestJSON {
         Assertions.assertTrue(obj.isSection());
         Assertions.assertEquals("Unicode \u0123\u5432", obj.asSection().getString("key"));
 
+
+        try {
+            ConfigObject sec = JSONCodec.fileCodec().loadFromFile(ConfigContext.INSTANCE, new File("Unicode.json"), StandardCharsets.UTF_8);
+            Assertions.assertTrue(sec.isSection());
+
+            String value = sec.asSection().getString("Test");
+            Assertions.assertEquals(1, value.length());
+            Assertions.assertEquals("\u00BB", value);
+
+        } catch (IOException ex) {
+            Assertions.fail();
+        }
     }
 
     @Test

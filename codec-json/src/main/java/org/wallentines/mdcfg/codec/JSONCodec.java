@@ -7,6 +7,7 @@ import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.io.*;
 import java.math.BigDecimal;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -249,7 +250,7 @@ public class JSONCodec implements Codec {
 
         public T decode(InputStream data, Charset charset) throws IOException {
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(data, charset));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(data, charset.newDecoder()));
             T out = decodeElement(reader);
             reader.close();
             return out;
@@ -417,80 +418,115 @@ public class JSONCodec implements Codec {
         }
 
         private String readString(BufferedReader reader) throws IOException {
-            StringBuilder output = new StringBuilder();
-            boolean escaped = false;
-            int c;
-            while((c = reader.read()) != '"' || escaped) {
 
-                if(c == -1) {
+
+            StringBuilder base = new StringBuilder();
+
+            boolean reading = true;
+            while (reading) {
+
+                reader.mark(1024);
+                CharBuffer buffer = CharBuffer.allocate(1024);
+
+                int chars = reader.read(buffer);
+                if (chars == -1) {
                     throw new DecodeException("Found EOF while parsing a String!");
                 }
 
-                if (escaped) {
 
-                    switch (c) {
-                        case '\\':
-                        case '/':
-                        case '"':
-                            output.appendCodePoint(c);
-                            break;
-                        case 'n':
-                            output.append("\n");
-                            break;
-                        case 'r':
-                            output.append("\r");
-                            break;
-                        case 'f':
-                            output.append("\f");
-                            break;
-                        case 'b':
-                            output.append("\b");
-                            break;
-                        case 't':
-                            output.append("\t");
-                            break;
-                        case 'u':
+                String str = buffer.rewind().toString();
 
-                            int lastRead;
-                            do {
-                                // Skip all additional u's
-                                lastRead = reader.read();
-                            } while (lastRead == 'u');
+                int index = 0;
+                while ((index = str.indexOf('"', index+1)) != -1) {
+                    if (str.charAt(index - 1) != '\\') {
+                        reading = false;
 
-                            char[] codePoint = new char[4];
-                            codePoint[0] = (char) lastRead;
-                            if (reader.read(codePoint, 1, 3) != 3) {
-                                throw new DecodeException("Not enough data to decode a unicode code point!");
-                            }
-                            String codePointStr = new String(codePoint);
+                        if(index + 1 < chars) {
+                            reader.reset();
+                            reader.skip(index + 1);
+                        }
 
-                            try {
-                                int codePointValue = Integer.parseUnsignedInt(codePointStr, 16);
-                                output.appendCodePoint(codePointValue);
-
-                            } catch (NumberFormatException nfe) {
-
-                                throw new DecodeException("Unable to decode unicode code point: " + codePointStr);
-                            }
-                            break;
-
-                        default:
-                            throw new DecodeException("Invalid escape character " + c + "!");
+                        break;
                     }
+                }
 
-                    escaped = false;
-
+                if (index == -1) {
+                    base.append(str);
                 } else {
-
-                    if (c == '\\') {
-                        escaped = true;
-                    } else {
-                        output.appendCodePoint(c);
-                    }
+                    base.append(str, 0, index);
                 }
             }
 
+            // Handle escapes
+            String unescaped = base.toString();
 
+            StringBuilder output = new StringBuilder();
+            int prevIndex = 0;
+            int index = 0;
+            while((index = unescaped.indexOf('\\', index)) != -1) {
+
+                if(index > prevIndex) {
+                    output.append(unescaped, prevIndex, index);
+                }
+
+                char next = unescaped.charAt(++index);
+                switch (next) {
+                    case '\\':
+                    case '/':
+                    case '"':
+                        output.append(next);
+                        index++;
+                        break;
+                    case 'n':
+                        output.append('\n');
+                        index++;
+                        break;
+                    case 'r':
+                        output.append('\r');
+                        index++;
+                        break;
+                    case 'f':
+                        output.append('\f');
+                        index++;
+                        break;
+                    case 'b':
+                        output.append('\b');
+                        index++;
+                        break;
+                    case 't':
+                        output.append('\t');
+                        index++;
+                        break;
+                    case 'u':
+
+                        char lastRead;
+                        do {
+                            // Skip all additional u's
+                            lastRead = unescaped.charAt(index++);
+                        } while (lastRead == 'u');
+
+                        String codePointStr = lastRead + unescaped.substring(index, index + 3);
+                        index += 3;
+
+                        try {
+                            int codePointValue = Integer.parseUnsignedInt(codePointStr, 16);
+                            output.appendCodePoint(codePointValue);
+
+                        } catch (NumberFormatException nfe) {
+
+                            throw new DecodeException("Unable to decode unicode code point: " + codePointStr);
+                        }
+                        break;
+
+                    default:
+                        throw new DecodeException("Invalid escape character " + next + "!");
+                }
+
+                prevIndex = index;
+
+            }
+
+            output.append(unescaped.substring(prevIndex));
             return output.toString();
         }
 
