@@ -1,6 +1,7 @@
 package org.wallentines.mdcfg.serializer;
 
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -102,18 +103,17 @@ public interface Serializer<T> {
      * @param <K> The type of values for the keys in the map
      */
     default <K> MapSerializer<K, T> filteredMapOf(InlineSerializer<K> keySerializer) {
-        return new MapSerializer<>(keySerializer, this, str -> false);
+        return new MapSerializer<>(keySerializer, this, (key, str) -> false);
     }
 
     /**
      * Creates a map serializer from this serializer using the given key serializer which does not require all contained objects to (de-)serialize successfully
      * @param onError A callback to send error text whenever an object fails to serialize
      * @return A serializer for map with K keys and T values
-     * @param <K> The type of values for the keys in the map
      */
-    default <K> MapSerializer<String, T> filteredMapOf(Consumer<String> onError) {
-        return new MapSerializer<>(InlineSerializer.RAW, this, str -> {
-            onError.accept(str);
+    default MapSerializer<String, T> filteredMapOf(BiConsumer<String, String> onError) {
+        return new MapSerializer<>(InlineSerializer.RAW, this, (key, str) -> {
+            onError.accept(key, str);
             return false;
         });
     }
@@ -125,9 +125,9 @@ public interface Serializer<T> {
      * @return A serializer for map with K keys and T values
      * @param <K> The type of values for the keys in the map
      */
-    default <K> MapSerializer<K, T> filteredMapOf(InlineSerializer<K> keySerializer, Consumer<String> onError) {
-        return new MapSerializer<>(keySerializer, this, str -> {
-            onError.accept(str);
+    default <K> MapSerializer<K, T> filteredMapOf(InlineSerializer<K> keySerializer, BiConsumer<K, String> onError) {
+        return new MapSerializer<>(keySerializer, this, (key, str) -> {
+            onError.accept(key, str);
             return false;
         });
     }

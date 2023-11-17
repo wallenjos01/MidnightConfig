@@ -2,7 +2,7 @@ package org.wallentines.mdcfg.serializer;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /**
  * A serializer for key-value pairs of objects
@@ -13,7 +13,7 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
 
     private final InlineSerializer<K> keySerializer;
     private final Serializer<V> valueSerializer;
-    private final Function<String, Boolean> onError;
+    private final BiFunction<K, String, Boolean> onError;
 
     /**
      * Creates a MapSerializer with the given key and value serializers
@@ -21,7 +21,7 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
      * @param valueSerializer The serializer to use to map values
      */
     public MapSerializer(InlineSerializer<K> keySerializer, Serializer<V> valueSerializer) {
-        this(keySerializer, valueSerializer, str -> true);
+        this(keySerializer, valueSerializer, (k, str) -> true);
     }
 
     /**
@@ -31,7 +31,7 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
      * @param onError The function to call when an error is encountered. If this function returns true, (de)serializing
      *                will be stopped with an error
      */
-    public MapSerializer(InlineSerializer<K> keySerializer, Serializer<V> valueSerializer, Function<String, Boolean> onError) {
+    public MapSerializer(InlineSerializer<K> keySerializer, Serializer<V> valueSerializer, BiFunction<K, String, Boolean> onError) {
         this.keySerializer = keySerializer;
         this.valueSerializer = valueSerializer;
         this.onError = onError;
@@ -46,7 +46,7 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
             if(key == null) return SerializeResult.failure("Unable to serialize key " + ent.getKey() + " as a String!");
 
             SerializeResult<O> valueResult = valueSerializer.serialize(context, ent.getValue());
-            if(!valueResult.isComplete() && onError.apply(valueResult.getError())) {
+            if(!valueResult.isComplete() && onError.apply(ent.getKey(), valueResult.getError())) {
                 return valueResult;
             }
 
@@ -69,7 +69,7 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
             if(key == null) return SerializeResult.failure("Unable to deserialize map key " + entry.getKey() + "!");
 
             SerializeResult<V> valueResult = valueSerializer.deserialize(context, entry.getValue());
-            if(!valueResult.isComplete() && onError.apply(valueResult.getError())) {
+            if(!valueResult.isComplete() && onError.apply(key, valueResult.getError())) {
                 return SerializeResult.failure("Unable to deserialize map value " + entry.getValue() + " with key " + key + "! " + valueResult.getError());
             }
 
