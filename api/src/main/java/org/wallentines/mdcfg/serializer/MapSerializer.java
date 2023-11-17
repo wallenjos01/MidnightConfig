@@ -64,7 +64,9 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
                 return valueResult;
             }
 
-            out.put(key, valueResult.get().orElse(null));
+            if(valueResult.isComplete()) {
+                out.put(key, valueResult.getOrThrow());
+            }
         }
 
         return SerializeResult.ofNullable(context.toMap(out), "Unable to serialize map!");
@@ -87,7 +89,9 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
                 return SerializeResult.failure("Unable to deserialize map value " + entry.getValue() + " with key " + key + "! " + valueResult.getError());
             }
 
-            out.put(key, valueResult.get().orElse(null));
+            if(valueResult.isComplete()) {
+                out.put(key, valueResult.getOrThrow());
+            }
         }
 
         return SerializeResult.success(out);
