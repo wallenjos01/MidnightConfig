@@ -106,6 +106,33 @@ public interface Serializer<T> {
     }
 
     /**
+     * Creates a map serializer from this serializer using the given key serializer which does not require all contained objects to (de-)serialize successfully
+     * @param onError A callback to send error text whenever an object fails to serialize
+     * @return A serializer for map with K keys and T values
+     * @param <K> The type of values for the keys in the map
+     */
+    default <K> MapSerializer<String, T> filteredMapOf(Consumer<String> onError) {
+        return new MapSerializer<>(InlineSerializer.RAW, this, str -> {
+            onError.accept(str);
+            return false;
+        });
+    }
+
+    /**
+     * Creates a map serializer from this serializer using the given key serializer which does not require all contained objects to (de-)serialize successfully
+     * @param keySerializer The serializer to use to serialize the keys in the map to Strings
+     * @param onError A callback to send error text whenever an object fails to serialize
+     * @return A serializer for map with K keys and T values
+     * @param <K> The type of values for the keys in the map
+     */
+    default <K> MapSerializer<K, T> filteredMapOf(InlineSerializer<K> keySerializer, Consumer<String> onError) {
+        return new MapSerializer<>(keySerializer, this, str -> {
+            onError.accept(str);
+            return false;
+        });
+    }
+
+    /**
      * Creates a new serializer with a fallback serializer. If serialization fails, the fallback will be used instead
      * @param other The fallback serializer
      * @return A new serializer with the given fallback.
