@@ -1,6 +1,6 @@
 # MidnightConfig
 
-A Java configuration and serialization API
+A general-purpose configuration and serialization library for Java
 
 <br>
 
