@@ -192,9 +192,11 @@ public interface SerializeContext<T> {
      * @return A merged value, if possible, or a copy of the second value if not
      */
     default T merge(T value, T other) {
-
+        if(value == null) {
+            return copy(other);
+        }
         if(isMap(other)) {
-            if(!isMap(value)) return other;
+            if(!isMap(value)) return copy(other);
             return mergeMap(value, other);
         }
         if(isList(value) && isList(other) ||

@@ -126,7 +126,21 @@ public class FileCodecRegistry {
 
     /**
      * Finds a file with the given prefix in the given folder, and creates a wrapper for it with the given charset and
-     * context
+     * default root
+     * @param context The context by which to decode/encode data
+     * @param prefix The file's name without the extension (i.e. "data.json" becomes "data")
+     * @param folder The folder to search in
+     * @param defaults The default root to use when (re)loading the file
+     * @return A wrapper for the found file, or null if none is found
+     * @param <T> The type of values to read/write
+     */
+    public <T> FileWrapper<T> find(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull File folder, T defaults) {
+        return find(context, prefix, folder, StandardCharsets.UTF_8, defaults);
+    }
+
+    /**
+     * Finds a file with the given prefix in the given folder, and creates a wrapper for it with the given charset,
+     * context, and default root
      * @param context The context by which to decode/encode data
      * @param prefix The file's name without the extension (i.e. "data.json" becomes "data")
      * @param folder The folder to search in
@@ -226,6 +240,7 @@ public class FileCodecRegistry {
             File newFile = new File(folder, newFileName);
 
             out = new FileWrapper<>(context, codec, newFile, charset, defaults);
+            out.load();
         }
         return out;
     }

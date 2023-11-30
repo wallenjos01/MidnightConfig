@@ -74,7 +74,7 @@ public class FileWrapper<T> {
         try {
             root = codec.loadFromFile(context, file, charset);
             if(defaults != null) {
-                context.merge(root, defaults);
+                root = context.merge(root, defaults);
             }
             return;
         } catch (IOException ex) {

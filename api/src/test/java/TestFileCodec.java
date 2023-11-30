@@ -78,10 +78,25 @@ public class TestFileCodec {
 
         Assertions.assertTrue(f.exists());
 
+        f = new File("test_defaults.json");
+        Assertions.assertTrue(!f.exists() || f.delete());
+
         wrapper = registry.findOrCreate(ConfigContext.INSTANCE, "test_defaults", cwd, new ConfigSection().with("key", "value"));
         Assertions.assertNotNull(wrapper.getRoot());
         Assertions.assertTrue(wrapper.getRoot().isSection());
         Assertions.assertEquals("value", wrapper.getRoot().asSection().getString("key"));
+
+        wrapper.save();
+
+        Assertions.assertTrue(f.exists());
+
+        f = new File("test_empty.json");
+        Assertions.assertTrue(!f.exists() || f.delete());
+
+        wrapper = registry.findOrCreate(ConfigContext.INSTANCE, "test_empty", cwd, new ConfigSection());
+        Assertions.assertNotNull(wrapper.getRoot());
+        Assertions.assertTrue(wrapper.getRoot().isSection());
+        Assertions.assertEquals(0, wrapper.getRoot().asSection().size());
 
         wrapper.save();
 
