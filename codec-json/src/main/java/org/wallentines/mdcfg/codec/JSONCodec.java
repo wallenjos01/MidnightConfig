@@ -428,20 +428,18 @@ public class JSONCodec implements Codec {
                 return "";
             }
             reader.reset();
+            CharBuffer buffer = CharBuffer.allocate(1024);
 
             boolean reading = true;
             while (reading) {
 
                 reader.mark(1024);
-                CharBuffer buffer = CharBuffer.allocate(1024);
 
                 int chars = reader.read(buffer);
                 if (chars == -1) {
                     throw new DecodeException("Found EOF while parsing a String!");
                 }
-
-
-                String str = buffer.rewind().toString();
+                String str = buffer.rewind().toString().substring(0, chars);
 
                 int index = 0;
                 while ((index = str.indexOf('"', index+1)) != -1) {

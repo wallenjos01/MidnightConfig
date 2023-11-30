@@ -140,4 +140,35 @@ public class TestConfigContext {
         return out;
     }
 
+    @Test
+    public void testCopy() {
+
+        ConfigSection section = new ConfigSection()
+                .with("string", "str")
+                .with("number", 12)
+                .with("bool", true)
+                .with("list", new ConfigList().append(1).append("Hello"))
+                .with("section", new ConfigSection()
+                        .with("key", "value"));
+
+        ConfigObject cloned = ConfigContext.INSTANCE.copy(section);
+
+        Assertions.assertTrue(cloned.isSection());
+        Assertions.assertNotSame(cloned, section);
+
+        Assertions.assertEquals(5, cloned.asSection().size());
+        Assertions.assertEquals("str", cloned.asSection().getString("string"));
+        Assertions.assertEquals(12, cloned.asSection().getInt("number"));
+        Assertions.assertTrue(cloned.asSection().getBoolean("bool"));
+
+        Assertions.assertEquals(2, cloned.asSection().getList("list").size());
+        Assertions.assertEquals(section.getList("list"), cloned.asSection().getList("list"));
+        Assertions.assertNotSame(section.getList("list"), cloned.asSection().getList("list"));
+
+        Assertions.assertEquals(1, cloned.asSection().getSection("section").size());
+        Assertions.assertEquals(section.getSection("section"), cloned.asSection().getSection("section"));
+        Assertions.assertNotSame(section.getSection("section"), cloned.asSection().getSection("section"));
+
+    }
+
 }

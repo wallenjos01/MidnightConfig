@@ -23,7 +23,7 @@ public class FileWrapper<T> {
     private final FileCodec codec;
     private final File file;
     private final Charset charset;
-
+    private final T defaults;
     private T root;
 
     /**
@@ -34,7 +34,7 @@ public class FileWrapper<T> {
      * @param file The file to read from or write to
      */
     public FileWrapper(@NotNull SerializeContext<T> context, @NotNull FileCodec codec, @NotNull File file) {
-        this(context, codec, file, StandardCharsets.UTF_8);
+        this(context, codec, file, StandardCharsets.UTF_8, null);
     }
 
     /**
@@ -46,24 +46,43 @@ public class FileWrapper<T> {
      * @param charset The charset to interpret/write data as
      */
     public FileWrapper(SerializeContext<T> context, FileCodec codec, File file, Charset charset) {
+        this(context, codec, file, charset, null);
+    }
+
+    /**
+     * Creates a new file wrapper from the given file with the given serialization context and file codec, using the
+     * given charset and default root
+     * @param context The context by which to encode/decode data
+     * @param codec The codec to use to encode/decode data
+     * @param file The file to read from or write to
+     * @param charset The charset to interpret/write data as
+     * @param defaults The default value for the root. Will be used to fill the actual root each time the file is loaded
+     */
+    public FileWrapper(SerializeContext<T> context, FileCodec codec, File file, Charset charset, T defaults) {
         this.context = context;
         this.file = file;
         this.codec = codec;
         this.charset = charset;
+        this.defaults = defaults;
     }
 
     /**
-     * Attempts to load data from the file into the root of the wrapper. If data cannot be read or decoded, nothing
-     * will happen
+     * Attempts to load data from the file into the root of the wrapper. If data cannot be read or decoded, the root
+     * will be set to the default value.
      */
     public void load() {
         try {
             root = codec.loadFromFile(context, file, charset);
+            if(defaults != null) {
+                context.merge(root, defaults);
+            }
+            return;
         } catch (IOException ex) {
             LOGGER.error("An exception occurred while attempting to read data from file " + file.getAbsolutePath() + "!", ex);
         } catch (DecodeException ex) {
             LOGGER.error("An exception occurred while attempting to decode data from file " + file.getAbsolutePath() + "!", ex);
         }
+        root = context.copy(defaults);
     }
 
     /**

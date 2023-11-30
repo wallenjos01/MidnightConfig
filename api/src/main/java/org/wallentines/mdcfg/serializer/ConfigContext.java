@@ -153,4 +153,9 @@ public class ConfigContext implements SerializeContext<ConfigObject> {
         object.asSection().set(key, value);
         return object;
     }
+
+    @Override
+    public ConfigObject copy(ConfigObject object) {
+        return object.copy();
+    }
 }

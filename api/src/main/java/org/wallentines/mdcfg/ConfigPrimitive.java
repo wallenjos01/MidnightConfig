@@ -1,5 +1,7 @@
 package org.wallentines.mdcfg;
 
+import org.wallentines.mdcfg.serializer.SerializeContext;
+
 import java.math.BigInteger;
 import java.util.Objects;
 
@@ -177,7 +179,10 @@ public class ConfigPrimitive implements ConfigObject {
 
     @Override
     public ConfigPrimitive copy() {
-        return this;
+        if(isNumber()) {
+            return new ConfigPrimitive(SerializeContext.copyNumber(asNumber()));
+        }
+        return new ConfigPrimitive(value);
     }
 
     @Override

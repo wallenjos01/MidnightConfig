@@ -1,10 +1,8 @@
 package org.wallentines.mdcfg.serializer;
 
-import org.wallentines.mdcfg.Tuples;
+import org.wallentines.mdcfg.ConfigPrimitive;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -191,7 +189,7 @@ public interface SerializeContext<T> {
      * Merges two encode-able objects together, if possible
      * @param value The value to read from
      * @param other The value to merge into
-     * @return A merged value, if possible, or the second value if not
+     * @return A merged value, if possible, or a copy of the second value if not
      */
     default T merge(T value, T other) {
 
@@ -206,7 +204,7 @@ public interface SerializeContext<T> {
             return value;
         }
 
-        return other;
+        return copy(other);
     }
 
     /**
@@ -245,18 +243,72 @@ public interface SerializeContext<T> {
                     .map(t -> convert(other, t)).collect(Collectors.toList()));
         }
         if(isMap(object)) {
-            return other.toMap(asOrderedMap(object).entrySet().stream()
-                    .map(ent -> new Tuples.T2<>(ent.getKey(), convert(other, ent.getValue())))
-                    .filter(t2 -> t2.p1 != null && t2.p2 != null)
-                    .collect(Collectors.toMap(
-                            t2 -> t2.p1, // Key mapper
-                            t2 -> t2.p2, // Value mapper
-                            (v1,v2) -> { throw new IllegalStateException("Found duplicate keys for values " + v1 + " and " + v2 + "!"); }, // Duplicate handler
-                            LinkedHashMap::new // Map factory
-                    )));
+
+            O out = other.toMap(new LinkedHashMap<>());
+            for(String key : getOrderedKeys(object)) {
+                T value = get(key, object);
+                other.set(key, convert(other, value), out);
+            }
+            return out;
         }
 
         throw new SerializeException("Don't know how to convert " + object + " to another context!");
+    }
+
+    /**
+     * Clones the given object
+     * @param object The object to clone
+     * @return A cloned object
+     */
+    default T copy(T object) {
+
+        if(object == null) return null;
+        if(isString(object)) {
+            return toString(asString(object));
+        }
+        if(isNumber(object)) {
+            return toNumber(copyNumber(asNumber(object)));
+        }
+        if(isBoolean(object)) {
+            return toBoolean(asBoolean(object));
+        }
+        if(isList(object)) {
+            List<T> out = new ArrayList<>();
+            for(T value : asList(object)) {
+                out.add(copy(value));
+            }
+            return toList(out);
+        }
+        if(isMap(object)) {
+
+            T out = toMap(new LinkedHashMap<>());
+            for(String key : getOrderedKeys(object)) {
+                T value = get(key, object);
+                set(key, copy(value), out);
+            }
+            return out;
+        }
+
+        throw new SerializeException("Don't know how to clone " + object + "in this context!");
+    }
+
+    /**
+     * Copies a number value
+     * @param number The number to copy
+     * @return A copy of that number
+     */
+    static Number copyNumber(Number number) {
+        if(number instanceof Integer) return number.intValue();
+        if(number instanceof Long) return number.longValue();
+        if(number instanceof Float) return number.floatValue();
+        if(number instanceof Short) return number.shortValue();
+        if(number instanceof Double) return number.doubleValue();
+        if(number instanceof Byte) return number.byteValue();
+
+        if(ConfigPrimitive.isInteger(number)) {
+            return number.longValue();
+        }
+        return number.doubleValue();
     }
 
 }
