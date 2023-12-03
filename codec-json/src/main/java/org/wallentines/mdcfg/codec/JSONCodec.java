@@ -256,6 +256,13 @@ public class JSONCodec implements Codec {
             return out;
         }
 
+        public T decode(Reader reader) throws IOException {
+
+            T out = decodeElement(reader);
+            reader.close();
+            return out;
+        }
+
         private void skipWhitespace(Reader reader) throws IOException {
             while(lastReadChar <= 32) {
                 lastReadChar = reader.read();

@@ -6,6 +6,7 @@ import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.io.*;
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -248,15 +249,26 @@ public class BinaryCodec implements Codec {
         throw new DecodeException("Invalid number type!");
     }
 
-    private String readString(DataInputStream stream) throws IOException{
+    private String readString(DataInputStream stream) throws IOException {
 
         int length = stream.readInt();
-        byte[] data = new byte[length];
-        if(stream.read(data) != length) {
-            throw new DecodeException("Unexpected EOF encountered while reading a String!");
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] copyBuffer = new byte[1024];
+
+        int read = 0;
+        while(read < length) {
+
+            int bytesRead = stream.read(copyBuffer, 0, Math.min(1024, length - read));
+            if(bytesRead == -1) {
+                throw new DecodeException("Unexpected EOF encountered while reading a String!");
+            }
+
+            read += bytesRead;
+            bos.write(copyBuffer, 0, bytesRead);
         }
 
-        return new String(data, StandardCharsets.UTF_8);
+        return bos.toString();
     }
 
 
