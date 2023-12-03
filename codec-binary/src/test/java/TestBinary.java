@@ -47,6 +47,32 @@ public class TestBinary {
     }
 
     @Test
+    public void testUnicode() {
+
+        ConfigSection section = new ConfigSection()
+                .with("String", "Unicode \u0123\u5432");
+
+        FileCodec codec = BinaryCodec.fileCodec();
+
+        File file = new File("test_unicode.mdb");
+        try {
+            codec.saveToFile(ConfigContext.INSTANCE, section, file, Charset.defaultCharset());
+        } catch (IOException ex) {
+            Assertions.fail();
+        }
+
+        ConfigSection read = null;
+        try {
+            read = codec.loadFromFile(ConfigContext.INSTANCE, file, Charset.defaultCharset()).asSection();
+        } catch (IOException ex) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals(section, read);
+
+    }
+
+    @Test
     public void testLarge() {
 
         ConfigSection section = new ConfigSection();

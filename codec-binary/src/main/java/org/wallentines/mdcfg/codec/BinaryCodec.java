@@ -151,8 +151,9 @@ public class BinaryCodec implements Codec {
 
     private void writeString(String str, DataOutputStream stream) throws IOException {
 
-        stream.writeInt(str.length());
-        stream.write(str.getBytes(StandardCharsets.UTF_8));
+        byte[] data = str.getBytes(StandardCharsets.UTF_8);
+        stream.writeInt(data.length);
+        stream.write(data);
     }
 
 
@@ -264,6 +265,9 @@ public class BinaryCodec implements Codec {
         private String readString(DataInputStream stream) throws IOException {
 
             int length = stream.readInt();
+            if(length == 0) {
+                return "";
+            }
 
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
@@ -279,7 +283,7 @@ public class BinaryCodec implements Codec {
                 bos.write(copyBuffer, 0, bytesRead);
             }
 
-            return bos.toString();
+            return bos.toString(StandardCharsets.UTF_8);
         }
     }
 

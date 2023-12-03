@@ -1,0 +1,8 @@
+[
+  {
+    "lines": [ "all" ],
+    "type": "replace",
+    "find": "bos.toString(StandardCharsets.UTF_8)",
+    "replace": "bos.toString(\"UTF-8\")"
+  }
+]
