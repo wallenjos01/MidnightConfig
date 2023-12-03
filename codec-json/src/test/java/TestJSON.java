@@ -61,7 +61,7 @@ public class TestJSON {
         Assertions.assertEquals(43.435, list.asList().get(1).asPrimitive().asDouble());
         Assertions.assertEquals("String", list.asList().get(2).asPrimitive().asString());
 
-        String encodedObject = "{   \"String\":\n\"Hello, World\",      \"Number\":42,  \"Float\":112.45,  \"List\":[123,321,\"Wow\"\n],\"Object\":{\"Wow\":12}}";
+        String encodedObject = "{   \"String\":\n\"Hello, World\" ,      \"Number\":42,  \"Float\":112.45  \n,  \"List\":[123,321,\"Wow\"\n],\"Object\":{\"Wow\":12}}";
 
         ConfigObject obj = codec.decode(ConfigContext.INSTANCE, encodedObject);
 
@@ -167,16 +167,10 @@ public class TestJSON {
     @Test
     public void testInvalid() {
 
-        String invalid = "{\"key\":\"Invalid Value}";
+        Assertions.assertThrows(DecodeException.class, () -> {
+            JSONCodec.loadConfig("{\"key\":\"Invalid Value}");
+        });
 
-        boolean caught = false;
-        try {
-            JSONCodec.loadConfig(invalid);
-        } catch (DecodeException ex) {
-            caught = true;
-        }
-
-        Assertions.assertTrue(caught);
 
     }
 

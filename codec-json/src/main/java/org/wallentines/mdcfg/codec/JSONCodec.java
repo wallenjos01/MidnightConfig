@@ -7,7 +7,6 @@ import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.io.*;
 import java.math.BigDecimal;
-import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -243,6 +242,7 @@ public class JSONCodec implements Codec {
     private static class Decoder<T> {
 
         private final SerializeContext<T> context;
+        private int lastReadChar;
 
         public Decoder(SerializeContext<T> context) {
             this.context = context;
@@ -256,50 +256,63 @@ public class JSONCodec implements Codec {
             return out;
         }
 
-        private void skipWhitespace(BufferedReader reader) throws IOException {
-            reader.mark(1);
-
-            int i;
-            while((i = reader.read()) <= 32) {
-                if(i == -1) {
+        private void skipWhitespace(Reader reader) throws IOException {
+            while(lastReadChar <= 32) {
+                lastReadChar = reader.read();
+                if(lastReadChar == -1) {
                     throw new DecodeException("Found EOF while attempting to parse JSON!");
                 }
-
-                reader.mark(1);
             }
-            reader.reset();
         }
 
-        private T decodeElement(BufferedReader reader) throws IOException {
+        private int nextReal(Reader reader) throws IOException {
+            do {
+                lastReadChar = reader.read();
+            } while(lastReadChar <= 32 && lastReadChar > -1);
+            return lastReadChar;
+        }
+
+        private T decodeElement(Reader reader) throws IOException {
 
             skipWhitespace(reader);
 
-            reader.mark(1);
-            int c = reader.read();
-            if(c == '{') {
+            if(lastReadChar == '{') {
                 return decodeMap(reader);
             }
-            if(c == '[') {
+            if(lastReadChar == '[') {
                 return decodeList(reader);
             }
-            if(c == '"') {
+            if(lastReadChar == '"') {
                 return decodeString(reader);
             }
-            if(c == '}' || c == ']') { // Illegal Characters (in this context)
-                throw new DecodeException("Found illegal character " + c);
+            if(lastReadChar == '}' || lastReadChar == ']') { // Illegal Characters (in this context)
+                throw new DecodeException("Found illegal character " + lastReadChar);
             }
-            reader.reset();
+
             return decodePrimitive(reader);
         }
 
-        private T decodeString(BufferedReader reader) throws IOException {
+        private T decodeString(Reader reader) throws IOException {
 
             return context.toString(readString(reader));
         }
 
-        private T decodePrimitive(BufferedReader reader) throws IOException {
+        private T decodePrimitive(Reader reader) throws IOException {
 
-            String value = readPrimitive(reader);
+            StringBuilder output = new StringBuilder();
+
+            do {
+                if(lastReadChar > 127) {
+                    throw new DecodeException("Found invalid character while reading a primitive!");
+                }
+                output.append((char) lastReadChar);
+            }
+            while((lastReadChar = reader.read()) > 32
+                    && lastReadChar != '}'
+                    && lastReadChar != ','
+                    && lastReadChar != ']');
+
+            String value = output.toString();
 
             if(value.equalsIgnoreCase("true")) {
                 return context.toBoolean(true);
@@ -340,130 +353,102 @@ public class JSONCodec implements Codec {
             return context.toNumber(out);
         }
 
-        private T decodeMap(BufferedReader reader) throws IOException {
+        private T decodeMap(Reader reader) throws IOException {
 
-            skipWhitespace(reader);
-            reader.mark(1);
-            int c = reader.read();
+            if(lastReadChar != '{') {
+                throw new DecodeException("Expected object to start with '{'");
+            }
 
             Map<String, T> values = new LinkedHashMap<>();
 
-            // Handle empty maps
-            if(c == '}') {
-                return context.toMap(values);
-            }
-            reader.reset();
+            nextReal(reader);
 
-            // A key should come next
-            String lastKey = decodeMapEntry(reader, values);
-            while((c = reader.read()) == ',') {
-                lastKey = decodeMapEntry(reader, values);
+            String lastKey = null;
+            while(lastReadChar != '}') {
+
+                if(lastReadChar != '"') {
+                    String suffix = lastKey == null ? "" : " (After key " + lastKey + ")";
+                    throw new DecodeException("Found unquoted key while parsing an object!" + suffix);
+                }
+
+                try {
+                    lastKey = readString(reader);
+                } catch (DecodeException ex) {
+                    String suffix = lastKey == null ? "" : " (After key " + lastKey + ")";
+                    throw new DecodeException("An error occurred while decoding an object key!" + suffix, ex);
+                }
+
+                skipWhitespace(reader);
+                if(lastReadChar != ':') {
+                    throw new DecodeException("Found junk data after key \"" + lastKey + "\"");
+                }
+
+                nextReal(reader);
+                try {
+                    T obj = decodeElement(reader);
+                    values.put(lastKey, obj);
+                } catch (DecodeException ex) {
+                    throw new DecodeException("An error occurred while decoding an object value with key \"" + lastKey + "\"!", ex);
+                }
+
+                skipWhitespace(reader);
+                if(lastReadChar == ',') {
+                    if(nextReal(reader) == '}') {
+                        throw new DecodeException("Found unexpected end of object after key " + lastKey + "!");
+                    }
+                }
             }
 
-            if(c != '}') {
-                throw new DecodeException("Found junk data after value with key \"" + lastKey + "\"");
-            }
-
+            nextReal(reader);
             return context.toMap(values);
         }
 
-        private String decodeMapEntry(BufferedReader reader, Map<String, T> output) throws IOException {
+        private T decodeList(Reader reader) throws IOException {
 
             skipWhitespace(reader);
-            int c = reader.read();
-
-            if(c != '"') throw new DecodeException("Found invalid key while reading " + c + "!");
-
-            String key = readString(reader);
-            skipWhitespace(reader);
-
-            if(reader.read() != ':') throw new DecodeException("Found junk data after key \"" + key + "\"");
-
-            skipWhitespace(reader);
-            T value = decodeElement(reader);
-            if(value == null) return key;
-
-            output.put(key, value);
-            skipWhitespace(reader);
-
-            return key;
-        }
-
-        private T decodeList(BufferedReader reader) throws IOException {
-
-            skipWhitespace(reader);
-            reader.mark(1);
-            int c = reader.read();
             List<T> values = new ArrayList<>();
 
-            // Handle empty lists
-            if(c == ']') {
-                return context.toList(values);
-            }
-            reader.reset();
+            nextReal(reader);
+            while (lastReadChar != ']') {
 
-            T element = decodeElement(reader);
-            if(element != null) values.add(element);
-            skipWhitespace(reader);
-
-            while((c = reader.read()) == ',') {
-                element = decodeElement(reader);
-                if(element != null) values.add(element);
+                try {
+                    values.add(decodeElement(reader));
+                } catch (DecodeException ex) {
+                    throw new DecodeException("An error occurred while decoding a list value at index " + values.size(), ex);
+                }
                 skipWhitespace(reader);
+
+                if (lastReadChar == ',') {
+                    if(nextReal(reader) == ']') {
+                        throw new DecodeException("Found unexpected end of list after index " + values.size());
+                    }
+                }
             }
 
-            if(c != ']') throw new DecodeException("Found junk data after list");
-
+            nextReal(reader);
             return context.toList(values);
         }
 
-        private String readString(BufferedReader reader) throws IOException {
+        private String readString(Reader reader) throws IOException {
 
+            ByteArrayOutputStream str = new ByteArrayOutputStream(1024);
 
-            StringBuilder base = new StringBuilder();
+            boolean escaped = false;
+            while(true) {
 
-            // Handle empty strings
-            reader.mark(1);
-            if(reader.read() == '\"') {
-                return "";
-            }
-            reader.reset();
-            CharBuffer buffer = CharBuffer.allocate(1024);
-
-            boolean reading = true;
-            while (reading) {
-
-                reader.mark(1024);
-
-                int chars = reader.read(buffer);
-                if (chars == -1) {
-                    throw new DecodeException("Found EOF while parsing a String!");
+                lastReadChar = reader.read();
+                if(lastReadChar == -1) {
+                    throw new DecodeException("Found EOF while reading a JSON String!");
                 }
-                String str = buffer.rewind().toString().substring(0, chars);
-
-                int index = 0;
-                while ((index = str.indexOf('"', index+1)) != -1) {
-                    if (str.charAt(index - 1) != '\\') {
-                        reading = false;
-
-                        if(index + 1 < chars) {
-                            reader.reset();
-                            reader.skip(index + 1);
-                        }
-
-                        break;
-                    }
+                if(!escaped && lastReadChar == '"') {
+                    break;
                 }
 
-                if (index == -1) {
-                    base.append(str);
-                } else {
-                    base.append(str, 0, index);
-                }
+                escaped = lastReadChar == '\\';
+                str.write(lastReadChar);
             }
 
-            // Handle escapes
-            String unescaped = base.toString();
+            String unescaped = str.toString();
 
             StringBuilder output = new StringBuilder();
             int prevIndex = 0;
@@ -532,22 +517,8 @@ public class JSONCodec implements Codec {
             }
 
             output.append(unescaped.substring(prevIndex));
-            return output.toString();
-        }
 
-        private String readPrimitive(BufferedReader reader) throws IOException {
-
-            StringBuilder output = new StringBuilder();
-
-            int c;
-            reader.mark(1);
-            while((c = reader.read()) > 32 && c != '}' && c != ',' && c != ']') {
-                output.appendCodePoint(c);
-                reader.mark(1);
-            }
-
-            reader.reset();
-
+            nextReal(reader);
             return output.toString();
         }
 
