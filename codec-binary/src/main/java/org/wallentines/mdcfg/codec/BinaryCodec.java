@@ -6,7 +6,6 @@ import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.io.*;
 import java.math.BigDecimal;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -157,120 +156,132 @@ public class BinaryCodec implements Codec {
     }
 
 
-
     @Override
     public <T> T decode(@NotNull SerializeContext<T> context, @NotNull InputStream stream, Charset charset) throws DecodeException, IOException {
 
-        byte[] headerBytes = new byte[HEADER.length()];
-        if(stream.read(headerBytes) != headerBytes.length || !new String(headerBytes, StandardCharsets.US_ASCII).equals(HEADER)) {
-            throw new DecodeException("Unable to decode config binary! Missing or invalid header!");
-        }
-
-        Compression compression = Compression.byIndex(stream.read());
-        if(compression == null) {
-            throw new DecodeException("Unable to decode config binary! Unknown compression type!");
-        }
-
-        try(DataInputStream dis = compression.createInputStream(stream)) {
-            return decodeValue(context, dis);
-        }
+        return new Decoder<>(context).decode(stream);
     }
 
-    private <T> T decodeValue(SerializeContext<T> context, DataInputStream stream) throws IOException {
+    private static class Decoder<T> {
 
-        int typeIndex = stream.readByte();
-        Type t = Type.byIndex(typeIndex);
+        private final SerializeContext<T> context;
+        private final byte[] copyBuffer = new byte[1024];
 
-        if(t == null) {
-            throw new DecodeException("Found invalid type " + typeIndex + "!");
+        public Decoder(SerializeContext<T> context) {
+            this.context = context;
         }
 
-        switch (t) {
-            case NONE:
-                return null;
+        private T decode(InputStream stream) throws DecodeException, IOException {
 
-            case INTEGER:
-            case LONG:
-            case SHORT:
-            case BYTE:
-            case FLOAT:
-            case DOUBLE:
-            case BIG_DECIMAL:
-                return context.toNumber(decodeNumber(t, stream));
+            byte[] headerBytes = new byte[HEADER.length()];
+            if(stream.read(headerBytes) != headerBytes.length || !new String(headerBytes, StandardCharsets.US_ASCII).equals(HEADER)) {
+                throw new DecodeException("Unable to decode config binary! Missing or invalid header!");
+            }
 
-            case STRING:
-                return context.toString(readString(stream));
+            Compression compression = Compression.byIndex(stream.read());
+            if(compression == null) {
+                throw new DecodeException("Unable to decode config binary! Unknown compression type!");
+            }
 
-            case BOOLEAN:
-                return context.toBoolean(stream.readBoolean());
+            try(DataInputStream dis = compression.createInputStream(stream)) {
+                return decodeValue(context, dis);
+            }
+        }
 
-            case LIST: {
+        private T decodeValue(SerializeContext<T> context, DataInputStream stream) throws IOException {
 
-                int length = stream.readInt();
-                List<T> out = new ArrayList<>();
-                for (int i = 0; i < length; i++) {
-                    out.add(decodeValue(context, stream));
+            int typeIndex = stream.readByte();
+            Type t = Type.byIndex(typeIndex);
+
+            if(t == null) {
+                throw new DecodeException("Found invalid type " + typeIndex + "!");
+            }
+
+            switch (t) {
+                case NONE:
+                    return null;
+
+                case INTEGER:
+                case LONG:
+                case SHORT:
+                case BYTE:
+                case FLOAT:
+                case DOUBLE:
+                case BIG_DECIMAL:
+                    return context.toNumber(decodeNumber(t, stream));
+
+                case STRING:
+                    return context.toString(readString(stream));
+
+                case BOOLEAN:
+                    return context.toBoolean(stream.readBoolean());
+
+                case LIST: {
+
+                    int length = stream.readInt();
+                    List<T> out = new ArrayList<>();
+                    for (int i = 0; i < length; i++) {
+                        out.add(decodeValue(context, stream));
+                    }
+                    return context.toList(out);
                 }
-                return context.toList(out);
-            }
-            case SECTION: {
+                case SECTION: {
 
-                int length = stream.readInt();
-                Map<String, T> out = new LinkedHashMap<>();
-                for (int i = 0; i < length; i++) {
-                    out.put(readString(stream), decodeValue(context, stream));
+                    int length = stream.readInt();
+                    Map<String, T> out = new LinkedHashMap<>();
+                    for (int i = 0; i < length; i++) {
+                        out.put(readString(stream), decodeValue(context, stream));
+                    }
+                    return context.toMap(out);
                 }
-                return context.toMap(out);
-            }
-        }
-
-        throw new DecodeException("Don't know how to decode type " + t.name() + "!");
-    }
-
-    private Number decodeNumber(Type type, DataInputStream stream) throws IOException {
-
-        switch (type) {
-            case INTEGER:
-                return stream.readInt();
-            case LONG:
-                return stream.readLong();
-            case SHORT:
-                return stream.readShort();
-            case BYTE:
-                return stream.readByte();
-            case FLOAT:
-                return stream.readFloat();
-            case DOUBLE:
-                return stream.readDouble();
-            case BIG_DECIMAL:
-                return new BigDecimal(readString(stream));
-        }
-
-        throw new DecodeException("Invalid number type!");
-    }
-
-    private String readString(DataInputStream stream) throws IOException {
-
-        int length = stream.readInt();
-
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        byte[] copyBuffer = new byte[1024];
-
-        int read = 0;
-        while(read < length) {
-
-            int bytesRead = stream.read(copyBuffer, 0, Math.min(1024, length - read));
-            if(bytesRead == -1) {
-                throw new DecodeException("Unexpected EOF encountered while reading a String!");
             }
 
-            read += bytesRead;
-            bos.write(copyBuffer, 0, bytesRead);
+            throw new DecodeException("Don't know how to decode type " + t.name() + "!");
         }
 
-        return bos.toString();
-    }
+        private Number decodeNumber(Type type, DataInputStream stream) throws IOException {
 
+            switch (type) {
+                case INTEGER:
+                    return stream.readInt();
+                case LONG:
+                    return stream.readLong();
+                case SHORT:
+                    return stream.readShort();
+                case BYTE:
+                    return stream.readByte();
+                case FLOAT:
+                    return stream.readFloat();
+                case DOUBLE:
+                    return stream.readDouble();
+                case BIG_DECIMAL:
+                    return new BigDecimal(readString(stream));
+            }
+
+            throw new DecodeException("Invalid number type!");
+        }
+
+        private String readString(DataInputStream stream) throws IOException {
+
+            int length = stream.readInt();
+
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+            int read = 0;
+            while(read < length) {
+
+                int bytesRead = stream.read(copyBuffer, 0, Math.min(1024, length - read));
+                if(bytesRead == -1) {
+                    throw new DecodeException("Unexpected EOF encountered while reading a String!");
+                }
+
+                read += bytesRead;
+                bos.write(copyBuffer, 0, bytesRead);
+            }
+
+            return bos.toString();
+        }
+    }
 
 
     private enum Type {
