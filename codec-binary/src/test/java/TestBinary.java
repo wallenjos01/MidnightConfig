@@ -50,7 +50,9 @@ public class TestBinary {
     public void testUnicode() {
 
         ConfigSection section = new ConfigSection()
-                .with("String", "Unicode \u0123\u5432");
+                .with("Int", 11)
+                .with("String", "Unicode \u0123\u5432")
+                .with("SubSection", new ConfigSection());
 
         FileCodec codec = BinaryCodec.fileCodec();
 

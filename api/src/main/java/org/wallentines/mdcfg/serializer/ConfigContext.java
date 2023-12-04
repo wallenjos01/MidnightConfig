@@ -156,6 +156,7 @@ public class ConfigContext implements SerializeContext<ConfigObject> {
 
     @Override
     public ConfigObject copy(ConfigObject object) {
+        if(object == null) return null;
         return object.copy();
     }
 }
