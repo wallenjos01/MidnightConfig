@@ -13,6 +13,17 @@
   {
     "lines": [
       {
+        "find_regex": "public static <[T,C,P0-9]+> ContextSerializer<T,C> createContextAware\\(",
+        "offset": 1
+      }
+    ],
+    "type": "replace",
+    "find": "return new ContextSerializer<>()",
+    "replace": "return new ContextSerializer<T,C>()"
+  },
+  {
+    "lines": [
+      {
         "find": "package org.wallentines.mdcfg.serializer;",
         "offset": 1
       }

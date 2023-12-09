@@ -52,4 +52,8 @@ public interface InlineContextSerializer<T,C> extends ContextSerializer<T,C> {
         };
     }
 
+    static <C> InlineContextSerializer<String,C> raw() {
+        return of((str,c) -> str, (str,c) -> str);
+    }
+
 }
