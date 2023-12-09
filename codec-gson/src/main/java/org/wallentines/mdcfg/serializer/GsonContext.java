@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * A {@link org.wallentines.mdcfg.serializer.SerializeContext SerializeContext} for serializing to or deserialize from
+ * A {@link org.wallentines.mdcfg.serializer.SerializeContext SerializeContext} for serializing to or deserializing from
  * GSON objects
  */
 public class GsonContext implements SerializeContext<JsonElement> {

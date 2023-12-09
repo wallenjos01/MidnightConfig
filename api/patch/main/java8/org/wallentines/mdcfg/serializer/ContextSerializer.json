@@ -1,0 +1,8 @@
+[
+  {
+    "lines": [ "all" ],
+    "type": "replace",
+    "find": "return new Serializer<>() {",
+    "replace": "return new Serializer<T>() {"
+  }
+]
