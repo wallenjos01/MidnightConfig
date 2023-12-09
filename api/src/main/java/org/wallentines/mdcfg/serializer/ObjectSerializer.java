@@ -377,6 +377,10 @@ public class ObjectSerializer {
         return new ContextEntry<>(serializer, getter, key);
     }
 
+    public static <T,O,C> ContextEntry<T,O,C> entry(String key, Serializer<T> serializer, Functions.F2<O,C,T> getter) {
+        return new ContextEntry<>(ContextSerializer.fromStatic(serializer), getter, key);
+    }
+
     public static <T,C,P1> ContextSerializer<T,C> createContextAware(ContextEntry<P1, T, C> ent1, Functions.F2<C,P1,T> constructor) {
         return new ContextSerializer<>() {
             @Override

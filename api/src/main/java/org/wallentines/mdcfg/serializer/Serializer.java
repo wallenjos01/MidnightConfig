@@ -1,5 +1,7 @@
 package org.wallentines.mdcfg.serializer;
 
+import org.wallentines.mdcfg.Functions;
+
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -38,6 +40,17 @@ public interface Serializer<T> {
      * @param <O> The type of object to serialize
      */
     default <O> ObjectSerializer.Entry<T, O> entry(String key, Function<O, T> getter) {
+        return ObjectSerializer.entry(key, this, getter);
+    }
+
+    /**
+     * Creates an context-aware entry for use in an ObjectSerializer using the given key and getter
+     * @param key The key to use for lookups and saving
+     * @param getter A function to retrieve an instance of T from an instance of O when serializing
+     * @return An entry for use in ObjectSerializer.create()
+     * @param <O> The type of object to serialize
+     */
+    default <O,C> ObjectSerializer.ContextEntry<T, O, C> entry(String key, Functions.F2<O, C, T> getter) {
         return ObjectSerializer.entry(key, this, getter);
     }
 
