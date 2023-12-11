@@ -352,7 +352,7 @@ public class ObjectSerializer {
                 return SerializeResult.failure("Unable to find value for required key " + key + "!");
             }
 
-            return SerializeResult.success(defaultGetter.apply(context));
+            return SerializeResult.success(defaultGetter == null ? null : defaultGetter.apply(context));
         }
 
         public <SC> SerializeResult<Tuples.T2<String, SC>> resolve(SerializeContext<SC> serializeContext, O object, C context) {
