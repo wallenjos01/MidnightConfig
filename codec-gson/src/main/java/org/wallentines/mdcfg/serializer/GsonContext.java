@@ -110,14 +110,18 @@ public class GsonContext implements SerializeContext<JsonElement> {
     @Override
     public JsonElement toList(Collection<JsonElement> list) {
         JsonArray arr = new JsonArray();
-        if(list != null) list.forEach(arr::add);
+        if(list != null) list.forEach(v -> {
+            if(v != null) arr.add(v);
+        });
         return arr;
     }
 
     @Override
     public JsonElement toMap(Map<String, JsonElement> map) {
         JsonObject obj = new JsonObject();
-        if(map != null) map.forEach(obj::add);
+        if(map != null) map.forEach((k,v) -> {
+            if(v != null) obj.add(k,v);
+        });
         return obj;
     }
 
@@ -137,7 +141,8 @@ public class GsonContext implements SerializeContext<JsonElement> {
         JsonObject fill = other.getAsJsonObject();
 
         for(String key : fill.keySet()) {
-            if(!base.has(key)) base.add(key, fill.get(key));
+            JsonElement value = fill.get(key);
+            if(value != null && !base.has(key)) base.add(key, fill.get(key));
         }
         return object;
     }
@@ -150,7 +155,10 @@ public class GsonContext implements SerializeContext<JsonElement> {
         JsonObject fill = other.getAsJsonObject();
 
         for(String key : fill.keySet()) {
-            base.add(key, fill.get(key));
+            JsonElement value = fill.get(key);
+            if(value != null) {
+                base.add(key, value);
+            }
         }
         return object;
     }

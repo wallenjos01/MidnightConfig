@@ -4,6 +4,7 @@ import org.wallentines.mdcfg.Functions;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * A context-aware serializer. A serializer which expects an object of a specific type to be available while (de)serializing
@@ -27,6 +28,20 @@ public interface ContextSerializer<T,C> {
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> ctx, O value) {
                 return ContextSerializer.this.deserialize(ctx, value, context);
+            }
+        };
+    }
+
+    default Serializer<T> forContext(Supplier<C> context) {
+        return new Serializer<>() {
+            @Override
+            public <O> SerializeResult<O> serialize(SerializeContext<O> ctx, T value) {
+                return ContextSerializer.this.serialize(ctx, value, context.get());
+            }
+
+            @Override
+            public <O> SerializeResult<T> deserialize(SerializeContext<O> ctx, O value) {
+                return ContextSerializer.this.deserialize(ctx, value, context.get());
             }
         };
     }
