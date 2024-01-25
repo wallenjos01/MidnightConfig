@@ -11,7 +11,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
-public class ConfigList implements ConfigObject {
+public class ConfigList extends ConfigObject {
 
     private final ArrayList<ConfigObject> values = new ArrayList<>();
 

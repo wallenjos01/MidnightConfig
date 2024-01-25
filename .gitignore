@@ -50,3 +50,5 @@ bin/
 /codec-binary/run
 /codec-json/run
 /codec-gson/run
+
+/codec-nbt/run/*.out

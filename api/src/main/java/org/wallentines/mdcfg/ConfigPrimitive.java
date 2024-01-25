@@ -6,7 +6,7 @@ import java.math.BigInteger;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
-public class ConfigPrimitive implements ConfigObject {
+public class ConfigPrimitive extends ConfigObject {
 
     private final Object value;
 

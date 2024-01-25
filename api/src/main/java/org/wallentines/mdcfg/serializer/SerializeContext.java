@@ -294,6 +294,12 @@ public interface SerializeContext<T> {
         throw new SerializeException("Don't know how to clone " + object + "in this context!");
     }
 
+    boolean supportsMeta(T object);
+
+    String getMetaProperty(T object, String key);
+
+    void setMetaProperty(T object, String key, String value);
+
     /**
      * Copies a number value
      * @param number The number to copy

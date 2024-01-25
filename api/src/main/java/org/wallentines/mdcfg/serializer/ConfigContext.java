@@ -159,4 +159,19 @@ public class ConfigContext implements SerializeContext<ConfigObject> {
         if(object == null) return null;
         return object.copy();
     }
+
+    @Override
+    public boolean supportsMeta(ConfigObject object) {
+        return true;
+    }
+
+    @Override
+    public String getMetaProperty(ConfigObject object, String key) {
+        return object.getMetaProperty(key);
+    }
+
+    @Override
+    public void setMetaProperty(ConfigObject object, String key, String value) {
+        object.setMetaProperty(key, value);
+    }
 }

@@ -6,33 +6,36 @@ import org.wallentines.mdcfg.serializer.SerializeResult;
 import org.wallentines.mdcfg.serializer.Serializer;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
-public interface ConfigObject {
+public abstract class ConfigObject {
+
+    protected Map<String, String> meta = new HashMap<>();
 
     /**
      * Whether the value is a primitive value. (String, Number, or Boolean)
      * @return Whether the value is a primitive.
      */
-    boolean isPrimitive();
+    public abstract boolean isPrimitive();
 
     /**
      * Whether the value is a ConfigList.
      * @return Whether the value is a ConfigList.
      */
-    boolean isList();
+    public abstract boolean isList();
 
     /**
      * Whether the value is a ConfigSection.
      * @return Whether the value is a ConfigSection.
      */
-    boolean isSection();
+    public abstract boolean isSection();
 
     /**
      * Whether the value is a String value. This also means it is a primitive
      * @return Whether the value is a String
      */
-    default boolean isString() {
+    public boolean isString() {
         return isPrimitive() && asPrimitive().isString();
     }
 
@@ -40,7 +43,7 @@ public interface ConfigObject {
      * Whether the value is a Number value. This also means it is a primitive
      * @return Whether the value is a Number
      */
-    default boolean isNumber() {
+    public boolean isNumber() {
         return isPrimitive() && asPrimitive().isNumber();
     }
 
@@ -48,7 +51,7 @@ public interface ConfigObject {
      * Whether the value is a Boolean value. This also means it is a primitive
      * @return Whether the value is a Boolean
      */
-    default boolean isBoolean() {
+    public boolean isBoolean() {
         return isPrimitive() && asPrimitive().isBoolean();
     }
 
@@ -57,34 +60,34 @@ public interface ConfigObject {
      * @return This object as a ConfigPrimitive
      * @throws IllegalStateException If the value is not a primitive
      */
-    ConfigPrimitive asPrimitive();
+    public abstract ConfigPrimitive asPrimitive();
 
     /**
      * Casts this object to a ConfigList and returns it
      * @return This object as a ConfigList
      * @throws IllegalStateException If the value is not a list
      */
-    ConfigList asList();
+    public abstract ConfigList asList();
 
     /**
      * Casts this object to a ConfigSection and returns it
      * @return This object as a ConfigSection
      * @throws IllegalStateException If the value is not a section
      */
-    ConfigSection asSection();
+    public abstract ConfigSection asSection();
 
     /**
      * Copies this object
      * @return A copy of this object
      */
-    ConfigObject copy();
+    public abstract ConfigObject copy();
 
     /**
      * Casts this object to a String and returns it
      * @return This object as a String
      * @throws IllegalStateException If the value is not a String
      */
-    default String asString() {
+    public String asString() {
         return asPrimitive().asString();
     }
 
@@ -93,7 +96,7 @@ public interface ConfigObject {
      * @return This object as a Number
      * @throws IllegalStateException If the value is not a Number
      */
-    default Number asNumber() {
+    public Number asNumber() {
         return asPrimitive().asNumber();
     }
 
@@ -102,8 +105,26 @@ public interface ConfigObject {
      * @return This object as a Boolean
      * @throws IllegalStateException If the value is not a Boolean
      */
-    default Boolean asBoolean() {
+    public Boolean asBoolean() {
         return asPrimitive().asBoolean();
+    }
+
+    /**
+     * Adds a meta property to this config object, which cna be queried layer, and may or may not be serialized
+     * @param key The key of the property to set
+     * @param value The property value
+     */
+    public void setMetaProperty(String key, String value) {
+        meta.put(key, value);
+    }
+
+    /**
+     * Queries a meta property for this config object
+     * @param key The key of the property to get
+     * @return The value of the property
+     */
+    public String getMetaProperty(String key) {
+        return meta.get(key);
     }
 
     /**

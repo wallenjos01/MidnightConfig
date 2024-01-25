@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
-public class ConfigSection implements ConfigObject {
+public class ConfigSection extends ConfigObject {
 
     private final List<ConfigObject> values = new ArrayList<>();
     private final List<String> orderedKeys = new ArrayList<>();

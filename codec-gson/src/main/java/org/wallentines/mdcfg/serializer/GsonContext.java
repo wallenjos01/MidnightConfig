@@ -174,4 +174,17 @@ public class GsonContext implements SerializeContext<JsonElement> {
         return object;
     }
 
+    @Override
+    public boolean supportsMeta(JsonElement object) {
+        return false;
+    }
+
+    @Override
+    public String getMetaProperty(JsonElement object, String key) {
+        return null;
+    }
+
+    @Override
+    public void setMetaProperty(JsonElement object, String key, String value) { }
+
 }

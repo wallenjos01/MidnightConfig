@@ -14,5 +14,6 @@ include("api")
 include("codec-json")
 include("codec-gson")
 include("codec-binary")
+include("codec-nbt")
 
 include("cfgtool")
