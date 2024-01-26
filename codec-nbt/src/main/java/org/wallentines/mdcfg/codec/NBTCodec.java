@@ -9,19 +9,6 @@ import java.util.*;
 
 public class NBTCodec implements Codec {
 
-    private static final int TAG_END = 0;
-    private static final int TAG_BYTE = 1;
-    private static final int TAG_SHORT = 2;
-    private static final int TAG_INT = 3;
-    private static final int TAG_LONG = 4;
-    private static final int TAG_FLOAT = 5;
-    private static final int TAG_DOUBLE = 6;
-    private static final int TAG_BYTE_ARRAY = 7;
-    private static final int TAG_STRING = 8;
-    private static final int TAG_LIST = 9;
-    private static final int TAG_COMPOUND = 10;
-    private static final int TAG_INT_ARRAY = 11;
-    private static final int TAG_LONG_ARRAY = 12;
 
 
     private final boolean expectRootName;
@@ -35,8 +22,8 @@ public class NBTCodec implements Codec {
 
         DataOutput dos = new DataOutputStream(os);
 
-        int type = getTagType(ctx, t);
-        dos.writeByte(type);
+        TagType type = getTagType(ctx, t);
+        dos.writeByte(type.getValue());
 
         if(expectRootName && ctx.isMap(t)) {
 
@@ -53,128 +40,113 @@ public class NBTCodec implements Codec {
 
     private <T> void encode(SerializeContext<T> ctx, T t, DataOutput dos) throws IOException {
 
-        int type = getTagType(ctx, t);
-        if (type == -1) {
-            throw new EncodeException("Unable to determine NBT type of " + t + "!");
-        }
+        TagType type = getTagType(ctx, t);
 
         switch (type) {
-            case TAG_BYTE -> dos.writeByte(ctx.asNumber(t).byteValue());
-            case TAG_SHORT -> dos.writeShort(ctx.asNumber(t).shortValue());
-            case TAG_INT -> dos.writeInt(ctx.asNumber(t).intValue());
-            case TAG_LONG -> dos.writeLong(ctx.asNumber(t).longValue());
-            case TAG_FLOAT -> dos.writeFloat(ctx.asNumber(t).floatValue());
-            case TAG_DOUBLE -> dos.writeDouble(ctx.asNumber(t).doubleValue());
-            case TAG_BYTE_ARRAY, TAG_INT_ARRAY, TAG_LONG_ARRAY -> {
+            case BYTE -> dos.writeByte(ctx.asNumber(t).byteValue());
+            case SHORT -> dos.writeShort(ctx.asNumber(t).shortValue());
+            case INT -> dos.writeInt(ctx.asNumber(t).intValue());
+            case LONG -> dos.writeLong(ctx.asNumber(t).longValue());
+            case FLOAT -> dos.writeFloat(ctx.asNumber(t).floatValue());
+            case DOUBLE -> dos.writeDouble(ctx.asNumber(t).doubleValue());
+            case BYTE_ARRAY, INT_ARRAY, LONG_ARRAY -> {
                 Collection<T> list = ctx.asList(t);
                 dos.writeInt(list.size());
                 for(T t1 : list) {
                     encode(ctx, t1, dos);
                 }
             }
-            case TAG_STRING -> dos.writeUTF(ctx.asString(t));
-            case TAG_LIST -> {
+            case STRING -> dos.writeUTF(ctx.asString(t));
+            case LIST -> {
                 Collection<T> list = ctx.asList(t);
-                dos.writeByte(getListType(ctx, list));
+                dos.writeByte(getListType(ctx, list).getValue());
                 dos.writeInt(list.size());
                 for(T t1 : list) {
                     encode(ctx, t1, dos);
                 }
             }
-            case TAG_COMPOUND -> {
+            case COMPOUND -> {
                 Map<String, T> values = ctx.asMap(t);
                 for(Map.Entry<String, T> ent : values.entrySet()) {
-                    dos.writeByte(getTagType(ctx, ent.getValue()));
+
+                    dos.writeByte(getTagType(ctx, ent.getValue()).getValue());
                     dos.writeUTF(ent.getKey());
                     encode(ctx, ent.getValue(), dos);
                 }
-                dos.writeByte(TAG_END);
+                dos.writeByte(TagType.END.getValue());
             }
         }
     }
 
-    private <T> int getTagType(SerializeContext<T> ctx, T value) {
+    private <T> TagType getTagType(SerializeContext<T> ctx, T value) {
 
         if(ctx.supportsMeta(value)) {
-            String type = ctx.getMetaProperty(value, "nbt.tag_type");
-            if(type != null && type.length() == 1) {
-                char c = type.charAt(0);
-                if(HexFormat.isHexDigit(c)) {
-                    return HexFormat.fromHexDigit(c);
-                }
-            }
+            TagType type = TagType.parse(ctx.getMetaProperty(value, "nbt.tag_type"));
+            if(type != null) return type;
         }
 
         if(ctx.isNumber(value)) {
             Number num = ctx.asNumber(value);
             if(num instanceof Byte) {
-                return TAG_BYTE;
+                return TagType.BYTE;
             }
             else if(num instanceof Short) {
-                return TAG_SHORT;
+                return TagType.SHORT;
             }
             else if(num instanceof Integer) {
-                return TAG_INT;
+                return TagType.INT;
             }
             else if(num instanceof Long) {
-                return TAG_LONG;
+                return TagType.LONG;
             }
             else if(num instanceof Float) {
-                return TAG_FLOAT;
+                return TagType.FLOAT;
             }
             else if(num instanceof Double) {
-                return TAG_DOUBLE;
+                return TagType.DOUBLE;
             }
         }
         else if(ctx.isString(value)) {
-            return TAG_STRING;
+            return TagType.STRING;
         }
         else if(ctx.isList(value)) {
 
-            int tag = -1;
+            TagType type;
             if (ctx.supportsMeta(value)) {
                 String tagStr = ctx.getMetaProperty(value, "nbt.list_type");
-                switch (tagStr) {
-                    case "byte" -> tag = TAG_BYTE_ARRAY;
-                    case "int" -> tag = TAG_INT_ARRAY;
-                    case "long" -> tag = TAG_LONG_ARRAY;
-                    case "tag" -> tag = TAG_LIST;
-                }
+                type = TagType.parse(tagStr);
+                if(type != null) return type;
             }
 
             Collection<T> values = ctx.asList(value);
-            if(tag == -1) {
-                tag = getListType(ctx, values);
-            }
+            type = getListType(ctx, values);
 
-            if(tag == -1) return -1;
-
-            return switch (tag) {
-                case TAG_BYTE -> TAG_BYTE_ARRAY;
-                case TAG_INT -> TAG_INT_ARRAY;
-                case TAG_LONG -> TAG_LONG_ARRAY;
-                default -> TAG_LIST;
+            return switch (type) {
+                case BYTE -> TagType.BYTE_ARRAY;
+                case INT -> TagType.INT_ARRAY;
+                case LONG -> TagType.LONG_ARRAY;
+                default -> TagType.LIST;
             };
         } else if(ctx.isMap(value)) {
-            return TAG_COMPOUND;
+            return TagType.COMPOUND;
         }
 
-        return -1;
+        throw new EncodeException("Unable to determine NBT type of" + value + "!");
     }
 
-    private <T> int getListType(SerializeContext<T> ctx, Collection<T> values) {
+    private <T> TagType getListType(SerializeContext<T> ctx, Collection<T> values) {
 
         if(values.isEmpty()) {
-            return TAG_END;
+            return TagType.END;
         }
 
-        int tag = -1;
+        TagType tag = null;
         for(T val : values) {
-            if(tag == -1) {
+            if(tag == null) {
                 tag = getTagType(ctx, val);
             } else {
                 if(tag != getTagType(ctx, val)) {
-                    return -1;
+                    throw new EncodeException("Found list tag with multiple types!");
                 }
             }
         }
@@ -187,10 +159,10 @@ public class NBTCodec implements Codec {
 
         DataInput dis = new DataInputStream(is);
 
-        int tag = dis.readByte();
+        TagType tag = readTagType(dis);
         String rootName = null;
         if(expectRootName) {
-            if(tag != TAG_COMPOUND) {
+            if(tag != TagType.COMPOUND) {
                 throw new DecodeException("Expected root to be a compound!");
             }
 
@@ -206,76 +178,86 @@ public class NBTCodec implements Codec {
         return out;
     }
 
-    private <T> T decode(@NotNull SerializeContext<T> ctx, @NotNull DataInput dis, int tag) throws IOException {
+    private <T> T decode(@NotNull SerializeContext<T> ctx, @NotNull DataInput dis, TagType tag) throws IOException {
 
-        int listType = -1;
+        TagType listType = null;
 
         T out = switch(tag) {
-            default -> throw new DecodeException("Found unknown tag " + tag + "!");
-            case TAG_END -> throw new DecodeException("Found unexpected end tag!");
-            case TAG_BYTE -> ctx.toNumber(dis.readByte());
-            case TAG_SHORT -> ctx.toNumber(dis.readShort());
-            case TAG_INT -> ctx.toNumber(dis.readInt());
-            case TAG_LONG -> ctx.toNumber(dis.readLong());
-            case TAG_FLOAT -> ctx.toNumber(dis.readFloat());
-            case TAG_DOUBLE -> ctx.toNumber(dis.readDouble());
-            case TAG_BYTE_ARRAY -> {
+            case END -> throw new DecodeException("Found unexpected end tag!");
+            case BYTE -> ctx.toNumber(dis.readByte());
+            case SHORT -> ctx.toNumber(dis.readShort());
+            case INT -> ctx.toNumber(dis.readInt());
+            case LONG -> ctx.toNumber(dis.readLong());
+            case FLOAT -> ctx.toNumber(dis.readFloat());
+            case DOUBLE -> ctx.toNumber(dis.readDouble());
+            case BYTE_ARRAY -> {
                 List<T> list = new ArrayList<>();
                 int length = dis.readInt();
                 for(int i = 0 ; i < length ; i++) {
                     list.add(ctx.toNumber(dis.readByte()));
                 }
-                listType = TAG_BYTE;
+                listType = TagType.BYTE;
                 yield ctx.toList(list);
             }
-            case TAG_STRING -> ctx.toString(dis.readUTF());
-            case TAG_LIST -> {
+            case STRING -> ctx.toString(dis.readUTF());
+            case LIST -> {
                 List<T> list = new ArrayList<>();
-                listType = dis.readByte();
+                listType = TagType.byValue(dis.readByte());
+                if(listType == null) {
+                    throw new DecodeException("Found unknown tag while reading a list!");
+                }
                 int length = dis.readInt();
                 for(int i = 0 ; i < length ; i++) {
                     list.add(decode(ctx, dis, listType));
                 }
                 yield ctx.toList(list);
             }
-            case TAG_COMPOUND -> {
+            case COMPOUND -> {
 
                 Map<String, T> map = new HashMap<>();
-                int nextTag;
-                while((nextTag = dis.readByte()) != TAG_END) {
+                TagType nextTag;
+                while((nextTag = readTagType(dis)) != TagType.END) {
                     map.put(dis.readUTF(), decode(ctx, dis, nextTag));
                 }
 
                 yield  ctx.toMap(map);
             }
-            case TAG_INT_ARRAY -> {
+            case INT_ARRAY -> {
                 List<T> list = new ArrayList<>();
                 int length = dis.readInt();
                 for(int i = 0 ; i < length ; i++) {
                     list.add(ctx.toNumber(dis.readInt()));
                 }
-                listType = TAG_INT;
+                listType = TagType.INT;
                 yield ctx.toList(list);
             }
-            case TAG_LONG_ARRAY -> {
+            case LONG_ARRAY -> {
 
                 List<T> list = new ArrayList<>();
                 int length = dis.readInt();
                 for(int i = 0 ; i < length ; i++) {
                     list.add(ctx.toNumber(dis.readLong()));
                 }
-                listType = TAG_LONG;
+                listType = TagType.LONG;
                 yield ctx.toList(list);
             }
         };
 
         if(ctx.supportsMeta(out)) {
-            if(listType != -1) {
-                ctx.setMetaProperty(out, "nbt.list_type", Integer.toHexString(listType));
+            if(listType != null) {
+                ctx.setMetaProperty(out, "nbt.list_type", listType.encode());
             }
-            ctx.setMetaProperty(out, "nbt.tag_type", Integer.toHexString(tag));
+            ctx.setMetaProperty(out, "nbt.tag_type", tag.encode());
         }
 
         return out;
+    }
+
+
+    private TagType readTagType(DataInput input) throws IOException {
+        int tagValue = input.readByte();
+        TagType type = TagType.byValue(tagValue);
+        if(type == null) throw new DecodeException("Found unknown tag type " + tagValue + "!");
+        return type;
     }
 }
