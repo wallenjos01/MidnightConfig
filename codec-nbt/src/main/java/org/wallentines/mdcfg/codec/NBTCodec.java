@@ -49,6 +49,7 @@ public class NBTCodec implements Codec {
             case LONG -> dos.writeLong(ctx.asNumber(t).longValue());
             case FLOAT -> dos.writeFloat(ctx.asNumber(t).floatValue());
             case DOUBLE -> dos.writeDouble(ctx.asNumber(t).doubleValue());
+            case STRING -> dos.writeUTF(ctx.asString(t));
             case BYTE_ARRAY, INT_ARRAY, LONG_ARRAY -> {
                 Collection<T> list = ctx.asList(t);
                 dos.writeInt(list.size());
@@ -56,7 +57,6 @@ public class NBTCodec implements Codec {
                     encode(ctx, t1, dos);
                 }
             }
-            case STRING -> dos.writeUTF(ctx.asString(t));
             case LIST -> {
                 Collection<T> list = ctx.asList(t);
                 dos.writeByte(getListType(ctx, list).getValue());
@@ -178,11 +178,11 @@ public class NBTCodec implements Codec {
         return out;
     }
 
-    private <T> T decode(@NotNull SerializeContext<T> ctx, @NotNull DataInput dis, TagType tag) throws IOException {
+    private <T> T decode(@NotNull SerializeContext<T> ctx, @NotNull DataInput dis, TagType type) throws IOException {
 
         TagType listType = null;
 
-        T out = switch(tag) {
+        T out = switch (type) {
             case END -> throw new DecodeException("Found unexpected end tag!");
             case BYTE -> ctx.toNumber(dis.readByte());
             case SHORT -> ctx.toNumber(dis.readShort());
@@ -190,6 +190,7 @@ public class NBTCodec implements Codec {
             case LONG -> ctx.toNumber(dis.readLong());
             case FLOAT -> ctx.toNumber(dis.readFloat());
             case DOUBLE -> ctx.toNumber(dis.readDouble());
+            case STRING -> ctx.toString(dis.readUTF());
             case BYTE_ARRAY -> {
                 List<T> list = new ArrayList<>();
                 int length = dis.readInt();
@@ -199,7 +200,6 @@ public class NBTCodec implements Codec {
                 listType = TagType.BYTE;
                 yield ctx.toList(list);
             }
-            case STRING -> ctx.toString(dis.readUTF());
             case LIST -> {
                 List<T> list = new ArrayList<>();
                 listType = TagType.byValue(dis.readByte());
@@ -220,7 +220,7 @@ public class NBTCodec implements Codec {
                     map.put(dis.readUTF(), decode(ctx, dis, nextTag));
                 }
 
-                yield  ctx.toMap(map);
+                yield ctx.toMap(map);
             }
             case INT_ARRAY -> {
                 List<T> list = new ArrayList<>();
@@ -247,7 +247,7 @@ public class NBTCodec implements Codec {
             if(listType != null) {
                 ctx.setMetaProperty(out, "nbt.list_type", listType.encode());
             }
-            ctx.setMetaProperty(out, "nbt.tag_type", tag.encode());
+            ctx.setMetaProperty(out, "nbt.tag_type", type.encode());
         }
 
         return out;

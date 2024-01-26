@@ -12,6 +12,7 @@ multiVersion {
 
 patch {
     patchSet("java8", sourceSets["main"], sourceSets["main"].java, multiVersion.getCompileTask(8))
+    patchSet("java11", sourceSets["main"], sourceSets["main"].java, multiVersion.getCompileTask(11))
 }
 
 repositories {

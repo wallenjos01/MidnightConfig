@@ -1,0 +1,118 @@
+[
+  {
+    "lines": [
+      {
+        "find": "        switch (type) {",
+        "offset": [ 1, 8 ]
+      }
+    ],
+    "type": "replace_regex",
+    "find": "^            case ([A-Z_]+) -> (.*);$",
+    "replace": "            case $1: $2; break;"
+  },
+  {
+    "lines": [
+      {
+        "find": "}\ncase"
+      }
+    ],
+    "type": "set",
+    "value": "break;}"
+  },
+  {
+    "lines": ["all"],
+    "type": "replace_regex",
+    "find": "case ([A-Z_]+) -> \\{",
+    "replace": "case $1: {"
+  },
+  {
+    "lines": [
+      {
+        "find": "        switch (type) {",
+        "offset": [ 9, 34 ]
+      }
+    ],
+    "type": "replace_regex",
+    "find": "^            }\\n            case",
+    "replace": "^            break; }\\n            case"
+  },
+  {
+    "lines": [
+      {
+        "find": "case BYTE_ARRAY, INT_ARRAY, LONG_ARRAY -> {"
+      }
+    ],
+    "type": "set",
+    "value": "case BYTE_ARRAY:\ncase INT_ARRAY:\ncase LONG_ARRAY: {"
+  },
+  {
+    "lines": [
+      {
+        "find": "return switch (type) {",
+        "offset": [1,4]
+      }
+    ],
+    "type": "replace",
+    "find": " -> ",
+    "replace": ": return "
+  },
+  {
+    "lines": [
+      {
+        "find": "default: return",
+        "offset": 1
+      }
+    ],
+    "type": "replace",
+    "find": "};",
+    "replace": "}"
+  },
+  {
+    "lines": [
+      {
+        "find": "return switch (type) {"
+      }
+    ],
+    "type": "replace",
+    "find": "return ",
+    "replace": ""
+  },
+  {
+    "lines": [
+      {
+        "find": "T out = switch (type) {",
+        "offset": 1
+      }
+    ],
+    "type": "replace",
+    "find": "case END ->",
+    "replace": "case END:"
+  },
+  {
+    "lines": [
+      {
+        "find": "T out = switch (type) {",
+        "offset": [ 2, 8 ]
+      }
+    ],
+    "type": "replace_regex",
+    "find": "^            case ([A-Z_]+) -> (.*);$",
+    "replace": "            case $1: out = $2; break;"
+  },
+  {
+    "lines": [ "all" ],
+    "type": "replace_regex",
+    "find": "yield (.*);",
+    "replace": "out = $1;"
+  },
+  {
+    "lines": [
+      {
+        "find": "T out = switch (type) {"
+      }
+    ],
+    "type": "replace",
+    "find": "T out = ",
+    "replace": "T out = null; "
+  }
+]

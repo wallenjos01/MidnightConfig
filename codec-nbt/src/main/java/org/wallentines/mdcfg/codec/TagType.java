@@ -1,7 +1,5 @@
 package org.wallentines.mdcfg.codec;
 
-import java.util.HexFormat;
-
 public enum TagType {
     END(0),
     BYTE(1),
@@ -28,7 +26,7 @@ public enum TagType {
     }
 
     public String encode() {
-        return Integer.toHexString(value);
+        return "" + (char) ('a' + value);
     }
 
     public static TagType byValue(int val) {
@@ -39,9 +37,7 @@ public enum TagType {
     public static TagType parse(String string) {
         if(string != null && string.length() == 1) {
             char c = string.charAt(0);
-            if(HexFormat.isHexDigit(c)) {
-                return byValue(HexFormat.fromHexDigit(c));
-            }
+            return byValue(c - 'a');
         }
         return null;
     }
