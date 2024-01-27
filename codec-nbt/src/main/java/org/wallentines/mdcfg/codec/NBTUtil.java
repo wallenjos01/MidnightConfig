@@ -3,6 +3,7 @@ package org.wallentines.mdcfg.codec;
 import org.wallentines.mdcfg.ConfigList;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigPrimitive;
+import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.util.UUID;
 
@@ -48,6 +49,20 @@ public class NBTUtil {
     
     public static TagType getTagType(ConfigObject obj) {
         return TagType.parse(obj.getMetaProperty("nbt.tag_type"));
+    }
+
+
+    public static <T> void setTagType(SerializeContext<T> ctx, T obj, TagType tagType) {
+        if(ctx.supportsMeta(obj)) {
+            ctx.setMetaProperty(obj, "nbt.tag_type", tagType.encode());
+        }
+    }
+
+    public static <T> TagType getTagType(SerializeContext<T> ctx, T obj) {
+        if(ctx.supportsMeta(obj)) {
+            return TagType.parse(ctx.getMetaProperty(obj, "nbt.tag_type"));
+        }
+        return null;
     }
     
 }

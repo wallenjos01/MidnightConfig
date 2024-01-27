@@ -34,7 +34,7 @@
     ],
     "type": "replace_regex",
     "find": "^            }\\n            case",
-    "replace": "^            break; }\\n            case"
+    "replace": "            break; }            case"
   },
   {
     "lines": [
@@ -59,7 +59,7 @@
   {
     "lines": [
       {
-        "find": "default -> TagType.LIST",
+        "find": "default: return",
         "offset": 1
       }
     ],
