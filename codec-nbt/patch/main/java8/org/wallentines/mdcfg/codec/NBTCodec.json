@@ -7,20 +7,20 @@
       }
     ],
     "type": "replace_regex",
-    "find": "^            case ([A-Z_]+) -> (.*);$",
-    "replace": "            case $1: $2; break;"
+    "find": "case ([A-Z_]+) -> (.*);",
+    "replace": "case $1: $2; break;"
   },
   {
     "lines": [
       {
-        "find": "}\ncase"
+        "find_regex": "^            }\\n            case"
       }
     ],
     "type": "set",
     "value": "break;}"
   },
   {
-    "lines": ["all"],
+    "lines": [ "all" ],
     "type": "replace_regex",
     "find": "case ([A-Z_]+) -> \\{",
     "replace": "case $1: {"
@@ -59,7 +59,7 @@
   {
     "lines": [
       {
-        "find": "default: return",
+        "find": "default -> TagType.LIST",
         "offset": 1
       }
     ],
@@ -96,8 +96,8 @@
       }
     ],
     "type": "replace_regex",
-    "find": "^            case ([A-Z_]+) -> (.*);$",
-    "replace": "            case $1: out = $2; break;"
+    "find": "case ([A-Z_]+) -> (.*);",
+    "replace": "case $1: out = $2; break;"
   },
   {
     "lines": [ "all" ],
