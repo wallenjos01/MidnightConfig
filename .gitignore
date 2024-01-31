@@ -51,4 +51,4 @@ bin/
 /codec-json/run
 /codec-gson/run
 
-/codec-nbt/run/*.out
+/codec-nbt/run/test/*.out

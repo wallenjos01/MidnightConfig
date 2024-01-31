@@ -16,8 +16,9 @@
         "find_regex": "^            }\\n            case"
       }
     ],
-    "type": "set",
-    "value": "break;}"
+    "type": "replace",
+    "find": "}",
+    "replace": "break;}"
   },
   {
     "lines": [ "all" ],

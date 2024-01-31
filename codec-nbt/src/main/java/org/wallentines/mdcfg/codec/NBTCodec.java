@@ -9,8 +9,6 @@ import java.util.*;
 
 public class NBTCodec implements Codec {
 
-
-
     private final boolean expectRootName;
 
     public NBTCodec(boolean expectRootName) {

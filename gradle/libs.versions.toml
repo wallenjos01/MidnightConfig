@@ -1,9 +1,9 @@
 [versions]
 junit = "5.9.1"
 jetbrains = "24.0.1"
-slf4j = "2.0.7"
+slf4j = "2.0.11"
 gson = "2.10.1"
-zstd = "1.5.5-5"
+zstd = "1.5.5-11"
 
 shadow = "8.1.1"
 
