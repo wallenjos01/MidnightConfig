@@ -41,7 +41,7 @@ public class NBTCodec implements Codec {
         TagType type = getTagType(ctx, t);
 
         switch (type) {
-            case BYTE -> dos.writeByte(ctx.asNumber(t).byteValue());
+            case BYTE -> dos.writeByte(ctx.isBoolean(t) ? ctx.asBoolean(t) ? 0b1 : 0b0 : ctx.asNumber(t).byteValue());
             case SHORT -> dos.writeShort(ctx.asNumber(t).shortValue());
             case INT -> dos.writeInt(ctx.asNumber(t).intValue());
             case LONG -> dos.writeLong(ctx.asNumber(t).longValue());
@@ -103,6 +103,9 @@ public class NBTCodec implements Codec {
             else if(num instanceof Double) {
                 return TagType.DOUBLE;
             }
+        }
+        else if(ctx.isBoolean(value)) {
+            return TagType.BYTE;
         }
         else if(ctx.isString(value)) {
             return TagType.STRING;
