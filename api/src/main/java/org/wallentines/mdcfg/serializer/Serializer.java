@@ -2,6 +2,8 @@ package org.wallentines.mdcfg.serializer;
 
 import org.wallentines.mdcfg.Functions;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -174,6 +176,28 @@ public interface Serializer<T> {
             @Override
             public <O1> SerializeResult<O> deserialize(SerializeContext<O1> context, O1 value) {
                 return Serializer.this.deserialize(context, value).flatMap(construct);
+            }
+        };
+    }
+
+    default Serializer<T> fieldOf(String key) {
+        return new Serializer<T>() {
+            @Override
+            public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
+                return Serializer.this.serialize(context, value).flatMap(val -> {
+                    Map<String, O> out = new HashMap<>();
+                    out.put(key, val);
+                    return context.toMap(out);
+                });
+            }
+
+            @Override
+            public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
+                O val;
+                if(!context.isMap(value) || (val = context.get(key, value)) == null) {
+                    return SerializeResult.failure("Key " + key + " not found!");
+                }
+                return Serializer.this.deserialize(context, val);
             }
         };
     }
