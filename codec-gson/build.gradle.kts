@@ -1,6 +1,6 @@
 plugins {
     id("midnightcfg-build")
-    id("org.wallentines.gradle-multi-version") version "0.2.1-SNAPSHOT"
+    id("org.wallentines.gradle-multi-version") version "0.2.1"
 }
 
 multiVersion {

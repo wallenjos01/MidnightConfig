@@ -1,6 +1,7 @@
 package org.wallentines.mdcfg.serializer;
 
 import org.wallentines.mdcfg.Functions;
+import org.wallentines.mdcfg.Tuples;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -166,6 +167,13 @@ public interface Serializer<T> {
         };
     }
 
+    /**
+     * Creates a new serializer which maps data to another type before serialization and after serialization
+     * @param getter A function which converts the mapped type to the serializer's type
+     * @param construct A function which constructs the mapped type from the serializer's output
+     * @param <O> The type to map to
+     * @return A new serializer of the mapped type.
+     */
     default <O> Serializer<O> map(Function<O, T> getter, Function<T, O> construct) {
         return new Serializer<>() {
             @Override
@@ -180,6 +188,11 @@ public interface Serializer<T> {
         };
     }
 
+    /**
+     * Creates a serializer which reads from a map with the given key
+     * @param key The map key to lookup when deserializing
+     * @return A new serializer
+     */
     default Serializer<T> fieldOf(String key) {
         return new Serializer<T>() {
             @Override
@@ -201,6 +214,40 @@ public interface Serializer<T> {
             }
         };
     }
+
+    /**
+     * Creates a combined serializer with this serializer and another
+     * @param other The second serializer to use
+     * @return A new serializer which serializes a pair of objects
+     * @param <O> The type of the second serializer
+     */
+    default <O> Serializer<Tuples.T2<T, O>> and(Serializer<O> other) {
+
+        return new Serializer<Tuples.T2<T, O>>() {
+            @Override
+            public <O2> SerializeResult<O2> serialize(SerializeContext<O2> context, Tuples.T2<T, O> value) {
+
+                SerializeResult<O2> out1 = Serializer.this.serialize(context, value.p1);
+                if(!out1.isComplete()) {
+                    return out1;
+                }
+
+                SerializeResult<O2> out2 = other.serialize(context, value.p2);
+                if(!out2.isComplete()) {
+                    return out2;
+                }
+
+                return SerializeResult.success(context.merge(out1.getOrThrow(), out2.getOrThrow()));
+            }
+
+            @Override
+            public <O2> SerializeResult<Tuples.T2<T, O>> deserialize(SerializeContext<O2> context, O2 value) {
+
+                return Serializer.this.deserialize(context, value).and(other.deserialize(context, value));
+            }
+        };
+    }
+
 
     // Default Serializers
     Serializer<String> STRING = new Serializer<>() {
