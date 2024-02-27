@@ -173,12 +173,17 @@ public class TestSerializer {
     @Test
     public void testComplex() {
 
+        HashMap<Integer, String> map = new HashMap<>();
+        map.put(12, "Yes");
+        map.put(33, "No");
+
+
         TestSerializableComplex multi = new TestSerializableComplex(
                 "Hello",
                 42,
                 true,
                 Arrays.asList("Hello", "World"),
-                makeMap(12, "Yes", 33, "No"),
+                map,
                 new TestSerializableMulti("str", 11, false));
 
         Serializer<TestSerializableComplex> serializer = ObjectSerializer.create(
@@ -385,13 +390,40 @@ public class TestSerializer {
         Assertions.assertEquals("Hello", serialized);
     }
 
-    private <K,V> Map<K,V> makeMap(K key, V value, K key2, V value2) {
+    @Test
+    public void testFieldOf() {
 
-        HashMap<K, V> out = new HashMap<>();
-        out.put(key, value);
-        out.put(key2, value2);
+        Serializer<String> serializer = Serializer.STRING.fieldOf("key");
 
-        return out;
+        ConfigSection sec = new ConfigSection()
+                .with("key", "value");
+
+        String value = serializer.deserialize(ConfigContext.INSTANCE, sec).getOrThrow();
+        Assertions.assertEquals("value", value);
+
+        ConfigSection serialized = serializer.serialize(ConfigContext.INSTANCE, value).getOrThrow().asSection();
+
+        Assertions.assertEquals(sec, serialized);
+
+    }
+
+    @Test
+    public void testAnd() {
+
+        Serializer<Tuples.T2<String, Boolean>> serializer = Serializer.STRING.fieldOf("str").and(Serializer.BOOLEAN.fieldOf("bool"));
+
+        ConfigSection sec = new ConfigSection()
+                .with("str", "value")
+                .with("bool", true);
+
+        Tuples.T2<String, Boolean> value = serializer.deserialize(ConfigContext.INSTANCE, sec).getOrThrow();
+        Assertions.assertEquals("value", value.p1);
+        Assertions.assertTrue(value.p2);
+
+        ConfigSection serialized = serializer.serialize(ConfigContext.INSTANCE, value).getOrThrow().asSection();
+
+        Assertions.assertEquals(sec, serialized);
+
     }
 
 }
