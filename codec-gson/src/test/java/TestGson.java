@@ -5,8 +5,8 @@ import org.wallentines.mdcfg.ConfigList;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.codec.DecodeException;
-import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.codec.GsonCodec;
+import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.serializer.GsonContext;
 
 public class TestGson {

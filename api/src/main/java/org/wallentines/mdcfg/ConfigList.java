@@ -2,8 +2,8 @@ package org.wallentines.mdcfg;
 
 import org.jetbrains.annotations.NotNull;
 import org.wallentines.mdcfg.serializer.ConfigContext;
-import org.wallentines.mdcfg.serializer.Serializer;
 import org.wallentines.mdcfg.serializer.SerializeException;
+import org.wallentines.mdcfg.serializer.Serializer;
 
 import java.util.ArrayList;
 import java.util.Collection;

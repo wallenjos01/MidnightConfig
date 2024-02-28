@@ -1,8 +1,13 @@
 package org.wallentines.mdcfg.serializer;
 
-import org.wallentines.mdcfg.*;
+import org.wallentines.mdcfg.ConfigList;
+import org.wallentines.mdcfg.ConfigObject;
+import org.wallentines.mdcfg.ConfigPrimitive;
+import org.wallentines.mdcfg.ConfigSection;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**

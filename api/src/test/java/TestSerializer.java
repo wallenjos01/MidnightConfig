@@ -1,6 +1,9 @@
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.wallentines.mdcfg.*;
+import org.wallentines.mdcfg.ConfigObject;
+import org.wallentines.mdcfg.ConfigPrimitive;
+import org.wallentines.mdcfg.ConfigSection;
+import org.wallentines.mdcfg.Tuples;
 import org.wallentines.mdcfg.serializer.*;
 
 import java.util.*;
