@@ -57,6 +57,7 @@ public class ContextObjectSerializer<T,C> implements ContextSerializer<T,C> {
         private final ContextSerializer<T, C> serializer;
         private final Functions.F2<O, C, T> getter;
         private final String key;
+        private final List<String> alternateKeys = new ArrayList<>();
         private Function<C, T> defaultGetter;
         private boolean optional;
 
@@ -64,6 +65,13 @@ public class ContextObjectSerializer<T,C> implements ContextSerializer<T,C> {
             this.serializer = serializer;
             this.getter = getter;
             this.key = key;
+        }
+
+        public ContextEntry(ContextSerializer<T, C> serializer, Functions.F2<O, C, T> getter, String key, Collection<String> alternateKeys) {
+            this.serializer = serializer;
+            this.getter = getter;
+            this.key = key;
+            this.alternateKeys.addAll(alternateKeys);
         }
 
         public ContextSerializer<T, C> getSerializer() {
@@ -89,9 +97,21 @@ public class ContextObjectSerializer<T,C> implements ContextSerializer<T,C> {
             return this;
         }
 
+        public ContextEntry<T, O, C> acceptKey(String alternateKey) {
+            this.alternateKeys.add(alternateKey);
+            return this;
+        }
+
         public <SC> SerializeResult<T> parse(SerializeContext<SC> serializeContext, SC value, C context) {
 
             SC val = serializeContext.get(key, value);
+            if(val == null) {
+                for(String s : alternateKeys) {
+                    val = serializeContext.get(s, value);
+                    if(val != null) break;
+                }
+            }
+
             if(val != null) {
 
                 return serializer.deserialize(serializeContext, val, context).mapError(error -> SerializeResult.failure("Unable to deserialize value with key " + key + "! " + error));

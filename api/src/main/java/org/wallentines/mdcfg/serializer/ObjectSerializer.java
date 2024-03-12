@@ -81,7 +81,7 @@ public class ObjectSerializer<T> implements Serializer<T> {
         private final Serializer<T> serializer;
         private final Function<O, T> getter;
         private final String key;
-        private final List<String> alternateKeys;
+        private final List<String> alternateKeys = new ArrayList<>();
         private T defaultValue;
         private boolean optional;
 
@@ -89,14 +89,13 @@ public class ObjectSerializer<T> implements Serializer<T> {
             this.serializer = serializer;
             this.getter = getter;
             this.key = key;
-            this.alternateKeys = Collections.emptyList();
         }
 
         public Entry(Serializer<T> serializer, Function<O, T> getter, String key, Collection<String> alternateKeys) {
             this.serializer = serializer;
             this.getter = getter;
             this.key = key;
-            this.alternateKeys = List.copyOf(alternateKeys);
+            this.alternateKeys.addAll(alternateKeys);
         }
 
         public Serializer<T> getSerializer() {
@@ -122,12 +121,17 @@ public class ObjectSerializer<T> implements Serializer<T> {
             return this;
         }
 
+        public Entry<T, O> acceptKey(String alternateKey) {
+            this.alternateKeys.add(alternateKey);
+            return this;
+        }
+
         public <C> SerializeResult<T> parse(SerializeContext<C> context, C value) {
 
             C val = context.get(key, value);
             if(val == null) {
                 for(String s : alternateKeys) {
-                    val = context.get(key, value);
+                    val = context.get(s, value);
                     if(val != null) break;
                 }
             }
