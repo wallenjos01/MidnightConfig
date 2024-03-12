@@ -133,7 +133,7 @@ public abstract class ConfigObject {
      * @return The object converted to a ConfigObject
      * @throws IllegalArgumentException If the object cannot be converted
      */
-    static ConfigObject toConfigObject(Object obj) {
+    public static ConfigObject toConfigObject(Object obj) {
 
         // Config Objects
         if(obj instanceof ConfigObject) return (ConfigObject) obj;
@@ -164,7 +164,7 @@ public abstract class ConfigObject {
         throw new IllegalArgumentException("Unable to convert " + obj + " to a config object!");
     }
 
-    Serializer<ConfigObject> SERIALIZER = new Serializer<>() {
+    public static final Serializer<ConfigObject> SERIALIZER = new Serializer<>() {
         @Override
         public <O> SerializeResult<O> serialize(SerializeContext<O> context, ConfigObject value) {
             return SerializeResult.ofNullable(ConfigContext.INSTANCE.convert(context, value), "Could not convert " + value + " to ConfigObject!");

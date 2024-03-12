@@ -38,5 +38,13 @@
     "type": "replace",
     "find": "List.of(",
     "replace": "Arrays.asList("
+  },
+  {
+    "lines": [
+      "all"
+    ],
+    "type": "replace",
+    "find": "List.copyOf(",
+    "replace": "new ArrayList<>("
   }
 ]

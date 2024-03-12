@@ -68,8 +68,8 @@ public interface ContextSerializer<T,C> {
      * @return An entry for use in ObjectSerializer.create()
      * @param <O> The type of object to serialize
      */
-    default <O> ObjectSerializer.ContextEntry<T, O, C> entry(String key, Functions.F2<O, C, T> getter) {
-        return ObjectSerializer.entry(key, this, getter);
+    default <O> ContextObjectSerializer.ContextEntry<T, O, C> entry(String key, Functions.F2<O, C, T> getter) {
+        return ContextObjectSerializer.entry(key, this, getter);
     }
 
     /**
