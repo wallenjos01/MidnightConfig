@@ -56,18 +56,18 @@ public class ContextObjectSerializer<T,C> implements ContextSerializer<T,C> {
 
         private final ContextSerializer<T, C> serializer;
         private final Functions.F2<O, C, T> getter;
-        private final String key;
+        private final Functions.F1<C, String> key;
         private final List<String> alternateKeys = new ArrayList<>();
         private Function<C, T> defaultGetter;
         private boolean optional;
 
-        public ContextEntry(ContextSerializer<T, C> serializer, Functions.F2<O, C, T> getter, String key) {
+        public ContextEntry(ContextSerializer<T, C> serializer, Functions.F2<O, C, T> getter, Functions.F1<C, String> key) {
             this.serializer = serializer;
             this.getter = getter;
             this.key = key;
         }
 
-        public ContextEntry(ContextSerializer<T, C> serializer, Functions.F2<O, C, T> getter, String key, Collection<String> alternateKeys) {
+        public ContextEntry(ContextSerializer<T, C> serializer, Functions.F2<O, C, T> getter, Functions.F1<C, String> key, Collection<String> alternateKeys) {
             this.serializer = serializer;
             this.getter = getter;
             this.key = key;
@@ -82,8 +82,8 @@ public class ContextObjectSerializer<T,C> implements ContextSerializer<T,C> {
             return getter.apply(object, context);
         }
 
-        public String getKey() {
-            return key;
+        public String getKey(C context) {
+            return key.apply(context);
         }
 
         public ContextEntry<T, O, C> optional() {
@@ -104,7 +104,7 @@ public class ContextObjectSerializer<T,C> implements ContextSerializer<T,C> {
 
         public <SC> SerializeResult<T> parse(SerializeContext<SC> serializeContext, SC value, C context) {
 
-            SC val = serializeContext.get(key, value);
+            SC val = serializeContext.get(getKey(context), value);
             if(val == null) {
                 for(String s : alternateKeys) {
                     val = serializeContext.get(s, value);
@@ -126,6 +126,7 @@ public class ContextObjectSerializer<T,C> implements ContextSerializer<T,C> {
         public <SC> SerializeResult<Tuples.T2<String, SC>> resolve(SerializeContext<SC> serializeContext, O object, C context) {
 
             T out = getValue(object, context);
+            String key = getKey(context);
             if(out == null) {
                 if(!optional) {
                     return SerializeResult.failure("A value for " + key + " could not be obtained from object!");
@@ -162,10 +163,18 @@ public class ContextObjectSerializer<T,C> implements ContextSerializer<T,C> {
 
 
     public static <T,O,C> ContextEntry<T,O,C> entry(String key, ContextSerializer<T, C> serializer, Functions.F2<O,C,T> getter) {
-        return new ContextEntry<>(serializer, getter, key);
+        return new ContextEntry<>(serializer, getter, ctx -> key);
     }
 
     public static <T,O,C> ContextEntry<T,O,C> entry(String key, Serializer<T> serializer, Functions.F2<O,C,T> getter) {
+        return new ContextEntry<>(ContextSerializer.fromStatic(serializer), getter, ctx -> key);
+    }
+
+    public static <T,O,C> ContextEntry<T,O,C> entry(Functions.F1<C, String> key, ContextSerializer<T, C> serializer, Functions.F2<O,C,T> getter) {
+        return new ContextEntry<>(serializer, getter, key);
+    }
+
+    public static <T,O,C> ContextEntry<T,O,C> entry(Functions.F1<C, String> key, Serializer<T> serializer, Functions.F2<O,C,T> getter) {
         return new ContextEntry<>(ContextSerializer.fromStatic(serializer), getter, key);
     }
     

@@ -47,13 +47,24 @@ public interface Serializer<T> {
     }
 
     /**
-     * Creates an context-aware entry for use in an ObjectSerializer using the given key and getter
+     * Creates a context-aware entry for use in an ObjectSerializer using the given key and getter
      * @param key The key to use for lookups and saving
      * @param getter A function to retrieve an instance of T from an instance of O when serializing
      * @return An entry for use in ObjectSerializer.create()
      * @param <O> The type of object to serialize
      */
     default <O,C> ContextObjectSerializer.ContextEntry<T, O, C> entry(String key, Functions.F2<O, C, T> getter) {
+        return ContextObjectSerializer.entry(key, this, getter);
+    }
+
+    /**
+     * Creates a context-aware entry for use in an ObjectSerializer using the given key and getter
+     * @param key The key to use for lookups and saving
+     * @param getter A function to retrieve an instance of T from an instance of O when serializing
+     * @return An entry for use in ObjectSerializer.create()
+     * @param <O> The type of object to serialize
+     */
+    default <O,C> ContextObjectSerializer.ContextEntry<T, O, C> entry(Functions.F1<C, String> key, Functions.F2<O, C, T> getter) {
         return ContextObjectSerializer.entry(key, this, getter);
     }
 
