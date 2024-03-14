@@ -300,7 +300,7 @@ public class ObjectSerializer<T> implements Serializer<T> {
                 .withEntry(ent8)
                 .withEntry(ent9)
                 .withEntry(ent10)
-                .build(set -> SerializeResult.success(constructor.apply(set.get(0), set.get(1), set.get(2), set.get(3), set.get(4), set.get(5), set.get(6), set.get(7), set.get(8), set.get(10))));
+                .build(set -> SerializeResult.success(constructor.apply(set.get(0), set.get(1), set.get(2), set.get(3), set.get(4), set.get(5), set.get(6), set.get(7), set.get(8), set.get(9))));
     }
 
     public static <T,P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11> Serializer<T> create(Entry<P1, T> ent1, Entry<P2, T> ent2, Entry<P3, T> ent3, Entry<P4, T> ent4, Entry<P5, T> ent5, Entry<P6, T> ent6, Entry<P7, T> ent7, Entry<P8, T> ent8, Entry<P9, T> ent9, Entry<P10, T> ent10, Entry<P11, T> ent11, Functions.F11<P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,T> constructor) {
@@ -317,7 +317,7 @@ public class ObjectSerializer<T> implements Serializer<T> {
                 .withEntry(ent9)
                 .withEntry(ent10)
                 .withEntry(ent11)
-                .build(set -> SerializeResult.success(constructor.apply(set.get(0), set.get(1), set.get(2), set.get(3), set.get(4), set.get(5), set.get(6), set.get(7), set.get(8), set.get(10), set.get(11))));
+                .build(set -> SerializeResult.success(constructor.apply(set.get(0), set.get(1), set.get(2), set.get(3), set.get(4), set.get(5), set.get(6), set.get(7), set.get(8), set.get(9), set.get(10))));
     }
 
     public static <T,P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12> Serializer<T> create(Entry<P1, T> ent1, Entry<P2, T> ent2, Entry<P3, T> ent3, Entry<P4, T> ent4, Entry<P5, T> ent5, Entry<P6, T> ent6, Entry<P7, T> ent7, Entry<P8, T> ent8, Entry<P9, T> ent9, Entry<P10, T> ent10, Entry<P11, T> ent11, Entry<P12, T> ent12, Functions.F12<P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12,T> constructor) {
@@ -335,7 +335,7 @@ public class ObjectSerializer<T> implements Serializer<T> {
                 .withEntry(ent10)
                 .withEntry(ent11)
                 .withEntry(ent12)
-                .build(set -> SerializeResult.success(constructor.apply(set.get(0), set.get(1), set.get(2), set.get(3), set.get(4), set.get(5), set.get(6), set.get(7), set.get(8), set.get(10), set.get(11), set.get(12))));
+                .build(set -> SerializeResult.success(constructor.apply(set.get(0), set.get(1), set.get(2), set.get(3), set.get(4), set.get(5), set.get(6), set.get(7), set.get(8), set.get(9), set.get(10), set.get(11))));
     }
 
     public static <T,P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12,P13> Serializer<T> create(Entry<P1, T> ent1, Entry<P2, T> ent2, Entry<P3, T> ent3, Entry<P4, T> ent4, Entry<P5, T> ent5, Entry<P6, T> ent6, Entry<P7, T> ent7, Entry<P8, T> ent8, Entry<P9, T> ent9, Entry<P10, T> ent10, Entry<P11, T> ent11, Entry<P12, T> ent12, Entry<P13, T> ent13, Functions.F13<P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12,P13,T> constructor) {
@@ -354,7 +354,7 @@ public class ObjectSerializer<T> implements Serializer<T> {
                 .withEntry(ent11)
                 .withEntry(ent12)
                 .withEntry(ent13)
-                .build(set -> SerializeResult.success(constructor.apply(set.get(0), set.get(1), set.get(2), set.get(3), set.get(4), set.get(5), set.get(6), set.get(7), set.get(8), set.get(10), set.get(11), set.get(12), set.get(13))));
+                .build(set -> SerializeResult.success(constructor.apply(set.get(0), set.get(1), set.get(2), set.get(3), set.get(4), set.get(5), set.get(6), set.get(7), set.get(8), set.get(9), set.get(10), set.get(11), set.get(12))));
     }
 
     public static <T,P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12,P13,P14> Serializer<T> create(Entry<P1, T> ent1, Entry<P2, T> ent2, Entry<P3, T> ent3, Entry<P4, T> ent4, Entry<P5, T> ent5, Entry<P6, T> ent6, Entry<P7, T> ent7, Entry<P8, T> ent8, Entry<P9, T> ent9, Entry<P10, T> ent10, Entry<P11, T> ent11, Entry<P12, T> ent12, Entry<P13, T> ent13, Entry<P14, T> ent14, Functions.F14<P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12,P13,P14,T> constructor) {
@@ -374,7 +374,7 @@ public class ObjectSerializer<T> implements Serializer<T> {
                 .withEntry(ent12)
                 .withEntry(ent13)
                 .withEntry(ent14)
-                .build(set -> SerializeResult.success(constructor.apply(set.get(0), set.get(1), set.get(2), set.get(3), set.get(4), set.get(5), set.get(6), set.get(7), set.get(8), set.get(10), set.get(11), set.get(12), set.get(13), set.get(14))));
+                .build(set -> SerializeResult.success(constructor.apply(set.get(0), set.get(1), set.get(2), set.get(3), set.get(4), set.get(5), set.get(6), set.get(7), set.get(8), set.get(9), set.get(10), set.get(11), set.get(12), set.get(13))));
     }
 
     public static <T,P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12,P13,P14,P15> Serializer<T> create(Entry<P1, T> ent1, Entry<P2, T> ent2, Entry<P3, T> ent3, Entry<P4, T> ent4, Entry<P5, T> ent5, Entry<P6, T> ent6, Entry<P7, T> ent7, Entry<P8, T> ent8, Entry<P9, T> ent9, Entry<P10, T> ent10, Entry<P11, T> ent11, Entry<P12, T> ent12, Entry<P13, T> ent13, Entry<P14, T> ent14, Entry<P15, T> ent15, Functions.F15<P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12,P13,P14,P15,T> constructor) {
@@ -395,6 +395,6 @@ public class ObjectSerializer<T> implements Serializer<T> {
                 .withEntry(ent13)
                 .withEntry(ent14)
                 .withEntry(ent15)
-                .build(set -> SerializeResult.success(constructor.apply(set.get(0), set.get(1), set.get(2), set.get(3), set.get(4), set.get(5), set.get(6), set.get(7), set.get(8), set.get(10), set.get(11), set.get(12), set.get(13), set.get(14), set.get(15))));
+                .build(set -> SerializeResult.success(constructor.apply(set.get(0), set.get(1), set.get(2), set.get(3), set.get(4), set.get(5), set.get(6), set.get(7), set.get(8), set.get(9), set.get(10), set.get(11), set.get(12), set.get(13), set.get(14))));
     }
 }

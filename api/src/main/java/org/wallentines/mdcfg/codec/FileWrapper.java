@@ -90,6 +90,9 @@ public class FileWrapper<T> {
      */
     public void save() {
         try {
+            if(defaults != null) {
+                root = context.merge(root, defaults);
+            }
             codec.saveToFile(context, root, file, charset);
         } catch (IOException ex) {
             LOGGER.error("An exception occurred while attempting to write data to file " + file.getAbsolutePath() + "!", ex);
