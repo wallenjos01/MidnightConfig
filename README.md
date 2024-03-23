@@ -4,6 +4,21 @@ A general-purpose configuration and serialization library for Java
 
 <br>
 
+## Obtaining
+MidnightConfig is hosted at [https://maven.wallentines.org/](https://maven.wallentines.org/).
+
+Example `build.gradle.kts` buildscript configuration:
+```kotlin
+repositories {
+    maven("https://maven.wallentines.org/releases")
+}
+dependencies {
+    implementation("org.wallentines:midnightcfg-api:2.2.0")
+    implementation("org.wallentines:midnightcfg-codec-json:2.2.0")
+}
+```
+
+
 ## Basic Usage
 
 MidnightConfig offers an easy way to load and manage configuration files. The most important types included
