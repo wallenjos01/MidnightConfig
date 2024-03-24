@@ -1,15 +1,7 @@
 plugins {
     id("midnightcfg-build")
-    id("org.wallentines.gradle-multi-version") version "0.2.1"
-}
-
-multiVersion {
-    defaultVersion(17)
-    additionalVersions(11,8)
-}
-
-repositories {
-    mavenCentral()
+    id("midnightcfg-multi-version")
+    id("midnightcfg-publish")
 }
 
 dependencies {
