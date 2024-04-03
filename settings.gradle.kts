@@ -10,6 +10,7 @@ pluginManagement {
 }
 
 include("api")
+include("api-sql")
 
 include("codec-nbt")
 include("codec-json")
