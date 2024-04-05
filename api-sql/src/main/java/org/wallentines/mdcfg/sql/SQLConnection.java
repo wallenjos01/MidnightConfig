@@ -15,6 +15,7 @@ public class SQLConnection implements AutoCloseable {
     private final Connection internal;
     private String db;
 
+
     public SQLConnection(DatabaseType type, Connection internal) {
         this.type = type;
         this.internal = internal;
@@ -37,9 +38,10 @@ public class SQLConnection implements AutoCloseable {
 
         Set<String> out = new HashSet<>();
         try {
-            ResultSet set = internal.createStatement().executeQuery(type.getDialect().showTables());
+
+            ResultSet set = internal.getMetaData().getTables(null, null, null, null);
             while(set.next()) {
-                String table = set.getString(1);
+                String table = set.getString("TABLE_NAME");
                 out.add(table);
             }
         } catch (SQLException ex) {
@@ -53,6 +55,7 @@ public class SQLConnection implements AutoCloseable {
         if (!SQLUtil.VALID_NAME.matcher(name).matches()) {
             throw new IllegalArgumentException("Invalid table name: " + name);
         }
+
         return execute(type.getDialect().createTable(name, schema)) > 0;
     }
 

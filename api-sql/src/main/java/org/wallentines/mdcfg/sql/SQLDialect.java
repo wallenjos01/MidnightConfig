@@ -10,10 +10,6 @@ public class SQLDialect {
 
     public static final SQLDialect STANDARD = new SQLDialect();
 
-    public String showTables() {
-        return "SHOW TABLES;";
-    }
-
     public String createTable(String name, TableSchema schema) {
         return "CREATE TABLE " + name + "(" +
                 schema.getColumnNames().stream()
@@ -80,14 +76,6 @@ public class SQLDialect {
         }
         out.append(";");
         return out.toString();
-    }
-
-
-    public static class SQLite extends SQLDialect {
-        @Override
-        public String showTables() {
-            return "SELECT name FROM sqlite_master WHERE type='table';";
-        }
     }
 
 }

@@ -27,7 +27,15 @@ public class DatabaseType {
         try {
             return new SQLConnection(this, DriverManager.getConnection("jdbc:" + prefix + url));
         } catch (SQLException ex) {
-            throw new IllegalArgumentException("Unable to connect to database with URL " + prefix + url + "!");
+            throw new IllegalArgumentException("Unable to connect to database with URL " + prefix + url + "!", ex);
+        }
+    }
+
+    public SQLConnection create(String url, String username, String password) {
+        try {
+            return new SQLConnection(this, DriverManager.getConnection("jdbc:" + prefix + url, username, password));
+        } catch (SQLException ex) {
+            throw new IllegalArgumentException("Unable to connect to database with URL " + prefix + url + "!", ex);
         }
     }
 
@@ -56,7 +64,7 @@ public class DatabaseType {
         } catch (ClassNotFoundException ex) {
             throw new NoSuchDriverException("Could not find SQLite driver!", ex);
         }
-        return new DatabaseType("sqlite:", true, new SQLDialect.SQLite());
+        return new DatabaseType("sqlite:", true, SQLDialect.STANDARD);
     }
 
     public static DatabaseType h2(ResourceType type) {
