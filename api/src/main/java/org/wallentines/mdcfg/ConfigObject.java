@@ -5,6 +5,7 @@ import org.wallentines.mdcfg.serializer.SerializeContext;
 import org.wallentines.mdcfg.serializer.SerializeResult;
 import org.wallentines.mdcfg.serializer.Serializer;
 
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +31,12 @@ public abstract class ConfigObject {
      * @return Whether the value is a ConfigSection.
      */
     public abstract boolean isSection();
+
+    /**
+     * Whether the value is a ConfigBlob
+     * @return Whether the value is a ConfigBlob
+     */
+    public abstract boolean isBlob();
 
     /**
      * Whether the value is a String value. This also means it is a primitive
@@ -75,6 +82,13 @@ public abstract class ConfigObject {
      * @throws IllegalStateException If the value is not a section
      */
     public abstract ConfigSection asSection();
+
+    /**
+     * Casts this object to a ConfigBlob and returns it
+     * @return This object as a ConfigBlob
+     * @throws IllegalStateException If the value is not a blob
+     */
+    public abstract ConfigBlob asBlob();
 
     /**
      * Copies this object
@@ -159,6 +173,13 @@ public abstract class ConfigObject {
         // Maps
         if(obj instanceof Map<?, ?>) {
             return ConfigSection.of((Map<?, ?>) obj);
+        }
+
+        // Blobs
+        if(obj instanceof ByteBuffer) {
+            return new ConfigBlob((ByteBuffer) obj);
+        } else if(obj instanceof byte[]) {
+            return new ConfigBlob((byte[]) obj);
         }
 
         throw new IllegalArgumentException("Unable to convert " + obj + " to a config object!");

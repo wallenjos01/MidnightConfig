@@ -130,6 +130,26 @@ public class ConfigPrimitive extends ConfigObject {
     }
 
     @Override
+    public ConfigPrimitive asPrimitive() {
+        return this;
+    }
+
+    @Override
+    public ConfigList asList() {
+        throw new IllegalStateException("Cannot convert a primitive to a list!");
+    }
+
+    @Override
+    public ConfigSection asSection() {
+        throw new IllegalStateException("Cannot convert a primitive to a section!");
+    }
+
+    @Override
+    public ConfigBlob asBlob() {
+        throw new IllegalStateException("Cannot convert a primitive to a blob!");
+    }
+
+    @Override
     public boolean isPrimitive() {
         return true;
     }
@@ -141,6 +161,11 @@ public class ConfigPrimitive extends ConfigObject {
 
     @Override
     public boolean isSection() {
+        return false;
+    }
+
+    @Override
+    public boolean isBlob() {
         return false;
     }
 
@@ -160,21 +185,6 @@ public class ConfigPrimitive extends ConfigObject {
     public Boolean asBoolean() {
         if(!isBoolean()) throw new IllegalStateException("Cannot convert " + value + " to a Boolean!");
         return (Boolean) value;
-    }
-
-    @Override
-    public ConfigPrimitive asPrimitive() {
-        return this;
-    }
-
-    @Override
-    public ConfigList asList() {
-        throw new IllegalStateException("Cannot convert a primitive to a list!");
-    }
-
-    @Override
-    public ConfigSection asSection() {
-        throw new IllegalStateException("Cannot convert a primitive to a ConfigSection!");
     }
 
     @Override

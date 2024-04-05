@@ -292,6 +292,11 @@ public class ConfigList extends ConfigObject {
     }
 
     @Override
+    public boolean isBlob() {
+        return false;
+    }
+
+    @Override
     public boolean isList() {
         return true;
     }
@@ -309,6 +314,11 @@ public class ConfigList extends ConfigObject {
     @Override
     public ConfigSection asSection() {
         throw new IllegalStateException("Cannot convert a list to a section!");
+    }
+
+    @Override
+    public ConfigBlob asBlob() {
+        throw new IllegalStateException("Cannot convert a list to a blob!");
     }
 
     @Override

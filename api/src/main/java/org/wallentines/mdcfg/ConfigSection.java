@@ -592,18 +592,28 @@ public class ConfigSection extends ConfigObject {
     }
 
     @Override
+    public boolean isBlob() {
+        return false;
+    }
+
+    @Override
     public ConfigPrimitive asPrimitive() {
-        throw new IllegalStateException("Unable to convert a section to a primitive!");
+        throw new IllegalStateException("Cannot convert a section to a primitive!");
     }
 
     @Override
     public ConfigList asList() {
-        throw new IllegalStateException("Unable to convert a section to a list!");
+        throw new IllegalStateException("Cannot convert a section to a list!");
     }
 
     @Override
     public ConfigSection asSection() {
         return this;
+    }
+
+    @Override
+    public ConfigBlob asBlob() {
+        throw new IllegalStateException("Cannot convert a section to a blob!");
     }
 
     @Override
