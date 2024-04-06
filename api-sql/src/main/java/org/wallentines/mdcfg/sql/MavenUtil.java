@@ -26,7 +26,7 @@ public class MavenUtil {
             URL actualUrl = new URL(url);
             URLConnection conn = actualUrl.openConnection();
 
-            SAXParser parser = SAXParserFactory.newDefaultInstance().newSAXParser();
+            SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
             LatestVersionHandler handler = new LatestVersionHandler();
             parser.parse(conn.getInputStream(), handler);
 
@@ -90,7 +90,7 @@ public class MavenUtil {
             if(version == null) {
                 return null;
             }
-            return namespace.replace(".", "/") + "/%s/%s/%s-%s.jar".formatted(id, version, id, version);
+            return namespace.replace(".", "/") + String.format("/%s/%s/%s-%s.jar", id, version, id, version);
         }
 
         public String getMetadataPath() {

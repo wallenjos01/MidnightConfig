@@ -8,12 +8,12 @@ import java.util.Map;
 
 public class DriverRepository {
 
-    private final HashMap<String, DriverSpec> registry = new HashMap<>();
+    private final Map<String, DriverSpec> registry;
     private final File folder;
 
     public DriverRepository(File folder, Map<String, DriverSpec> registry) {
         this.folder = folder;
-        this.registry.putAll(registry);
+        this.registry = Map.copyOf(registry);
     }
 
     public File getFolder() {
