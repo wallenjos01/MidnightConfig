@@ -6,6 +6,7 @@ import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.io.*;
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -61,44 +62,52 @@ public class BinaryCodec implements Codec {
 
     private <T> void encodeValue(SerializeContext<T> context, T input, DataOutputStream dos) throws IOException {
 
-        if(input == null) {
-            dos.writeByte(Type.NONE.index());
+        switch (context.getType(input)) {
+            case STRING:
+                dos.writeByte(Type.STRING.index());
+                writeString(context.asString(input), dos);
+                break;
 
-        } else if (context.isNumber(input)) {
+            case NUMBER:
+                encodeNumber(context.asNumber(input), dos);
+                break;
 
-            encodeNumber(context.asNumber(input), dos);
+            case BOOLEAN:
+                Boolean value = context.asBoolean(input);
+                dos.writeByte(Type.BOOLEAN.index());
+                dos.writeBoolean(value);
+                break;
 
-        } else if(context.isString(input)) {
+            case BLOB:
+                ByteBuffer buffer = context.asBlob(input);
+                dos.writeByte(Type.BLOB.index());
+                dos.write(buffer.capacity());
+                dos.write(buffer.array());
+                break;
 
-            dos.writeByte(Type.STRING.index());
-            writeString(context.asString(input), dos);
+            case LIST:
+                Collection<T> objects = context.asList(input);
+                dos.writeByte(Type.LIST.index());
+                dos.writeInt(objects.size());
 
-        } else if(context.isBoolean(input)) {
+                for(T o : objects) {
+                    encodeValue(context, o, dos);
+                }
+                break;
 
-            Boolean value = context.asBoolean(input);
-            dos.writeByte(Type.BOOLEAN.index());
-            dos.writeBoolean(value);
+            case MAP:
+                Map<String, T> entries = context.asOrderedMap(input);
+                dos.writeByte(Type.SECTION.index());
+                dos.writeInt(entries.size());
 
-        } else if(context.isList(input)) {
+                for(String s : entries.keySet()) {
+                    writeString(s, dos);
+                    encodeValue(context, entries.get(s), dos);
+                }
+                break;
 
-            Collection<T> objects = context.asList(input);
-            dos.writeByte(Type.LIST.index());
-            dos.writeInt(objects.size());
-
-            for(T o : objects) {
-                encodeValue(context, o, dos);
-            }
-
-        } else if(context.isMap(input)) {
-
-            Map<String, T> entries = context.asOrderedMap(input);
-            dos.writeByte(Type.SECTION.index());
-            dos.writeInt(entries.size());
-
-            for(String s : entries.keySet()) {
-                writeString(s, dos);
-                encodeValue(context, entries.get(s), dos);
-            }
+            default:
+                dos.writeByte(Type.NONE.index());
         }
     }
 
@@ -217,6 +226,25 @@ public class BinaryCodec implements Codec {
                 case BOOLEAN:
                     return context.toBoolean(stream.readBoolean());
 
+                case BLOB:
+                    int bytes = stream.readInt();
+                    if(bytes < 1) {
+                        throw new DecodeException("Unable to decode empty blob!");
+                    }
+
+                    ByteBuffer buf = ByteBuffer.allocate(bytes);
+                    int remaining = bytes;
+                    while(remaining > 0) {
+
+                        int read = stream.read(copyBuffer, 0, Math.min(remaining, copyBuffer.length));
+                        if(read <= 0) {
+                            throw new DecodeException("Unexpected EOF encountered while reading a blob!");
+                        }
+                        remaining -= read;
+                        buf.put(copyBuffer, 0, read);
+                    }
+                    return context.toBlob(buf);
+
                 case LIST: {
 
                     int length = stream.readInt();
@@ -271,15 +299,15 @@ public class BinaryCodec implements Codec {
 
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
-            int read = 0;
-            while(read < length) {
+            int remaining = length;
+            while(remaining > 0) {
 
-                int bytesRead = stream.read(copyBuffer, 0, Math.min(1024, length - read));
-                if(bytesRead == -1) {
+                int bytesRead = stream.read(copyBuffer, 0, Math.min(remaining, copyBuffer.length));
+                if(bytesRead <= 0) {
                     throw new DecodeException("Unexpected EOF encountered while reading a String!");
                 }
 
-                read += bytesRead;
+                remaining -= bytesRead;
                 bos.write(copyBuffer, 0, bytesRead);
             }
 
@@ -300,7 +328,8 @@ public class BinaryCodec implements Codec {
         STRING,
         BOOLEAN,
         LIST,
-        SECTION;
+        SECTION,
+        BLOB;
 
         int index() {
             return ordinal();

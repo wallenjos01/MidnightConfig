@@ -11,12 +11,21 @@ public class ConfigPrimitive extends ConfigObject {
     private final Object value;
 
     /**
+     * Creates a ConfigPrimitive with the given String value
+     * @param value The String value
+     * @throws IllegalArgumentException If the value is null
+     */
+    public ConfigPrimitive(String value) {
+        this(SerializeContext.Type.STRING, value);
+    }
+
+    /**
      * Creates a ConfigPrimitive with the given Number value
      * @param value The Number value
      * @throws IllegalArgumentException If the value is null
      */
     public ConfigPrimitive(Number value) {
-        this((Object) value);
+        this(SerializeContext.Type.NUMBER, value);
     }
 
     /**
@@ -25,19 +34,11 @@ public class ConfigPrimitive extends ConfigObject {
      * @throws IllegalArgumentException If the value is null
      */
     public ConfigPrimitive(Boolean value) {
-        this((Object) value);
+        this(SerializeContext.Type.BOOLEAN, value);
     }
 
-    /**
-     * Creates a ConfigPrimitive with the given String value
-     * @param value The String value
-     * @throws IllegalArgumentException If the value is null
-     */
-    public ConfigPrimitive(String value) {
-        this((Object) value);
-    }
-
-    private ConfigPrimitive(Object value) {
+    private ConfigPrimitive(SerializeContext.Type type, Object value) {
+        super(type);
         if(value == null) throw new IllegalArgumentException("Cannot construct Config Primitive from null input!");
         this.value = value;
     }
@@ -192,7 +193,7 @@ public class ConfigPrimitive extends ConfigObject {
         if(isNumber()) {
             return new ConfigPrimitive(SerializeContext.copyNumber(asNumber()));
         }
-        return new ConfigPrimitive(value);
+        return new ConfigPrimitive(type, value);
     }
 
     @Override

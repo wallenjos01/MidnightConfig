@@ -18,7 +18,9 @@ public class ConfigSection extends ConfigObject {
     /**
      * Creates an empty ConfigSection
      */
-    public ConfigSection() { }
+    public ConfigSection() {
+        super(SerializeContext.Type.MAP);
+    }
 
     /**
      * Associates the given value with the given key, overwriting any existing value if necessary

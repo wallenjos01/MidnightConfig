@@ -1,10 +1,8 @@
 package org.wallentines.mdcfg.serializer;
 
-import org.wallentines.mdcfg.ConfigList;
-import org.wallentines.mdcfg.ConfigObject;
-import org.wallentines.mdcfg.ConfigPrimitive;
-import org.wallentines.mdcfg.ConfigSection;
+import org.wallentines.mdcfg.*;
 
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -36,6 +34,12 @@ public class ConfigContext implements SerializeContext<ConfigObject> {
     }
 
     @Override
+    public ByteBuffer asBlob(ConfigObject object) {
+        if(!isBlob(object)) return null;
+        return object.asBlob().getData();
+    }
+
+    @Override
     public Collection<ConfigObject> asList(ConfigObject object) {
         if(!isList(object)) return null;
         return object.asList().values();
@@ -59,28 +63,9 @@ public class ConfigContext implements SerializeContext<ConfigObject> {
     }
 
     @Override
-    public boolean isString(ConfigObject object) {
-        return object != null && object.isPrimitive() && object.asPrimitive().isString();
-    }
-
-    @Override
-    public boolean isNumber(ConfigObject object) {
-        return object != null && object.isPrimitive() && object.asPrimitive().isNumber();
-    }
-
-    @Override
-    public boolean isBoolean(ConfigObject object) {
-        return object != null && object.isPrimitive() && object.asPrimitive().isBoolean();
-    }
-
-    @Override
-    public boolean isList(ConfigObject object) {
-        return object != null && object.isList();
-    }
-
-    @Override
-    public boolean isMap(ConfigObject object) {
-        return object != null && object.isSection();
+    public Type getType(ConfigObject object) {
+        if(object == null) return Type.UNKNOWN;
+        return object.getSerializedType();
     }
 
     @Override
@@ -111,6 +96,12 @@ public class ConfigContext implements SerializeContext<ConfigObject> {
     public ConfigObject toBoolean(Boolean object) {
         if(object == null) return null;
         return new ConfigPrimitive(object);
+    }
+
+    @Override
+    public ConfigObject toBlob(ByteBuffer object) {
+        if(object == null) return null;
+        return new ConfigBlob(object);
     }
 
     @Override

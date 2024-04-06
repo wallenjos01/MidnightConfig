@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 
@@ -35,6 +36,11 @@ public class GsonContext implements SerializeContext<JsonElement> {
     public Boolean asBoolean(JsonElement object) {
         if(!isBoolean(object)) return null;
         return object.getAsBoolean();
+    }
+
+    @Override
+    public ByteBuffer asBlob(JsonElement object) {
+        return null;
     }
 
     @Override
@@ -81,6 +87,22 @@ public class GsonContext implements SerializeContext<JsonElement> {
     }
 
     @Override
+    public Type getType(JsonElement object) {
+        if(object == null) return Type.UNKNOWN;
+        if(object.isJsonPrimitive()) {
+            JsonPrimitive prim = object.getAsJsonPrimitive();
+            if(prim.isString()) return Type.STRING;
+            if(prim.isNumber()) return Type.NUMBER;
+            if(prim.isBoolean()) return Type.BOOLEAN;
+        }
+        if(object.isJsonArray()) return Type.LIST;
+        if(object.isJsonObject()) return Type.MAP;
+        if(object.isJsonNull()) return Type.NULL;
+
+        throw new IllegalStateException("Unable to determine type of " + object);
+    }
+
+    @Override
     public Collection<String> getOrderedKeys(JsonElement object) {
         if(!isMap(object)) return null;
         return object.getAsJsonObject().keySet();
@@ -105,6 +127,11 @@ public class GsonContext implements SerializeContext<JsonElement> {
     @Override
     public JsonElement toBoolean(Boolean object) {
         return object == null ? null : new JsonPrimitive(object);
+    }
+
+    @Override
+    public JsonElement toBlob(ByteBuffer object) {
+        return null;
     }
 
     @Override

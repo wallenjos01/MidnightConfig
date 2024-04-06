@@ -2,6 +2,7 @@ package org.wallentines.mdcfg;
 
 import org.jetbrains.annotations.NotNull;
 import org.wallentines.mdcfg.serializer.ConfigContext;
+import org.wallentines.mdcfg.serializer.SerializeContext;
 import org.wallentines.mdcfg.serializer.SerializeException;
 import org.wallentines.mdcfg.serializer.Serializer;
 
@@ -18,12 +19,15 @@ public class ConfigList extends ConfigObject {
     /**
      * Creates an empty ConfigList
      */
-    public ConfigList() { }
+    public ConfigList() {
+        super(SerializeContext.Type.LIST);
+    }
 
     /**
      * Creates a ConfigList using the given values
      */
     public ConfigList(Collection<ConfigObject> collection) {
+        super(SerializeContext.Type.LIST);
         values.addAll(collection);
     }
 

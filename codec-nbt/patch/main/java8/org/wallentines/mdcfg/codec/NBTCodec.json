@@ -11,16 +11,6 @@
     "replace": "case $1: $2; break;"
   },
   {
-    "lines": [
-      {
-        "find_regex": "^            }\\n            case"
-      }
-    ],
-    "type": "replace",
-    "find": "}",
-    "replace": "break;}"
-  },
-  {
     "lines": [ "all" ],
     "type": "replace_regex",
     "find": "case ([A-Z_]+) -> \\{",
@@ -36,15 +26,6 @@
     "type": "replace_regex",
     "find": "^            }\\n            case",
     "replace": "            break; }            case"
-  },
-  {
-    "lines": [
-      {
-        "find": "case BYTE_ARRAY, INT_ARRAY, LONG_ARRAY -> {"
-      }
-    ],
-    "type": "set",
-    "value": "case BYTE_ARRAY:\ncase INT_ARRAY:\ncase LONG_ARRAY: {"
   },
   {
     "lines": [

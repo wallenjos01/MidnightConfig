@@ -2,6 +2,7 @@ package org.wallentines.mdcfg.serializer;
 
 import org.wallentines.mdcfg.ConfigPrimitive;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,6 +36,13 @@ public interface SerializeContext<T> {
     Boolean asBoolean(T object);
 
     /**
+     * Interprets the given encode-able object as a blob
+     * @param object The object to read
+     * @return A Blob, or null if the object cannot be interpreted as such
+     */
+    ByteBuffer asBlob(T object);
+
+    /**
      * Interprets the given encode-able object as a List
      * @param object The object to read
      * @return A List, or null if the object cannot be interpreted as such
@@ -55,41 +63,76 @@ public interface SerializeContext<T> {
      */
     Map<String, T> asOrderedMap(T object);
 
-
     /**
      * Determines if the given encode-able object can be interpreted as a String
      * @param object The object to inspect
      * @return Whether the object can be interpreted as a String
      */
-    boolean isString(T object);
+    default boolean isString(T object) {
+        return getType(object) == Type.STRING;
+    }
 
     /**
      * Determines if the given encode-able object can be interpreted as a Number
      * @param object The object to inspect
      * @return Whether the object can be interpreted as a Number
      */
-    boolean isNumber(T object);
+    default boolean isNumber(T object) {
+        return getType(object) == Type.NUMBER;
+    }
 
     /**
      * Determines if the given encode-able object can be interpreted as a Boolean
      * @param object The object to inspect
      * @return Whether the object can be interpreted as a Boolean
      */
-    boolean isBoolean(T object);
-
-    /**
-     * Determines if the given encode-able object can be interpreted as a List
-     * @param object The object to inspect
-     * @return Whether the object can be interpreted as a List
-     */
-    boolean isList(T object);
+    default boolean isBoolean(T object) {
+        return getType(object) == Type.BOOLEAN;
+    }
 
     /**
      * Determines if the given encode-able object can be interpreted as a Map
      * @param object The object to inspect
      * @return Whether the object can be interpreted as a Map
      */
-    boolean isMap(T object);
+    default boolean isBlob(T object) {
+        return getType(object) == Type.BLOB;
+    }
+
+    /**
+     * Determines if the given encode-able object can be interpreted as a List
+     * @param object The object to inspect
+     * @return Whether the object can be interpreted as a List
+     */
+    default boolean isList(T object) {
+        return getType(object) == Type.LIST;
+    }
+
+    /**
+     * Determines if the given encode-able object can be interpreted as a Map
+     * @param object The object to inspect
+     * @return Whether the object can be interpreted as a Map
+     */
+    default boolean isMap(T object) {
+        return getType(object) == Type.MAP;
+    }
+
+    /**
+     * Determines the basic type of the given encode-able object
+     * @param object The object to inspect
+     * @return The object's basic type.
+     */
+    Type getType(T object);
+
+    /**
+     * Determines if the two given encode-able object are of the same type
+     * @param object The object to inspect
+     * @param other The object to compare to
+     * @return Whether the two objects are the same type
+     */
+    default boolean isSimilar(T object, T other) {
+        return getType(object) == getType(other);
+    }
 
     /**
      * Gets the ordered keys for the given encode-able object, if it is a map
@@ -126,6 +169,13 @@ public interface SerializeContext<T> {
      * @return An encode-able object
      */
     T toBoolean(Boolean object);
+
+    /**
+     * Converts the given ByteBuffer into an encode-able object
+     * @param object The ByteBuffer to convert
+     * @return An encode-able object
+     */
+    T toBlob(ByteBuffer object);
 
     /**
      * Converts the given list into an encode-able object
@@ -199,10 +249,7 @@ public interface SerializeContext<T> {
             if(!isMap(value)) return copy(other);
             return mergeMap(value, other);
         }
-        if(isList(value) && isList(other) ||
-            isString(value) && isString(other) ||
-            isNumber(value) && isNumber(other) ||
-            isBoolean(value) && isBoolean(other)) {
+        if(isSimilar(value, other)) {
             return value;
         }
 
@@ -231,30 +278,29 @@ public interface SerializeContext<T> {
         if(object == null) return null;
         if(other.getClass() == getClass()) return (O) object;
 
-        if(isString(object)) {
-            return other.toString(asString(object));
-        }
-        if(isNumber(object)) {
-            return other.toNumber(asNumber(object));
-        }
-        if(isBoolean(object)) {
-            return other.toBoolean(asBoolean(object));
-        }
-        if(isList(object)) {
-            return other.toList(asList(object).stream()
-                    .map(t -> convert(other, t)).collect(Collectors.toList()));
-        }
-        if(isMap(object)) {
-
-            O out = other.toMap(new LinkedHashMap<>());
-            for(String key : getOrderedKeys(object)) {
-                T value = get(key, object);
-                other.set(key, convert(other, value), out);
+        switch (getType(object)) {
+            case STRING:
+                return other.toString(asString(object));
+            case NUMBER:
+                return other.toNumber(asNumber(object));
+            case BOOLEAN:
+                return other.toBoolean(asBoolean(object));
+            case BLOB:
+                return other.toBlob(asBlob(object));
+            case LIST:
+                return other.toList(asList(object).stream()
+                        .map(t -> convert(other, t)).collect(Collectors.toList()));
+            case MAP: {
+                O out = other.toMap(new LinkedHashMap<>());
+                for(String key : getOrderedKeys(object)) {
+                    T value = get(key, object);
+                    other.set(key, convert(other, value), out);
+                }
+                return out;
             }
-            return out;
+            default:
+                throw new SerializeException("Don't know how to convert " + object + " to another context!");
         }
-
-        throw new SerializeException("Don't know how to convert " + object + " to another context!");
     }
 
     /**
@@ -265,33 +311,34 @@ public interface SerializeContext<T> {
     default T copy(T object) {
 
         if(object == null) return null;
-        if(isString(object)) {
-            return toString(asString(object));
-        }
-        if(isNumber(object)) {
-            return toNumber(copyNumber(asNumber(object)));
-        }
-        if(isBoolean(object)) {
-            return toBoolean(asBoolean(object));
-        }
-        if(isList(object)) {
-            List<T> out = new ArrayList<>();
-            for(T value : asList(object)) {
-                out.add(copy(value));
+        switch (getType(object)) {
+            case STRING:
+                return toString(asString(object));
+            case NUMBER:
+                return toNumber(copyNumber(asNumber(object)));
+            case BOOLEAN:
+                return toBoolean(asBoolean(object));
+            case BLOB:
+                return toBlob(asBlob(object));
+            case LIST: {
+                List<T> out = new ArrayList<>();
+                for (T value : asList(object)) {
+                    out.add(copy(value));
+                }
+                return toList(out);
             }
-            return toList(out);
-        }
-        if(isMap(object)) {
-
-            T out = toMap(new LinkedHashMap<>());
-            for(String key : getOrderedKeys(object)) {
-                T value = get(key, object);
-                set(key, copy(value), out);
+            case MAP: {
+                T out = toMap(new LinkedHashMap<>());
+                for (String key : getOrderedKeys(object)) {
+                    T value = get(key, object);
+                    set(key, copy(value), out);
+                }
+                return out;
             }
-            return out;
-        }
+            default:
+                throw new SerializeException("Don't know how to clone " + object + "in this context!");
 
-        throw new SerializeException("Don't know how to clone " + object + "in this context!");
+        }
     }
 
     boolean supportsMeta(T object);
@@ -319,4 +366,15 @@ public interface SerializeContext<T> {
         return number.doubleValue();
     }
 
+
+    enum Type {
+        UNKNOWN,
+        NULL,
+        STRING,
+        NUMBER,
+        BOOLEAN,
+        BLOB,
+        LIST,
+        MAP
+    }
 }

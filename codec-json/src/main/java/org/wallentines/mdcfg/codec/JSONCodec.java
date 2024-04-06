@@ -215,27 +215,33 @@ public class JSONCodec implements Codec {
 
         private void encode(T value, String prefix, BufferedWriter writer) throws IOException {
 
-            if (context.isMap(value)) {
-                encodeMap(value, prefix, writer);
-                return;
+            switch (context.getType(value)) {
+                case STRING:
+                    writer.write("\"");
+                    writer.write(encodeString(context.asString(value)));
+                    writer.write("\"");
+                    break;
+                case NUMBER:
+                    writer.write(context.asNumber(value).toString());
+                    break;
+                case BOOLEAN:
+                    writer.write(context.asBoolean(value).toString());
+                    break;
+                case BLOB:
+                    String str = Base64.getEncoder().encode(context.asBlob(value)).asCharBuffer().toString();
+                    writer.write("\"");
+                    writer.write(str);
+                    writer.write("\"");
+                    break;
+                case LIST:
+                    encodeList(value, prefix, writer);
+                    break;
+                case MAP:
+                    encodeMap(value, prefix, writer);
+                    break;
+                default:
+                    throw new EncodeException("Unable to serialize " + value + "!");
             }
-            if (context.isList(value)) {
-                encodeList(value, prefix, writer);
-                return;
-            }
-            if (context.isString(value)) {
-                writer.write("\"" + encodeString(context.asString(value)) + "\"");
-                return;
-            }
-            if (context.isNumber(value)) {
-                writer.write(context.asNumber(value).toString());
-                return;
-            }
-            if (context.isBoolean(value)) {
-                writer.write(context.asBoolean(value).toString());
-                return;
-            }
-            throw new EncodeException("Unable to serialize " + value + "!");
 
         }
     }

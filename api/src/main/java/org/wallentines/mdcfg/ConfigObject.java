@@ -13,6 +13,11 @@ import java.util.Map;
 public abstract class ConfigObject {
 
     protected Map<String, String> meta = new HashMap<>();
+    protected final SerializeContext.Type type;
+
+    protected ConfigObject(SerializeContext.Type type) {
+        this.type = type;
+    }
 
     /**
      * Whether the value is a primitive value. (String, Number, or Boolean)
@@ -139,6 +144,14 @@ public abstract class ConfigObject {
      */
     public String getMetaProperty(String key) {
         return meta.get(key);
+    }
+
+    /**
+     * Gets the type of this object as used in SerializeContext
+     * @return The serialized type of the object
+     */
+    public SerializeContext.Type getSerializedType() {
+        return type;
     }
 
     /**
