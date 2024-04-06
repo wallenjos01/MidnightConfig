@@ -13,7 +13,9 @@ public class TestSQLite {
         SQLConnection conn = DatabaseType.sqlite().create(db.getAbsolutePath());
 
         Common.testBasics(conn);
+        Common.testWhere(conn);
 
+        conn.close();
     }
 
 }

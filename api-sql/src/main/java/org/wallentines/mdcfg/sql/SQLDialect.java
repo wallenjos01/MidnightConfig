@@ -3,6 +3,7 @@ package org.wallentines.mdcfg.sql;
 import org.jetbrains.annotations.Nullable;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
+import org.wallentines.mdcfg.Tuples;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 
 import java.util.stream.Collectors;
@@ -37,7 +38,7 @@ public class SQLDialect {
                 .append(" FROM ").append(table);
 
         if (where != null) {
-            query.append(" ").append(where);
+            query.append(" WHERE ").append(where(where));
         }
         query.append(";");
         return query.toString();
@@ -69,7 +70,7 @@ public class SQLDialect {
                 }).collect(Collectors.joining(", ")));
 
         if (where != null) {
-            query.append(" ").append(where);
+            query.append(" WHERE ").append(where(where));
         }
         query.append(";");
         return query.toString();
@@ -78,7 +79,7 @@ public class SQLDialect {
     public String delete(String table, @Nullable Where where) {
         StringBuilder out = new StringBuilder("DELETE FROM ").append(table);
         if(where != null) {
-            out.append(" ").append(where);
+            out.append(" WHERE ").append(where(where));
         }
         out.append(";");
         return out.toString();
@@ -86,6 +87,47 @@ public class SQLDialect {
 
     public String dropTable(String table) {
         return "DROP TABLE " + table + ";";
+    }
+
+    public String where(Where where) {
+
+        StringBuilder builder = new StringBuilder();
+        if(where.isInverted()) {
+            builder.append("NOT ");
+        }
+        builder.append(where.key);
+
+        switch (where.operand) {
+            case EQUALS: builder.append("=").append(where.writeArgument(0)); break;
+            case GREATER_THAN: builder.append(">").append(where.writeArgument(0)); break;
+            case LESS_THAN: builder.append("<").append(where.writeArgument(0)); break;
+            case AT_LEAST: builder.append(">=").append(where.writeArgument(0)); break;
+            case AT_MOST: builder.append("<=").append(where.writeArgument(0)); break;
+            case BETWEEN: builder.append("BETWEEN")
+                    .append(where.writeArgument(0))
+                    .append("AND")
+                    .append(where.writeArgument(1)); break;
+            case IN: {
+                builder.append("IN(");
+                for(int i = 0 ; i < where.getArgumentCount() ; i++) {
+                    builder.append(where.writeArgument(i));
+                }
+                builder.append(")");
+                break;
+            }
+        }
+
+        for(Tuples.T2<Where.Conjunction, Where> child : where.children) {
+            if(child.p1 == Where.Conjunction.AND) {
+                builder.append(" AND (");
+            } else {
+                builder.append(" OR (");
+            }
+            builder.append(where(child.p2));
+            builder.append(")");
+        }
+
+        return builder.toString();
     }
 
 
