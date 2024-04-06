@@ -47,16 +47,14 @@ public class ColumnType {
     public static final ColumnType MEDIUMINT = new ColumnType("MEDIUMINT", Reader.INT, SQLDataValue.Writer.NUMBER);
     public static final ColumnType INT = new ColumnType("INT", Reader.INT, SQLDataValue.Writer.NUMBER);
     public static final ColumnType BIGINT = new ColumnType("BIGINT", Reader.LONG, SQLDataValue.Writer.NUMBER);
-    public static ColumnType FLOAT(int digits, int decimalDigits) {
-        return new ColumnType("FLOAT(" + digits + "," + decimalDigits + ")", Reader.FLOAT, SQLDataValue.Writer.NUMBER);
+    public static ColumnType FLOAT(int precision) {
+        return new ColumnType("FLOAT(" + precision + ")", Reader.FLOAT, SQLDataValue.Writer.NUMBER);
     }
-    public static ColumnType DOUBLE(int digits, int decimalDigits) {
-        return new ColumnType("DOUBLE(" + digits + "," + decimalDigits + ")", Reader.DOUBLE, SQLDataValue.Writer.NUMBER);
-    }
-    public static ColumnType DECIMAL(int digits, int decimalDigits) {
+
+    public static ColumnType DECIMAL(int digits, int precision) {
         if(digits > 65 || digits < 1) throw new IllegalArgumentException("Invalid DECIMAL size! " + digits);
-        if(decimalDigits > 30 || decimalDigits < 1) throw new IllegalArgumentException("Invalid DECIMAL post-decimal point digits! " + decimalDigits);
-        return new ColumnType("DECIMAL(" + digits + "," + decimalDigits + ")", Reader.DOUBLE, SQLDataValue.Writer.NUMBER);
+        if(precision > 30 || precision < 1) throw new IllegalArgumentException("Invalid DECIMAL precision digits! " + precision);
+        return new ColumnType("DECIMAL(" + digits + "," + precision + ")", Reader.DOUBLE, SQLDataValue.Writer.NUMBER);
     }
 
     // Strings

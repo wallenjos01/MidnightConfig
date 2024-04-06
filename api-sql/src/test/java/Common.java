@@ -27,6 +27,51 @@ public class Common {
         Assertions.assertEquals("Test User", results.get(0).getString("name"));
     }
 
+    public static void testNumberTypes(SQLConnection conn) {
+        TableSchema schema = TableSchema.builder()
+                .withColumn("_bool", ColumnType.BOOL)
+                .withColumn("_tinyint", ColumnType.TINYINT)
+                .withColumn("_smallint", ColumnType.SMALLINT)
+                .withColumn("_mediumint", ColumnType.MEDIUMINT)
+                .withColumn("_int", ColumnType.INT)
+                .withColumn("_bigint", ColumnType.BIGINT)
+                .withColumn("_float", ColumnType.FLOAT(24))
+                .withColumn("_double", ColumnType.FLOAT(53))
+                .withColumn("_decimal", ColumnType.DECIMAL(10,5))
+                .build();
+
+        if(conn.hasTable("test_nums")) {
+            conn.dropTable("test_nums");
+        }
+
+        conn.createTable("test_nums", schema);
+
+        conn.insert("test_nums", schema, new ConfigSection()
+                .with("_bool", true)
+                .with("_tinyint", 9)
+                .with("_smallint", 12374)
+                .with("_mediumint", 12754755)
+                .with("_int", 588865932)
+                .with("_bigint", 12031984858L)
+                .with("_float", 100.0f)
+                .with("_double", 300000.0)
+                .with("_decimal", 10.12575));
+
+        List<ConfigSection> results = conn.select("test_nums", schema);
+
+        Assertions.assertEquals(1, results.size());
+        Assertions.assertTrue(results.get(0).getBoolean("_bool"));
+        Assertions.assertEquals(9, results.get(0).getInt("_tinyint"));
+        Assertions.assertEquals(12374, results.get(0).getInt("_smallint"));
+        Assertions.assertEquals(12754755, results.get(0).getInt("_mediumint"));
+        Assertions.assertEquals(588865932, results.get(0).getInt("_int"));
+        Assertions.assertEquals(12031984858L, results.get(0).getLong("_bigint"));
+        Assertions.assertEquals(100.0f, results.get(0).getFloat("_float"));
+        Assertions.assertEquals(300000.0, results.get(0).getDouble("_double"));
+        Assertions.assertEquals(10.12575, results.get(0).getDouble("_decimal"));
+
+    }
+
     public static void testWhere(SQLConnection conn) {
         TableSchema schema = TableSchema.builder()
                 .withColumn("id", ColumnType.SMALLINT)

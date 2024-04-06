@@ -13,6 +13,7 @@ public class TestH2 {
         SQLConnection conn = DatabaseType.h2(DatabaseType.ResourceType.FILE).create(db.getAbsolutePath());
 
         Common.testBasics(conn);
+        Common.testNumberTypes(conn);
         Common.testWhere(conn);
 
         conn.close();

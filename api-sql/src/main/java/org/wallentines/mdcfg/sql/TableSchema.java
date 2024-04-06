@@ -1,26 +1,40 @@
 package org.wallentines.mdcfg.sql;
 
+import org.wallentines.mdcfg.Tuples;
+
 import java.util.*;
 
 public class TableSchema {
 
-    private final Map<String, ColumnType> columns;
+    private final List<ColumnType> values = new ArrayList<>();
+    private final List<String> columnNames = new ArrayList<>();
+    private final HashMap<String, Integer> indicesByName = new HashMap<>();
 
-    private TableSchema(Map<String, ColumnType> columns) {
-        this.columns = Map.copyOf(columns);
+
+    private TableSchema(List<Tuples.T2<String, ColumnType>> columns) {
+
+        for(Tuples.T2<String, ColumnType> t : columns) {
+            int index = values.size();
+            values.add(t.p2);
+            columnNames.add(t.p1);
+            indicesByName.put(t.p1, index);
+        }
+
     }
 
     public Collection<String> getColumnNames() {
-        return columns.keySet();
+        return columnNames;
     }
 
     public ColumnType getType(String column) {
-        return columns.get(column);
+        return values.get(indicesByName.get(column));
     }
 
     public TableSchema toUpperCase() {
         Builder out = builder();
-        for(String key : columns.keySet()) out.withColumn(key.toUpperCase(), columns.get(key));
+        for(int i = 0 ; i < values.size() ; i++) {
+            out.withColumn(columnNames.get(i), values.get(i));
+        }
         return out.build();
     }
 
@@ -29,7 +43,7 @@ public class TableSchema {
     }
 
     public static class Builder {
-        Map<String, ColumnType> values = new HashMap<>();
+        List<Tuples.T2<String, ColumnType>> values = new ArrayList<>();
         public Builder() { }
 
         public Builder withColumn(String key, ColumnType value) {
@@ -38,7 +52,7 @@ public class TableSchema {
                 throw new IllegalArgumentException("Invalid column name " + key + "!");
             }
 
-            values.put(key, value);
+            values.add(new Tuples.T2<>(key, value));
             return this;
         }
 
