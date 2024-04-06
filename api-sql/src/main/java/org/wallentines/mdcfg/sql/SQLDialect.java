@@ -98,17 +98,17 @@ public class SQLDialect {
         builder.append(where.key);
 
         switch (where.operand) {
-            case EQUALS: builder.append("=").append(where.writeArgument(0)); break;
-            case GREATER_THAN: builder.append(">").append(where.writeArgument(0)); break;
-            case LESS_THAN: builder.append("<").append(where.writeArgument(0)); break;
-            case AT_LEAST: builder.append(">=").append(where.writeArgument(0)); break;
-            case AT_MOST: builder.append("<=").append(where.writeArgument(0)); break;
-            case BETWEEN: builder.append("BETWEEN")
+            case EQUALS: builder.append(" = ").append(where.writeArgument(0)); break;
+            case GREATER_THAN: builder.append(" > ").append(where.writeArgument(0)); break;
+            case LESS_THAN: builder.append(" < ").append(where.writeArgument(0)); break;
+            case AT_LEAST: builder.append(" >= ").append(where.writeArgument(0)); break;
+            case AT_MOST: builder.append(" <= ").append(where.writeArgument(0)); break;
+            case BETWEEN: builder.append(" BETWEEN ")
                     .append(where.writeArgument(0))
-                    .append("AND")
+                    .append(" AND ")
                     .append(where.writeArgument(1)); break;
             case IN: {
-                builder.append("IN(");
+                builder.append(" IN(");
                 for(int i = 0 ; i < where.getArgumentCount() ; i++) {
                     builder.append(where.writeArgument(i));
                 }
