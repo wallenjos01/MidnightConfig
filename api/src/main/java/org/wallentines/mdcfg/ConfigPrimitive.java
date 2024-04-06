@@ -39,7 +39,7 @@ public class ConfigPrimitive extends ConfigObject {
 
     private ConfigPrimitive(SerializeContext.Type type, Object value) {
         super(type);
-        if(value == null) throw new IllegalArgumentException("Cannot construct Config Primitive from null input!");
+        if(value == null && type != SerializeContext.Type.NULL) throw new IllegalArgumentException("Cannot construct Config Primitive from null input!");
         this.value = value;
     }
 
@@ -240,5 +240,7 @@ public class ConfigPrimitive extends ConfigObject {
     public static boolean isInteger(Number number) {
         return number instanceof Integer || number instanceof Long || number instanceof Short || number instanceof Byte || number instanceof BigInteger;
     }
+
+    public static final ConfigPrimitive NULL = new ConfigPrimitive(SerializeContext.Type.NULL, null);
 
 }

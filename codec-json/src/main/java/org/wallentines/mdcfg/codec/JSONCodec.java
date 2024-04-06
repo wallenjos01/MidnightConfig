@@ -239,6 +239,9 @@ public class JSONCodec implements Codec {
                 case MAP:
                     encodeMap(value, prefix, writer);
                     break;
+                case NULL:
+                    writer.write("null");
+                    break;
                 default:
                     throw new EncodeException("Unable to serialize " + value + "!");
             }
@@ -336,7 +339,7 @@ public class JSONCodec implements Codec {
                 return context.toBoolean(false);
             }
             if(value.equalsIgnoreCase("null")) {
-                return null;
+                return context.nullValue();
             }
 
             String validDigits = "0123456789.-E";

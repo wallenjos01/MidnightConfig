@@ -64,6 +64,15 @@ public interface SerializeContext<T> {
     Map<String, T> asOrderedMap(T object);
 
     /**
+     * Determines if the given encode-able object should be treated as null
+     * @param object the object to inspect
+     * @return Whether the object is null in the current context
+     */
+    default boolean isNull(T object) {
+        return getType(object) == Type.NULL;
+    }
+
+    /**
      * Determines if the given encode-able object can be interpreted as a String
      * @param object The object to inspect
      * @return Whether the object can be interpreted as a String
@@ -190,6 +199,12 @@ public interface SerializeContext<T> {
      * @return An encode-able object
      */
     T toMap(Map<String, T> map);
+
+    /**
+     * Creates a null value according to the current context
+     * @return A null value
+     */
+    T nullValue();
 
     /**
      * Merges the given list of encode-able objects into the given object, assuming it is a list

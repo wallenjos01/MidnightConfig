@@ -119,6 +119,11 @@ public class ConfigContext implements SerializeContext<ConfigObject> {
     }
 
     @Override
+    public ConfigObject nullValue() {
+        return ConfigPrimitive.NULL;
+    }
+
+    @Override
     public ConfigObject mergeList(Collection<ConfigObject> list, ConfigObject base) {
         if(!base.isList()) return null;
         if(list == null) return base;

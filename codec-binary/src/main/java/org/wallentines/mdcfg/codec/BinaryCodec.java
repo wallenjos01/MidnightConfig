@@ -106,8 +106,11 @@ public class BinaryCodec implements Codec {
                 }
                 break;
 
-            default:
+            case NULL:
                 dos.writeByte(Type.NONE.index());
+
+            default:
+                throw new EncodeException("Don't know how to encode " + input + "!");
         }
     }
 
@@ -209,7 +212,7 @@ public class BinaryCodec implements Codec {
 
             switch (t) {
                 case NONE:
-                    return null;
+                    return context.nullValue();
 
                 case INTEGER:
                 case LONG:

@@ -1,11 +1,9 @@
 package org.wallentines.mdcfg.serializer;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 
 import java.nio.ByteBuffer;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Map;
 
@@ -131,7 +129,7 @@ public class GsonContext implements SerializeContext<JsonElement> {
 
     @Override
     public JsonElement toBlob(ByteBuffer object) {
-        return null;
+        return object == null ? null : new JsonPrimitive(Base64.getEncoder().encode(object).asCharBuffer().toString());
     }
 
     @Override
@@ -150,6 +148,11 @@ public class GsonContext implements SerializeContext<JsonElement> {
             if(v != null) obj.add(k,v);
         });
         return obj;
+    }
+
+    @Override
+    public JsonElement nullValue() {
+        return JsonNull.INSTANCE;
     }
 
     @Override
