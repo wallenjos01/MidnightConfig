@@ -19,7 +19,7 @@ public class TestSQLite {
 
         TableSchema schema = TableSchema.builder()
                 .withColumn("id", ColumnType.SMALLINT)
-                .withColumn("name", ColumnType.VARCHAR(256))
+                .withColumn("name", ColumnType.VARCHAR(255))
                 .build();
 
         if(conn.getTables().contains("test")) {
