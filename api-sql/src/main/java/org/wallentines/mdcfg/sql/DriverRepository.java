@@ -20,25 +20,39 @@ public class DriverRepository {
         return folder;
     }
 
-    public void loadDriver(String name) throws IOException {
+    public boolean loadDriver(String name) {
 
         DriverSpec spec = registry.get(name);
-        if(spec.loaded) return;
+        if(spec == null) {
+            SQLUtil.LOGGER.error("Unable to find driver " + name + "!");
+            return false;
+        }
 
-        spec.finalizeVersion();
+        if(spec.loaded) return true;
+
+        if(!spec.finalizeVersion()) {
+            SQLUtil.LOGGER.error("Unable to find latest version for driver " + name + "!");
+            return false;
+        }
 
         String fileName = spec.artifact.getNamespace() + "." + spec.artifact.getId() + "." + spec.artifact.getVersion() + ".jar";
         File file = new File(folder, fileName);
 
         if(!file.exists()) {
-            MavenUtil.downloadArtifact(spec.repository, spec.artifact, file);
+            try {
+                MavenUtil.downloadArtifact(spec.repository, spec.artifact, file);
+            } catch (IOException ex) {
+                SQLUtil.LOGGER.error("Unable to download driver " + name + "!");
+                return false;
+            }
         }
 
         try(URLClassLoader loader = new URLClassLoader(new URL[] { file.toURI().toURL() }, getClass().getClassLoader())) {
 
             InputStream is = loader.getResourceAsStream("/META-INF/services/java.sql.Driver");
             if(is == null) {
-                throw new IOException("Downloaded jar does not have an SQL driver!");
+                SQLUtil.LOGGER.error("Downloaded jar does not have an SQL driver!");
+                return false;
             }
 
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -47,10 +61,17 @@ public class DriverRepository {
             try {
                 loader.loadClass(str);
             } catch (ClassNotFoundException ex) {
-                throw new IllegalStateException("Unable to find driver class!");
+                SQLUtil.LOGGER.error("Unable to find SQL driver class!", ex);
+                return false;
             }
 
             spec.loaded = true;
+            return true;
+
+        } catch (IOException ex) {
+
+            SQLUtil.LOGGER.error("An error occurred while loading an SQL driver!", ex);
+            return false;
         }
     }
 
@@ -66,11 +87,16 @@ public class DriverRepository {
             this.artifact = artifact;
         }
 
-        void finalizeVersion() {
+        boolean finalizeVersion() {
 
             if(artifact.getVersion() == null) {
-                artifact = artifact.withVersion(MavenUtil.getLatestVersion(repository, artifact));
+                String ver = MavenUtil.getLatestVersion(repository, artifact);
+                if(ver == null) {
+                    return false;
+                }
+                artifact = artifact.withVersion(ver);
             }
+            return true;
         }
 
     }
