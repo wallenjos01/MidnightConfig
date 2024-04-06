@@ -6,11 +6,13 @@ import java.sql.SQLException;
 public class DatabaseType {
 
     private final String prefix;
+    private final String driverClass;
     private final boolean singleDB;
     private final SQLDialect dialect;
 
-    public DatabaseType(String prefix, boolean singleDB, SQLDialect dialect) {
+    public DatabaseType(String prefix, String driverClass, boolean singleDB, SQLDialect dialect) {
         this.prefix = prefix;
+        this.driverClass = driverClass;
         this.singleDB = singleDB;
         this.dialect = dialect;
     }
@@ -40,14 +42,11 @@ public class DatabaseType {
     }
 
 
-    public static DatabaseType mysql() {
-        try {
-            Class.forName("com.mysql.jdbc.Driver");
-        } catch (ClassNotFoundException ex) {
-            throw new NoSuchDriverException("Could not find MySQL driver!", ex);
-        }
-        return new DatabaseType("mysql://", false, SQLDialect.STANDARD);
-    }
+    public static final DatabaseType MYSQL = new DatabaseType("mysql://", "com.mysql.cj.jdbc.Driver", false, SQLDialect.STANDARD);
+    public static final DatabaseType MARIADB = new DatabaseType("mariadb://", "org.mariadb.jdbc.Driver", false, SQLDialect.STANDARD);
+    public static final DatabaseType SQLITE = new DatabaseType("sqlite:", "org.sqlite.JDBC", true, SQLDialect.STANDARD);
+    public static final DatabaseType H2 = new DatabaseType("h2:file:", "org.h2.Driver", true, SQLDialect.STANDARD);
+
 
     public static DatabaseType mariadb() {
         try {
@@ -55,7 +54,7 @@ public class DatabaseType {
         } catch (ClassNotFoundException ex) {
             throw new NoSuchDriverException("Could not find MariaDB driver!", ex);
         }
-        return new DatabaseType("mariadb://", false, SQLDialect.STANDARD);
+        return MARIADB;
     }
 
     public static DatabaseType sqlite() {
@@ -64,7 +63,7 @@ public class DatabaseType {
         } catch (ClassNotFoundException ex) {
             throw new NoSuchDriverException("Could not find SQLite driver!", ex);
         }
-        return new DatabaseType("sqlite:", true, SQLDialect.STANDARD);
+        return SQLITE;
     }
 
     public static DatabaseType h2(ResourceType type) {
@@ -89,7 +88,7 @@ public class DatabaseType {
                 break;
         }
 
-        return new DatabaseType("h2:" + prefix, true, SQLDialect.STANDARD);
+        return new DatabaseType("h2:" + prefix, "org.h2.Driver", true, SQLDialect.H2);
     }
 
     public enum ResourceType {

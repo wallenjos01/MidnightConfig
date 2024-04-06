@@ -1,7 +1,6 @@
 import org.junit.jupiter.api.Assertions;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.sql.ColumnType;
-import org.wallentines.mdcfg.sql.DatabaseType;
 import org.wallentines.mdcfg.sql.SQLConnection;
 import org.wallentines.mdcfg.sql.TableSchema;
 
@@ -15,7 +14,7 @@ public class Common {
                 .withColumn("name", ColumnType.TINYTEXT)
                 .build();
 
-        if(conn.getTables().contains("test")) {
+        if(conn.hasTable("test")) {
             conn.dropTable("test");
         }
 

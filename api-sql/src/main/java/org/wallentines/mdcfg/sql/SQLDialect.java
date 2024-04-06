@@ -8,7 +8,14 @@ import java.util.stream.Collectors;
 
 public class SQLDialect {
 
-    public static final SQLDialect STANDARD = new SQLDialect();
+    public static final SQLDialect STANDARD = new SQLDialect(false);
+
+    public final boolean namesAreUppercase;
+
+    protected SQLDialect(boolean namesAreUppercase) {
+        this.namesAreUppercase = namesAreUppercase;
+    }
+
 
     public String createTable(String name, TableSchema schema) {
         return "CREATE TABLE " + name + "(" +
@@ -46,7 +53,7 @@ public class SQLDialect {
                     ConfigObject obj = row.get(key);
                     if (obj == null) throw new IllegalArgumentException("Row missing required value " + key + "!");
                     if (!obj.isPrimitive()) throw new IllegalArgumentException("Value " + key + " is not a primitive!");
-                    return SQLUtil.encodePrimitive(obj.asPrimitive());
+                    return schema.getType(key).write(obj.asPrimitive());
                 }).collect(Collectors.joining(", ")) +
                 ");";
     }
@@ -59,7 +66,7 @@ public class SQLDialect {
                     ConfigObject obj = row.get(key);
                     if (obj == null) throw new IllegalArgumentException("Row missing required value " + key + "!");
                     if (!obj.isPrimitive()) throw new IllegalArgumentException("Value " + key + " is not a primitive!");
-                    return key + " = " + SQLUtil.encodePrimitive(obj.asPrimitive());
+                    return key + " = " + schema.getType(key).write(obj.asPrimitive());
                 }).collect(Collectors.joining(", ")));
 
         if (where != null) {
@@ -81,5 +88,8 @@ public class SQLDialect {
     public String dropTable(String table) {
         return "DROP TABLE " + table + ";";
     }
+
+
+    public static final SQLDialect H2 = new SQLDialect(true);
 
 }

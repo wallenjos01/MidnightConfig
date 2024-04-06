@@ -29,6 +29,10 @@ public class SQLConnection implements AutoCloseable {
         }
     }
 
+    public DatabaseType getType() {
+        return type;
+    }
+
     @Nullable
     public String getActiveDatabase() {
         return db;
@@ -51,11 +55,17 @@ public class SQLConnection implements AutoCloseable {
         return out;
     }
 
+    public boolean hasTable(String name) {
+        if(type.getDialect().namesAreUppercase) {
+            name = name.toUpperCase();
+        }
+        return getTables().contains(name);
+    }
+
     public void createTable(String name, TableSchema schema) {
         if (!SQLUtil.VALID_NAME.matcher(name).matches()) {
             throw new IllegalArgumentException("Invalid table name: " + name);
         }
-
         execute(type.getDialect().createTable(name, schema));
     }
 
@@ -75,6 +85,7 @@ public class SQLConnection implements AutoCloseable {
         }
         try {
             Statement out = internal.createStatement();
+            out.closeOnCompletion();
             out.execute(statement);
             return out.getUpdateCount();
         } catch (SQLException ex) {

@@ -18,6 +18,12 @@ public class TableSchema {
         return columns.get(column);
     }
 
+    public TableSchema toUpperCase() {
+        Builder out = builder();
+        for(String key : columns.keySet()) out.withColumn(key.toUpperCase(), columns.get(key));
+        return out.build();
+    }
+
     public static Builder builder() {
         return new Builder();
     }
