@@ -55,7 +55,6 @@ public class NBTCodec implements Codec {
                     int size = buf.position();
                     buf.position(0);
 
-                    dos.writeByte(TagType.BYTE_ARRAY.getValue());
                     dos.writeInt(size);
 
                     byte[] copyBuffer = new byte[1024];

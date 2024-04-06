@@ -4,6 +4,7 @@ import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 public class ConfigBlob extends ConfigObject {
 
@@ -74,5 +75,26 @@ public class ConfigBlob extends ConfigObject {
     @Override
     public ConfigObject copy() {
         return new ConfigBlob(data.duplicate());
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ConfigBlob that = (ConfigBlob) o;
+        return Objects.equals(data, that.data);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(data);
+    }
+
+    @Override
+    public String toString() {
+        return "ConfigBlob{" +
+                "data=" + data +
+                '}';
     }
 }
