@@ -98,7 +98,15 @@ public class DriverRepository {
             }
             return true;
         }
+    }
 
+    public static final Map<String, DriverSpec> DEFAULT_DRIVERS = new HashMap<>();
+
+    static {
+        DEFAULT_DRIVERS.put("mysql", new DriverSpec("https://repo1.maven.org/maven2/", new MavenUtil.ArtifactSpec("com.mysql", "mysql-connector-j", null)));
+        DEFAULT_DRIVERS.put("mariadb", new DriverSpec("https://repo1.maven.org/maven2/", new MavenUtil.ArtifactSpec("org.mariadb.jdbc", "mariadb-java-client", null)));
+        DEFAULT_DRIVERS.put("sqlite", new DriverSpec("https://repo1.maven.org/maven2/", new MavenUtil.ArtifactSpec("org.xerial", "sqlite-jdbc", null)));
+        DEFAULT_DRIVERS.put("h2", new DriverSpec("https://repo1.maven.org/maven2/", new MavenUtil.ArtifactSpec("com.h2database", "h2", null)));
     }
 
 }
