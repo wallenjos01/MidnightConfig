@@ -1,5 +1,6 @@
 package org.wallentines.mdcfg;
 
+import org.jetbrains.annotations.Nullable;
 import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.math.BigInteger;
@@ -239,6 +240,34 @@ public class ConfigPrimitive extends ConfigObject {
      */
     public static boolean isInteger(Number number) {
         return number instanceof Integer || number instanceof Long || number instanceof Short || number instanceof Byte || number instanceof BigInteger;
+    }
+
+
+    /**
+     * Creates a new config primitive with the given value, or returns ConfigPrimitive#NULL the given value is null
+     * @param value The value
+     * @return A config primitive
+     */
+    public static ConfigPrimitive createNullable(@Nullable String value) {
+        return value == null ? NULL : new ConfigPrimitive(value);
+    }
+
+    /**
+     * Creates a new config primitive with the given value, or returns ConfigPrimitive#NULL the given value is null
+     * @param value The value
+     * @return A config primitive
+     */
+    public static ConfigPrimitive createNullable(@Nullable Number value) {
+        return value == null ? NULL : new ConfigPrimitive(value);
+    }
+
+    /**
+     * Creates a new config primitive with the given value, or returns ConfigPrimitive#NULL the given value is null
+     * @param value The value
+     * @return A config primitive
+     */
+    public static ConfigPrimitive createNullable(@Nullable Boolean value) {
+        return value == null ? NULL : new ConfigPrimitive(value);
     }
 
     public static final ConfigPrimitive NULL = new ConfigPrimitive(SerializeContext.Type.NULL, null);
