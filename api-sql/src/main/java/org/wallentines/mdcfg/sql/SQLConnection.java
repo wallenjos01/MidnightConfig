@@ -51,24 +51,22 @@ public class SQLConnection implements AutoCloseable {
         return out;
     }
 
-    public boolean createTable(String name, TableSchema schema) {
+    public void createTable(String name, TableSchema schema) {
         if (!SQLUtil.VALID_NAME.matcher(name).matches()) {
             throw new IllegalArgumentException("Invalid table name: " + name);
         }
 
-        return execute(type.getDialect().createTable(name, schema)) > 0;
+        execute(type.getDialect().createTable(name, schema));
     }
 
-    public boolean setActiveDatabase(String db) {
-        if(type.isSingleDB()) return false;
+    public void setActiveDatabase(String db) {
+        if(type.isSingleDB()) return;
         if (!SQLUtil.VALID_NAME.matcher(db).matches()) {
             throw new IllegalArgumentException("Invalid database name: " + db);
         }
         if(execute(type.getDialect().useDB(db)) > 0) {
             this.db = db;
-            return true;
         }
-        return false;
     }
 
     private int execute(String statement) {
@@ -124,6 +122,10 @@ public class SQLConnection implements AutoCloseable {
 
     public void clearTable(String table) {
         delete(table, null);
+    }
+
+    public void dropTable(String table) {
+        execute(type.getDialect().dropTable(table));
     }
 
     @Override

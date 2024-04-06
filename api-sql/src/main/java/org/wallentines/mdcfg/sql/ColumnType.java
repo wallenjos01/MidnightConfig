@@ -59,7 +59,7 @@ public class ColumnType {
         if(length > 0xFFFF || length < 0) throw new IllegalArgumentException("Invalid VARCHAR length! " + length);
         return new ColumnType("VARCHAR(" + length + ")", Reader.STRING);
     }
-    public static ColumnType TINYTEXT = new ColumnType("TINYTEXT", Reader.STRING);
+    public static final ColumnType TINYTEXT = new ColumnType("TINYTEXT", Reader.STRING);
     public static ColumnType TEXT(int size) {
         if(size > 0xFFFF || size < 0) throw new IllegalArgumentException("Invalid TEXT length! " + size);
         return new ColumnType("TEXT(" + size + ")", Reader.BLOB);
@@ -74,7 +74,7 @@ public class ColumnType {
     }
 
     // Blobs
-    public static ColumnType TINYBLOB = new ColumnType("TINYBLOB", Reader.BLOB);
+    public static final ColumnType TINYBLOB = new ColumnType("TINYBLOB", Reader.BLOB);
     public static ColumnType BLOB(int size) {
         if(size > 0xFFFF || size < 0) throw new IllegalArgumentException("Invalid BLOB length! " + size);
         return new ColumnType("BLOB(" + size + ")", Reader.BLOB);
@@ -92,17 +92,18 @@ public class ColumnType {
     public interface Reader {
         ConfigObject get(ResultSet set, String str) throws SQLException;
 
-        Reader STRING = (set, str) -> new ConfigPrimitive(set.getString(str));
-        Reader NSTRING = (set, str) -> new ConfigPrimitive(set.getNString(str));
-        Reader BOOLEAN = (set, str) -> new ConfigPrimitive(set.getBoolean(str));
-        Reader BYTE = (set, str) -> new ConfigPrimitive(set.getByte(str));
-        Reader SHORT = (set, str) -> new ConfigPrimitive(set.getShort(str));
-        Reader INT = (set, str) -> new ConfigPrimitive(set.getInt(str));
-        Reader LONG = (set, str) -> new ConfigPrimitive(set.getLong(str));
-        Reader FLOAT = (set, str) -> new ConfigPrimitive(set.getFloat(str));
-        Reader DOUBLE = (set, str) -> new ConfigPrimitive(set.getDouble(str));
+        Reader STRING = (set, str) -> ConfigPrimitive.createNullable(set.getString(str));
+        Reader NSTRING = (set, str) -> ConfigPrimitive.createNullable(set.getNString(str));
+        Reader BOOLEAN = (set, str) -> ConfigPrimitive.createNullable(set.getBoolean(str));
+        Reader BYTE = (set, str) -> ConfigPrimitive.createNullable(set.getByte(str));
+        Reader SHORT = (set, str) -> ConfigPrimitive.createNullable(set.getShort(str));
+        Reader INT = (set, str) -> ConfigPrimitive.createNullable(set.getInt(str));
+        Reader LONG = (set, str) -> ConfigPrimitive.createNullable(set.getLong(str));
+        Reader FLOAT = (set, str) -> ConfigPrimitive.createNullable(set.getFloat(str));
+        Reader DOUBLE = (set, str) -> ConfigPrimitive.createNullable(set.getDouble(str));
         Reader BLOB = (set, str) -> {
             Blob b = set.getBlob(str);
+            if(b == null) return ConfigPrimitive.NULL;
             return new ConfigBlob(b.getBytes(0, (int) b.length()));
         };
 

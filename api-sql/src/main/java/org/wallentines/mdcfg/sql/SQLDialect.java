@@ -78,4 +78,8 @@ public class SQLDialect {
         return out.toString();
     }
 
+    public String dropTable(String table) {
+        return "DROP TABLE " + table + ";";
+    }
+
 }
