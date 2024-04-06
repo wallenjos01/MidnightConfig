@@ -3,6 +3,7 @@ package org.wallentines.mdcfg.sql;
 import org.jetbrains.annotations.Nullable;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
+import org.wallentines.mdcfg.serializer.ConfigContext;
 
 import java.util.stream.Collectors;
 
@@ -52,8 +53,7 @@ public class SQLDialect {
                 schema.getColumnNames().stream().map(key -> {
                     ConfigObject obj = row.get(key);
                     if (obj == null) throw new IllegalArgumentException("Row missing required value " + key + "!");
-                    if (!obj.isPrimitive()) throw new IllegalArgumentException("Value " + key + " is not a primitive!");
-                    return schema.getType(key).write(obj.asPrimitive());
+                    return schema.getType(key).getWriter().write(ConfigContext.INSTANCE, obj);
                 }).collect(Collectors.joining(", ")) +
                 ");";
     }
@@ -65,8 +65,7 @@ public class SQLDialect {
                 schema.getColumnNames().stream().map(key -> {
                     ConfigObject obj = row.get(key);
                     if (obj == null) throw new IllegalArgumentException("Row missing required value " + key + "!");
-                    if (!obj.isPrimitive()) throw new IllegalArgumentException("Value " + key + " is not a primitive!");
-                    return key + " = " + schema.getType(key).write(obj.asPrimitive());
+                    return key + " = " + schema.getType(key).getWriter().write(ConfigContext.INSTANCE, obj);
                 }).collect(Collectors.joining(", ")));
 
         if (where != null) {

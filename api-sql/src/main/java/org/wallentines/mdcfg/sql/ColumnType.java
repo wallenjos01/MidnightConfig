@@ -1,9 +1,8 @@
 package org.wallentines.mdcfg.sql;
 
-import org.wallentines.mdcfg.ConfigBlob;
-import org.wallentines.mdcfg.ConfigObject;
-import org.wallentines.mdcfg.ConfigPrimitive;
+import org.wallentines.mdcfg.serializer.SerializeContext;
 
+import java.nio.ByteBuffer;
 import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,9 +11,10 @@ public class ColumnType {
 
     private final String encoded; // i.e. VARCHAR(256)
     private final Reader reader;
-    private final Writer writer;
+    private final SQLDataValue.Writer writer;
 
-    public ColumnType(String encoded, Reader reader, Writer writer) {
+
+    public ColumnType(String encoded, Reader reader, SQLDataValue.Writer writer) {
         this.encoded = encoded;
         this.reader = reader;
         this.writer = writer;
@@ -24,105 +24,158 @@ public class ColumnType {
         return encoded;
     }
 
-    public ConfigObject read(ResultSet results, String column) {
+    public <T> SQLDataValue<T> read(SerializeContext<T> ctx, ResultSet results, String column) {
         try {
-            return reader.get(results, column);
+            return new SQLDataValue<>(writer, ctx, reader.get(ctx, results, column));
         } catch (SQLException ex) {
             throw new IllegalArgumentException("Unable to read type " + encoded + " from column " + column + "!");
         }
     }
 
-    public String write(ConfigObject obj) {
-        return writer.write(obj);
+    public <T> SQLDataValue<T> create(SerializeContext<T> ctx, T value) {
+        return new SQLDataValue<>(writer, ctx, value);
+    }
+
+    public SQLDataValue.Writer getWriter() {
+        return writer;
     }
 
     // Numbers
-    public static final ColumnType BOOL = new ColumnType("BOOL", Reader.BOOLEAN, Writer.BOOLEAN);
-    public static final ColumnType TINYINT = new ColumnType("TINYINT", Reader.BYTE, Writer.NUMBER);
-    public static final ColumnType SMALLINT = new ColumnType("SMALLINT", Reader.SHORT, Writer.NUMBER);
-    public static final ColumnType MEDIUMINT = new ColumnType("MEDIUMINT", Reader.INT, Writer.NUMBER);
-    public static final ColumnType INT = new ColumnType("INT", Reader.INT, Writer.NUMBER);
-    public static final ColumnType BIGINT = new ColumnType("BIGINT", Reader.LONG, Writer.NUMBER);
+    public static final ColumnType BOOL = new ColumnType("BOOL", Reader.BOOLEAN, SQLDataValue.Writer.BOOLEAN);
+    public static final ColumnType TINYINT = new ColumnType("TINYINT", Reader.BYTE, SQLDataValue.Writer.NUMBER);
+    public static final ColumnType SMALLINT = new ColumnType("SMALLINT", Reader.SHORT, SQLDataValue.Writer.NUMBER);
+    public static final ColumnType MEDIUMINT = new ColumnType("MEDIUMINT", Reader.INT, SQLDataValue.Writer.NUMBER);
+    public static final ColumnType INT = new ColumnType("INT", Reader.INT, SQLDataValue.Writer.NUMBER);
+    public static final ColumnType BIGINT = new ColumnType("BIGINT", Reader.LONG, SQLDataValue.Writer.NUMBER);
     public static ColumnType FLOAT(int digits, int decimalDigits) {
-        return new ColumnType("FLOAT(" + digits + "," + decimalDigits + ")", Reader.FLOAT, Writer.NUMBER);
+        return new ColumnType("FLOAT(" + digits + "," + decimalDigits + ")", Reader.FLOAT, SQLDataValue.Writer.NUMBER);
     }
     public static ColumnType DOUBLE(int digits, int decimalDigits) {
-        return new ColumnType("DOUBLE(" + digits + "," + decimalDigits + ")", Reader.DOUBLE, Writer.NUMBER);
+        return new ColumnType("DOUBLE(" + digits + "," + decimalDigits + ")", Reader.DOUBLE, SQLDataValue.Writer.NUMBER);
     }
     public static ColumnType DECIMAL(int digits, int decimalDigits) {
         if(digits > 65 || digits < 1) throw new IllegalArgumentException("Invalid DECIMAL size! " + digits);
         if(decimalDigits > 30 || decimalDigits < 1) throw new IllegalArgumentException("Invalid DECIMAL post-decimal point digits! " + decimalDigits);
-        return new ColumnType("DECIMAL(" + digits + "," + decimalDigits + ")", Reader.DOUBLE, Writer.NUMBER);
+        return new ColumnType("DECIMAL(" + digits + "," + decimalDigits + ")", Reader.DOUBLE, SQLDataValue.Writer.NUMBER);
     }
 
     // Strings
     public static ColumnType CHAR(int length) {
         if(length > 0xFF || length < 0) throw new IllegalArgumentException("Invalid VARCHAR length! " + length);
-        return new ColumnType("CHAR(" + length + ")", Reader.STRING, Writer.STRING);
+        return new ColumnType("CHAR(" + length + ")", Reader.STRING, SQLDataValue.Writer.STRING);
     }
 
     public static ColumnType VARCHAR(int length) {
         if(length > 0xFFFF || length < 0) throw new IllegalArgumentException("Invalid VARCHAR length! " + length);
-        return new ColumnType("VARCHAR(" + length + ")", Reader.STRING, Writer.STRING);
+        return new ColumnType("VARCHAR(" + length + ")", Reader.STRING, SQLDataValue.Writer.STRING);
     }
-    public static final ColumnType TINYTEXT = new ColumnType("TINYTEXT", Reader.STRING, Writer.STRING);
+    public static final ColumnType TINYTEXT = new ColumnType("TINYTEXT", Reader.STRING, SQLDataValue.Writer.STRING);
     public static ColumnType TEXT(int size) {
         if(size > 0xFFFF || size < 0) throw new IllegalArgumentException("Invalid TEXT length! " + size);
-        return new ColumnType("TEXT(" + size + ")", Reader.STRING, Writer.STRING);
+        return new ColumnType("TEXT(" + size + ")", Reader.STRING, SQLDataValue.Writer.STRING);
     }
     public static ColumnType MEDIUMTEXT(int size) {
         if(size > 0xFFFFFF || size < 0) throw new IllegalArgumentException("Invalid MEDIUMTEXT length! " + size);
-        return new ColumnType("MEDIUMTEXT(" + size + ")", Reader.STRING, Writer.STRING);
+        return new ColumnType("MEDIUMTEXT(" + size + ")", Reader.STRING, SQLDataValue.Writer.STRING);
     }
     public static ColumnType LONGTEXT(long size) {
         if(size > 0xFFFFFFFFL || size < 0) throw new IllegalArgumentException("Invalid LONGTEXT length! " + size);
-        return new ColumnType("LONGTEXT(" + size + ")", Reader.STRING, Writer.STRING);
+        return new ColumnType("LONGTEXT(" + size + ")", Reader.STRING, SQLDataValue.Writer.STRING);
     }
 
     // Blobs
-    public static final ColumnType TINYBLOB = new ColumnType("TINYBLOB", Reader.BLOB, Writer.BLOB);
+    public static final ColumnType TINYBLOB = new ColumnType("TINYBLOB", Reader.BLOB, SQLDataValue.Writer.BLOB);
     public static ColumnType BLOB(int size) {
         if(size > 0xFFFF || size < 0) throw new IllegalArgumentException("Invalid BLOB length! " + size);
-        return new ColumnType("BLOB(" + size + ")", Reader.BLOB, Writer.BLOB);
+        return new ColumnType("BLOB(" + size + ")", Reader.BLOB, SQLDataValue.Writer.BLOB);
     }
     public static ColumnType MEDIUMBLOB(int size) {
         if(size > 0xFFFFFF || size < 0) throw new IllegalArgumentException("Invalid MEDIUMBLOB length! " + size);
-        return new ColumnType("MEDIUMBLOB(" + size + ")", Reader.BLOB, Writer.BLOB);
+        return new ColumnType("MEDIUMBLOB(" + size + ")", Reader.BLOB, SQLDataValue.Writer.BLOB);
     }
     public static ColumnType LONGBLOB(long size) {
         if(size > 0xFFFFFFFFL || size < 0) throw new IllegalArgumentException("Invalid LONGBLOB length! " + size);
-        return new ColumnType("LONGBLOB(" + size + ")", Reader.BLOB, Writer.BLOB);
+        return new ColumnType("LONGBLOB(" + size + ")", Reader.BLOB, SQLDataValue.Writer.BLOB);
     }
 
 
     public interface Reader {
-        ConfigObject get(ResultSet set, String str) throws SQLException;
+        <T> T get(SerializeContext<T> ctx, ResultSet set, String str) throws SQLException;
 
-        Reader STRING = (set, str) -> ConfigPrimitive.createNullable(set.getString(str));
-        Reader NSTRING = (set, str) -> ConfigPrimitive.createNullable(set.getNString(str));
-        Reader BOOLEAN = (set, str) -> ConfigPrimitive.createNullable(set.getBoolean(str));
-        Reader BYTE = (set, str) -> ConfigPrimitive.createNullable(set.getByte(str));
-        Reader SHORT = (set, str) -> ConfigPrimitive.createNullable(set.getShort(str));
-        Reader INT = (set, str) -> ConfigPrimitive.createNullable(set.getInt(str));
-        Reader LONG = (set, str) -> ConfigPrimitive.createNullable(set.getLong(str));
-        Reader FLOAT = (set, str) -> ConfigPrimitive.createNullable(set.getFloat(str));
-        Reader DOUBLE = (set, str) -> ConfigPrimitive.createNullable(set.getDouble(str));
-        Reader BLOB = (set, str) -> {
-            Blob b = set.getBlob(str);
-            if(b == null) return ConfigPrimitive.NULL;
-            return new ConfigBlob(b.getBytes(0, (int) b.length()));
+        Reader STRING = new Reader() {
+            @Override
+            public <T> T get(SerializeContext<T> ctx, ResultSet set, String str) throws SQLException {
+                return ctx.toString(set.getString(str));
+            }
+        };
+
+        Reader NSTRING = new Reader() {
+            @Override
+            public <T> T get(SerializeContext<T> ctx, ResultSet set, String str) throws SQLException {
+                return ctx.toString(set.getNString(str));
+            }
+        };
+
+        Reader BOOLEAN = new Reader() {
+            @Override
+            public <T> T get(SerializeContext<T> ctx, ResultSet set, String str) throws SQLException {
+                return ctx.toBoolean(set.getBoolean(str));
+            }
+        };
+
+        Reader BYTE = new Reader() {
+            @Override
+            public <T> T get(SerializeContext<T> ctx, ResultSet set, String str) throws SQLException {
+                return ctx.toNumber(set.getByte(str));
+            }
+        };
+
+        Reader SHORT = new Reader() {
+            @Override
+            public <T> T get(SerializeContext<T> ctx, ResultSet set, String str) throws SQLException {
+                return ctx.toNumber(set.getShort(str));
+            }
+        };
+
+        Reader INT = new Reader() {
+            @Override
+            public <T> T get(SerializeContext<T> ctx, ResultSet set, String str) throws SQLException {
+                return ctx.toNumber(set.getInt(str));
+            }
+        };
+
+        Reader LONG = new Reader() {
+            @Override
+            public <T> T get(SerializeContext<T> ctx, ResultSet set, String str) throws SQLException {
+                return ctx.toNumber(set.getLong(str));
+            }
+        };
+
+        Reader FLOAT = new Reader() {
+            @Override
+            public <T> T get(SerializeContext<T> ctx, ResultSet set, String str) throws SQLException {
+                return ctx.toNumber(set.getFloat(str));
+            }
+        };
+
+        Reader DOUBLE = new Reader() {
+            @Override
+            public <T> T get(SerializeContext<T> ctx, ResultSet set, String str) throws SQLException {
+                return ctx.toNumber(set.getDouble(str));
+            }
+        };
+
+        Reader BLOB = new Reader() {
+            @Override
+            public <T> T get(SerializeContext<T> ctx, ResultSet set, String str) throws SQLException {
+                Blob b = set.getBlob(str);
+                ByteBuffer out = ByteBuffer.allocate((int) b.length());
+                out.put(b.getBytes(0, (int) b.length()));
+                return ctx.toBlob(out);
+            }
         };
 
     }
 
-    public interface Writer {
-        String write(ConfigObject obj);
-
-        Writer STRING = (obj) -> "'" + obj.asString() + "'";
-        Writer BOOLEAN = (obj) -> obj.asBoolean() ? "1": "0";
-        Writer NUMBER = (obj) -> obj.asNumber().toString();
-        Writer BLOB = (obj) -> obj.asBlob().getData().asCharBuffer().toString();
-
-    }
 
 }

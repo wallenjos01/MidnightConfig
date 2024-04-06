@@ -31,43 +31,43 @@ public class Where {
 
     public static Where equals(String key, ConfigObject value) {
         if(!SQLUtil.VALID_NAME.matcher(key).matches()) throw new IllegalArgumentException("Invalid column name: " + key);
-        return new Where(new StringBuilder(key).append(" = ").append(value)); // TODO: Move to SQLDialect
+        return new Where(new StringBuilder(key).append(" = ").append(value));
     }
 
-    public static Where greaterThan(String key, Number value) {
+    public static Where greaterThan(String key, SQLDataValue<?> value) {
         if(!SQLUtil.VALID_NAME.matcher(key).matches()) throw new IllegalArgumentException("Invalid column name: " + key);
         return new Where(new StringBuilder(key).append(" > ").append(value));
     }
 
-    public static Where lessThan(String key, Number value) {
+    public static Where lessThan(String key, SQLDataValue<?> value) {
         if(!SQLUtil.VALID_NAME.matcher(key).matches()) throw new IllegalArgumentException("Invalid column name: " + key);
         return new Where(new StringBuilder(key).append(" < ").append(value));
     }
 
-    public static Where atLeast(String key, Number value) {
+    public static Where atLeast(String key, SQLDataValue<?> value) {
         if(!SQLUtil.VALID_NAME.matcher(key).matches()) throw new IllegalArgumentException("Invalid column name: " + key);
         return new Where(new StringBuilder(key).append(" >= ").append(value));
     }
 
-    public static Where atMost(String key, Number value) {
+    public static Where atMost(String key, SQLDataValue<?> value) {
         if(!SQLUtil.VALID_NAME.matcher(key).matches()) throw new IllegalArgumentException("Invalid column name: " + key);
         return new Where(new StringBuilder(key).append(" <= ").append(value));
     }
 
-    public static Where not(String key, Number value) {
+    public static Where not(String key, SQLDataValue<?> value) {
         if(!SQLUtil.VALID_NAME.matcher(key).matches()) throw new IllegalArgumentException("Invalid column name: " + key);
         return new Where(new StringBuilder(key).append(" <= ").append(value));
     }
 
-    public static <T extends Number> Where between(String key, T min, T max) {
+    public static <T extends SQLDataValue<?>> Where between(String key, T min, T max) {
         if(!SQLUtil.VALID_NAME.matcher(key).matches()) throw new IllegalArgumentException("Invalid column name: " + key);
         return new Where(new StringBuilder(key).append(" BETWEEN ").append(min).append(" AND ").append(max));
     }
 
-    public static Where in(String key, Stream<ConfigPrimitive> values) {
+    public static Where in(String key, Stream<SQLDataValue<?>> values) {
         if(!SQLUtil.VALID_NAME.matcher(key).matches()) throw new IllegalArgumentException("Invalid column name: " + key);
         return new Where(new StringBuilder(key).append(" IN (").append(values
-                .map(Object::toString) // TODO: Move to SQLDialect
+                .map(SQLDataValue::write)
                 .collect(Collectors.joining(","))).append(")"));
     }
 
