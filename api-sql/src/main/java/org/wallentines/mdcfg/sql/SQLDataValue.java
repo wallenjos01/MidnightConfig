@@ -6,8 +6,6 @@ import org.wallentines.mdcfg.ConfigPrimitive;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.serializer.SerializeContext;
 
-import java.nio.ByteBuffer;
-
 public class SQLDataValue<T> {
 
     private final Writer writer;

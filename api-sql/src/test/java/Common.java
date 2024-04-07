@@ -50,7 +50,7 @@ public class Common {
                 .with("_bool", true)
                 .with("_tinyint", 9)
                 .with("_smallint", 12374)
-                .with("_mediumint", 12754755)
+                .with("_mediumint", 8383307)
                 .with("_int", 588865932)
                 .with("_bigint", 12031984858L)
                 .with("_float", 100.0f)
@@ -63,7 +63,7 @@ public class Common {
         Assertions.assertTrue(results.get(0).getBoolean("_bool"));
         Assertions.assertEquals(9, results.get(0).getInt("_tinyint"));
         Assertions.assertEquals(12374, results.get(0).getInt("_smallint"));
-        Assertions.assertEquals(12754755, results.get(0).getInt("_mediumint"));
+        Assertions.assertEquals(8383307, results.get(0).getInt("_mediumint"));
         Assertions.assertEquals(588865932, results.get(0).getInt("_int"));
         Assertions.assertEquals(12031984858L, results.get(0).getLong("_bigint"));
         Assertions.assertEquals(100.0f, results.get(0).getFloat("_float"));

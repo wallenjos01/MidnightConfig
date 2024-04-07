@@ -10,7 +10,7 @@ public class TestSQLite {
     public void testSQLite() {
 
         File db = new File("test.db");
-        SQLConnection conn = DatabaseType.sqlite().create(db.getAbsolutePath());
+        SQLConnection conn = DatabaseType.SQLITE.create(db.getAbsolutePath());
 
         Common.testBasics(conn);
         Common.testNumberTypes(conn);

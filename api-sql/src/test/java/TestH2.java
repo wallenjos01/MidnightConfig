@@ -10,7 +10,7 @@ public class TestH2 {
     public void testH2() {
 
         File db = new File("h2");
-        SQLConnection conn = DatabaseType.h2(DatabaseType.ResourceType.FILE).create(db.getAbsolutePath());
+        SQLConnection conn = DatabaseType.H2.create(db.getAbsolutePath());
 
         Common.testBasics(conn);
         Common.testNumberTypes(conn);
