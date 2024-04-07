@@ -14,6 +14,7 @@ public class TestH2 {
 
         Common.testBasics(conn);
         Common.testNumberTypes(conn);
+        Common.testStringTypes(conn);
         Common.testWhere(conn);
 
         conn.close();

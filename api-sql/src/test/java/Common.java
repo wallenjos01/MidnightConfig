@@ -72,6 +72,42 @@ public class Common {
 
     }
 
+    public static void testStringTypes(SQLConnection conn) {
+        TableSchema schema = TableSchema.builder()
+                .withColumn("_char", ColumnType.CHAR(255))
+                .withColumn("_varchar", ColumnType.VARCHAR(999))
+                .withColumn("_tinytext", ColumnType.TINYTEXT)
+                .withColumn("_text", ColumnType.TEXT(3000))
+                .withColumn("_mediumtext", ColumnType.MEDIUMTEXT(98342))
+                .withColumn("_longtext", ColumnType.LONGTEXT(17000000))
+                .build();
+
+        if(conn.hasTable("test_strings")) {
+            conn.dropTable("test_strings");
+        }
+
+        conn.createTable("test_strings", schema);
+
+        conn.insert("test_strings", schema, new ConfigSection()
+                .with("_char", "CHAR TYPE")
+                .with("_varchar", "VARCHAR TYPE")
+                .with("_tinytext", "TINYTEXT TYPE")
+                .with("_text", "TEXT TYPE")
+                .with("_mediumtext", "MEDIUMTEXT TYPE")
+                .with("_longtext", "LONGTEXT TYPE"));
+
+        List<ConfigSection> results = conn.select("test_strings", schema);
+
+        Assertions.assertEquals(1, results.size());
+        Assertions.assertTrue(results.get(0).getString("_char").startsWith("CHAR TYPE"));
+        Assertions.assertEquals("VARCHAR TYPE", results.get(0).getString("_varchar"));
+        Assertions.assertEquals("TINYTEXT TYPE", results.get(0).getString("_tinytext"));
+        Assertions.assertEquals("TEXT TYPE", results.get(0).getString("_text"));
+        Assertions.assertEquals("MEDIUMTEXT TYPE", results.get(0).getString("_mediumtext"));
+        Assertions.assertEquals("LONGTEXT TYPE", results.get(0).getString("_longtext"));
+
+    }
+
     public static void testWhere(SQLConnection conn) {
         TableSchema schema = TableSchema.builder()
                 .withColumn("id", ColumnType.SMALLINT)
