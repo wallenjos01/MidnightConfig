@@ -12,15 +12,21 @@ public class ByteBufferInputStream extends InputStream {
     private final int length;
 
     public ByteBufferInputStream(ByteBuffer internal) {
-        this.internal = internal;
-        this.length = internal.position();
-        internal.position(0);
+        this(internal, 0, internal.limit());
+    }
+
+
+    public ByteBufferInputStream(ByteBuffer internal, int pos, int length) {
+        this.internal = internal.asReadOnlyBuffer();
+        this.internal.rewind();
+        this.length = length;
+        internal.position(pos);
     }
 
     @Override
     public int read(byte @NotNull [] data, int off, int len) throws IOException {
 
-        int remaining = length - internal.position();
+        int remaining = available();
         int length = Math.min(remaining, len);
         internal.get(data, 0, length);
         return length;
@@ -28,6 +34,11 @@ public class ByteBufferInputStream extends InputStream {
 
     @Override
     public int read() throws IOException {
-        return internal.get() & 0xFF;
+        return internal.get();
+    }
+
+    @Override
+    public int available() throws IOException {
+        return length - internal.position();
     }
 }

@@ -51,9 +51,9 @@ public class NBTCodec implements Codec {
             case STRING: dos.writeUTF(ctx.asString(t)); break;
             case BYTE_ARRAY:
                 if(ctx.isBlob(t)) {
-                    ByteBuffer buf = ctx.asBlob(t);
-                    int size = buf.position();
-                    buf.position(0);
+                    ByteBuffer buf = ctx.asBlob(t).asReadOnlyBuffer();
+                    buf.rewind();
+                    int size = buf.limit();
 
                     dos.writeInt(size);
 
@@ -216,6 +216,7 @@ public class NBTCodec implements Codec {
             case BYTE_ARRAY -> {
 
                 int length = dis.readInt();
+
                 ByteBuffer buffer = ByteBuffer.allocate(length);
                 int remaining = length;
                 byte[] copyBuffer = new byte[1024];
