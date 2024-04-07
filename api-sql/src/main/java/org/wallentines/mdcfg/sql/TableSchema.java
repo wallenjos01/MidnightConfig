@@ -26,8 +26,19 @@ public class TableSchema {
         return columnNames;
     }
 
+    public int getColumnCount() {
+        return columnNames.size();
+    }
+
     public ColumnType getType(String column) {
         return values.get(indicesByName.get(column));
+    }
+
+    public ColumnType getType(int column) {
+        return values.get(column);
+    }
+    public String getColumnName(int column) {
+        return columnNames.get(column);
     }
 
     public TableSchema toUpperCase() {

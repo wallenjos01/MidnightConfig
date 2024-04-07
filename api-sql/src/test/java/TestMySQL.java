@@ -20,6 +20,7 @@ public class TestMySQL {
                 Common.testBasics(conn);
                 Common.testNumberTypes(conn);
                 Common.testStringTypes(conn);
+                Common.testBlobTypes(conn);
                 Common.testWhere(conn);
 
             }

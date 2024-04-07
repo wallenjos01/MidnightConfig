@@ -15,11 +15,12 @@ public class SQLConnection implements AutoCloseable {
 
     private final DatabaseType type;
     private final Connection internal;
+    private final SQLEncoder encoder;
 
-
-    public SQLConnection(DatabaseType type, Connection internal) {
+    public SQLConnection(DatabaseType type, Connection internal, SQLEncoder encoder) {
         this.type = type;
         this.internal = internal;
+        this.encoder = encoder;
     }
 
     public boolean isConnected() {
@@ -52,40 +53,35 @@ public class SQLConnection implements AutoCloseable {
     }
 
     public boolean hasTable(String name) {
-        if(type.getDialect().namesAreUppercase) {
+        if(type.namesAreUppercase) {
             name = name.toUpperCase();
         }
         return getTables().contains(name);
     }
 
-    public void createTable(String name, TableSchema schema) {
-        if (!SQLUtil.VALID_NAME.matcher(name).matches()) {
-            throw new IllegalArgumentException("Invalid table name: " + name);
-        }
-        execute(type.getDialect().createTable(name, schema));
-    }
 
-    private int execute(String statement) {
+    public void createTable(String name, TableSchema schema) {
         if(!isConnected()) {
             throw new IllegalStateException("Database is not connected!");
         }
+
         try {
-            Statement out = internal.createStatement();
-            out.closeOnCompletion();
-            out.execute(statement);
-            return out.getUpdateCount();
+            PreparedStatement stmt = encoder.createTable(internal, name, schema);
+            stmt.execute();
+
         } catch (SQLException ex) {
-            throw new IllegalArgumentException("Unable to execute SQL statement " + statement + "!", ex);
+            throw new IllegalArgumentException("Unable to create table!", ex);
         }
     }
 
     public List<ConfigSection> select(String table, TableSchema schema, @Nullable Where where) {
 
-        String query = type.getDialect().select(table, schema, where);
         List<ConfigSection> out = new ArrayList<>();
         try {
 
-            ResultSet set = internal.createStatement().executeQuery(query);
+            PreparedStatement stmt = encoder.select(internal, table, schema, where);
+            ResultSet set = stmt.executeQuery();
+
             while(set.next()) {
                 ConfigSection row = new ConfigSection();
                 for (String key : schema.getColumnNames()) {
@@ -96,7 +92,7 @@ public class SQLConnection implements AutoCloseable {
             }
 
         } catch (SQLException ex) {
-            throw new IllegalArgumentException("Unable to execute SQL statement " + query + "!", ex);
+            throw new IllegalArgumentException("Unable to select from table " + table + "!", ex);
         }
         return out;
     }
@@ -107,15 +103,28 @@ public class SQLConnection implements AutoCloseable {
 
 
     public void insert(String table, TableSchema schema, ConfigSection row) {
-        execute(type.getDialect().insert(table, schema, row));
+
+        try {
+            encoder.insert(internal, table, schema, row).execute();
+        } catch (SQLException ex) {
+            throw new IllegalArgumentException("Unable to insert into table " + table + "!", ex);
+        }
     }
 
     public void update(String table, TableSchema schema, ConfigSection row, @Nullable Where where) {
-        execute(type.getDialect().update(table, schema, row, where));
+        try {
+            encoder.update(internal, table, schema, row, where).execute();
+        } catch (SQLException ex) {
+            throw new IllegalArgumentException("Unable to update table " + table + "!", ex);
+        }
     }
 
     public void delete(String table, @Nullable Where where) {
-        execute(type.getDialect().delete(table, where));
+        try {
+            encoder.delete(internal, table, where).execute();
+        } catch (SQLException ex) {
+            throw new IllegalArgumentException("Unable to delete from table " + table + "!", ex);
+        }
     }
 
     public void clearTable(String table) {
@@ -123,7 +132,11 @@ public class SQLConnection implements AutoCloseable {
     }
 
     public void dropTable(String table) {
-        execute(type.getDialect().dropTable(table));
+        try {
+            encoder.dropTable(internal, table).execute();
+        } catch (SQLException ex) {
+            throw new IllegalArgumentException("Unable to drop table " + table + "!", ex);
+        }
     }
 
     @Override

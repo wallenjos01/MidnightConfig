@@ -1,4 +1,5 @@
 import org.junit.jupiter.api.Assertions;
+import org.wallentines.mdcfg.ConfigBlob;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.sql.*;
 
@@ -107,6 +108,39 @@ public class Common {
         Assertions.assertEquals("LONGTEXT TYPE", results.get(0).getString("_longtext"));
 
     }
+
+    public static void testBlobTypes(SQLConnection conn) {
+        TableSchema schema = TableSchema.builder()
+                .withColumn("_tinyblob", ColumnType.TINYBLOB)
+                .withColumn("_blob", ColumnType.BLOB(3000))
+                .withColumn("_mediumblob", ColumnType.MEDIUMBLOB(98342))
+                .withColumn("_longblob", ColumnType.LONGBLOB(17000000))
+                .build();
+
+        if(conn.hasTable("test_blobs")) {
+            conn.dropTable("test_blobs");
+        }
+
+        conn.createTable("test_blobs", schema);
+
+        ConfigSection data = new ConfigSection()
+                .with("_tinyblob", new ConfigBlob("TINYBLOB TYPE".getBytes()))
+                .with("_blob", new ConfigBlob("BLOB TYPE".getBytes()))
+                .with("_mediumblob", new ConfigBlob("MEDIUMBLOB TYPE".getBytes()))
+                .with("_longblob", new ConfigBlob("LONGBLOB TYPE".getBytes()));
+
+        conn.insert("test_blobs", schema, data);
+
+        List<ConfigSection> results = conn.select("test_blobs", schema);
+
+        Assertions.assertEquals(1, results.size());
+        Assertions.assertEquals(data.get("_tinyblob"), results.get(0).get("_tinyblob"));
+        Assertions.assertEquals(data.get("_blob"), results.get(0).get("_blob"));
+        Assertions.assertEquals(data.get("_mediumblob"), results.get(0).get("_mediumblob"));
+        Assertions.assertEquals(data.get("_longblob"), results.get(0).get("_longblob"));
+
+    }
+
 
     public static void testWhere(SQLConnection conn) {
         TableSchema schema = TableSchema.builder()

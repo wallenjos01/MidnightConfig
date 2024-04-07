@@ -42,19 +42,19 @@ public class ColumnType {
 
     // Numbers
     public static final ColumnType BOOL = new ColumnType("BOOL", Reader.BOOLEAN, SQLDataValue.Writer.BOOLEAN);
-    public static final ColumnType TINYINT = new ColumnType("TINYINT", Reader.BYTE, SQLDataValue.Writer.NUMBER);
-    public static final ColumnType SMALLINT = new ColumnType("SMALLINT", Reader.SHORT, SQLDataValue.Writer.NUMBER);
-    public static final ColumnType MEDIUMINT = new ColumnType("MEDIUMINT", Reader.INT, SQLDataValue.Writer.NUMBER);
-    public static final ColumnType INT = new ColumnType("INT", Reader.INT, SQLDataValue.Writer.NUMBER);
-    public static final ColumnType BIGINT = new ColumnType("BIGINT", Reader.LONG, SQLDataValue.Writer.NUMBER);
+    public static final ColumnType TINYINT = new ColumnType("TINYINT", Reader.BYTE, SQLDataValue.Writer.BYTE);
+    public static final ColumnType SMALLINT = new ColumnType("SMALLINT", Reader.SHORT, SQLDataValue.Writer.SHORT);
+    public static final ColumnType MEDIUMINT = new ColumnType("MEDIUMINT", Reader.INT, SQLDataValue.Writer.INT);
+    public static final ColumnType INT = new ColumnType("INT", Reader.INT, SQLDataValue.Writer.INT);
+    public static final ColumnType BIGINT = new ColumnType("BIGINT", Reader.LONG, SQLDataValue.Writer.LONG);
     public static ColumnType FLOAT(int precision) {
-        return new ColumnType("FLOAT(" + precision + ")", Reader.FLOAT, SQLDataValue.Writer.NUMBER);
+        return new ColumnType("FLOAT(" + precision + ")", Reader.DOUBLE, SQLDataValue.Writer.DOUBLE);
     }
 
     public static ColumnType DECIMAL(int digits, int precision) {
         if(digits > 65 || digits < 1) throw new IllegalArgumentException("Invalid DECIMAL size! " + digits);
         if(precision > 30 || precision < 1) throw new IllegalArgumentException("Invalid DECIMAL precision digits! " + precision);
-        return new ColumnType("DECIMAL(" + digits + "," + precision + ")", Reader.DOUBLE, SQLDataValue.Writer.DECIMAL(precision));
+        return new ColumnType("DECIMAL(" + digits + "," + precision + ")", Reader.DECIMAL, SQLDataValue.Writer.DECIMAL);
     }
     public static final ColumnType FLOAT = FLOAT(24);
     public static final ColumnType DOUBLE = FLOAT(53);
@@ -162,6 +162,13 @@ public class ColumnType {
             @Override
             public <T> T get(SerializeContext<T> ctx, ResultSet set, String str) throws SQLException {
                 return ctx.toNumber(set.getDouble(str));
+            }
+        };
+
+        Reader DECIMAL = new Reader() {
+            @Override
+            public <T> T get(SerializeContext<T> ctx, ResultSet set, String str) throws SQLException {
+                return ctx.toNumber(set.getBigDecimal(str));
             }
         };
 

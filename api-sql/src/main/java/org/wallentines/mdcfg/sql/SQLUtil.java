@@ -12,6 +12,12 @@ public class SQLUtil {
 
     public static final Pattern VALID_NAME = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*$");
 
+    public static void validate(String name) {
+        if(!VALID_NAME.matcher(name).matches()) {
+            throw new IllegalArgumentException("Invalid name " + name + "!");
+        }
+    }
+
 /*    public static String encodePrimitive(ConfigPrimitive value) {
         if(value.isBoolean()) {
             return value.asBoolean() ? "1" : "0";

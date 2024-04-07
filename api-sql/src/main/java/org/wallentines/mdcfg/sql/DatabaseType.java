@@ -7,16 +7,12 @@ public class DatabaseType {
 
     private final String prefix;
     private final String driverClass;
-    private final SQLDialect dialect;
+    public final boolean namesAreUppercase;
 
-    public DatabaseType(String prefix, String driverClass, SQLDialect dialect) {
+    public DatabaseType(String prefix, String driverClass, boolean namesAreUppercase) {
         this.prefix = prefix;
         this.driverClass = driverClass;
-        this.dialect = dialect;
-    }
-
-    public SQLDialect getDialect() {
-        return dialect;
+        this.namesAreUppercase = namesAreUppercase;
     }
 
     public SQLConnection create(String url) {
@@ -26,7 +22,7 @@ public class DatabaseType {
     public SQLConnection create(String url, String username, String password) {
         try {
             Class.forName(driverClass);
-            return new SQLConnection(this, DriverManager.getConnection("jdbc:" + prefix + url, username, password));
+            return new SQLConnection(this, DriverManager.getConnection("jdbc:" + prefix + url, username, password), new SQLEncoder());
         } catch (ClassNotFoundException ex) {
             throw new IllegalArgumentException("Unable to load database driver!", ex);
         } catch (SQLException ex) {
@@ -35,10 +31,10 @@ public class DatabaseType {
     }
 
 
-    public static final DatabaseType MYSQL = new DatabaseType("mysql://", "com.mysql.cj.jdbc.Driver", SQLDialect.STANDARD);
-    public static final DatabaseType MARIADB = new DatabaseType("mariadb://", "org.mariadb.jdbc.Driver", SQLDialect.STANDARD);
-    public static final DatabaseType SQLITE = new DatabaseType("sqlite:", "org.sqlite.JDBC", SQLDialect.STANDARD);
-    public static final DatabaseType H2 = new DatabaseType("h2:", "org.h2.Driver", SQLDialect.H2);
+    public static final DatabaseType MYSQL = new DatabaseType("mysql://", "com.mysql.cj.jdbc.Driver", false);
+    public static final DatabaseType MARIADB = new DatabaseType("mariadb://", "org.mariadb.jdbc.Driver", false);
+    public static final DatabaseType SQLITE = new DatabaseType("sqlite:", "org.sqlite.JDBC", false);
+    public static final DatabaseType H2 = new DatabaseType("h2:", "org.h2.Driver", true);
 
 
 }
