@@ -2,9 +2,7 @@ package org.wallentines.mdcfg;
 
 import org.wallentines.mdcfg.serializer.SerializeContext;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
@@ -14,25 +12,12 @@ public class ConfigBlob extends ConfigObject {
 
     public ConfigBlob(ByteBuffer buffer) {
         super(SerializeContext.Type.BLOB);
-        this.data = buffer;
+        this.data = buffer.duplicate();
+        data.rewind();
     }
 
     public ConfigBlob(byte[] data) {
         this(ByteBuffer.wrap(data));
-    }
-
-    public ConfigBlob(InputStream stream) throws IOException {
-
-        super(SerializeContext.Type.BLOB);
-        int remaining = stream.available();
-        this.data = ByteBuffer.allocate(remaining);
-
-        byte[] copyBuffer = new byte[1024];
-        while(remaining > 0) {
-            int read = stream.read(copyBuffer);
-            remaining -= read;
-            this.data.put(copyBuffer, 0, read);
-        }
     }
 
     public ConfigBlob(ByteArrayOutputStream stream) {
@@ -40,7 +25,7 @@ public class ConfigBlob extends ConfigObject {
     }
 
     public int getSize() {
-        return data.position();
+        return data.limit();
     }
 
     public ByteBuffer getData() {
@@ -48,7 +33,7 @@ public class ConfigBlob extends ConfigObject {
     }
 
     public ByteBufferInputStream asStream() {
-        return new ByteBufferInputStream(data.asReadOnlyBuffer());
+        return new ByteBufferInputStream(data);
     }
 
     @Override
@@ -93,9 +78,9 @@ public class ConfigBlob extends ConfigObject {
     }
 
     @Override
-    public ConfigObject copy() {
+    public ConfigBlob copy() {
         try {
-            return new ConfigBlob(asStream());
+            return ConfigBlob.read(asStream(), getSize());
         } catch (IOException ex) {
             throw new IllegalStateException("Unable to copy blob!", ex);
         }
@@ -120,6 +105,36 @@ public class ConfigBlob extends ConfigObject {
         return "ConfigBlob{" +
                 "data=" + data +
                 '}';
+    }
+
+    public static ConfigBlob read(InputStream stream) throws IOException {
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        byte[] copyBuffer = new byte[1024];
+        int read;
+        while((read = stream.read(copyBuffer)) > 0) {
+            bos.write(copyBuffer, 0, read);
+        }
+
+        return new ConfigBlob(bos);
+    }
+
+    public static ConfigBlob read(InputStream stream, int length) throws IOException {
+
+        int remaining = length;
+        ByteBuffer temp = ByteBuffer.allocate(remaining);
+
+        byte[] copyBuffer = new byte[1024];
+        while(remaining > 0) {
+            int read = stream.read(copyBuffer);
+            if(read == -1) {
+                throw new EOFException("Found EOF while reading from a stream!");
+            }
+            remaining -= read;
+            temp.put(copyBuffer, 0, read);
+        }
+
+        return new ConfigBlob(temp);
     }
 
 }
