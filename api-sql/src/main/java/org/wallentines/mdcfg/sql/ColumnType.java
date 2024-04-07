@@ -1,8 +1,10 @@
 package org.wallentines.mdcfg.sql;
 
+import org.wallentines.mdcfg.ConfigBlob;
+import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.serializer.SerializeContext;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
 import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -28,7 +30,7 @@ public class ColumnType {
         try {
             return new SQLDataValue<>(writer, ctx, reader.get(ctx, results, column));
         } catch (SQLException ex) {
-            throw new IllegalArgumentException("Unable to read type " + encoded + " from column " + column + "!");
+            throw new IllegalArgumentException("Unable to read type " + encoded + " from column " + column + "!", ex);
         }
     }
 
@@ -74,14 +76,8 @@ public class ColumnType {
         if(size > 0xFFFF || size < 0) throw new IllegalArgumentException("Invalid TEXT length! " + size);
         return new ColumnType("TEXT(" + size + ")", Reader.STRING, SQLDataValue.Writer.STRING);
     }
-    public static ColumnType MEDIUMTEXT(int size) {
-        if(size > 0xFFFFFF || size < 0) throw new IllegalArgumentException("Invalid MEDIUMTEXT length! " + size);
-        return new ColumnType("MEDIUMTEXT(" + size + ")", Reader.STRING, SQLDataValue.Writer.STRING);
-    }
-    public static ColumnType LONGTEXT(long size) {
-        if(size > 0xFFFFFFFFL || size < 0) throw new IllegalArgumentException("Invalid LONGTEXT length! " + size);
-        return new ColumnType("LONGTEXT(" + size + ")", Reader.STRING, SQLDataValue.Writer.STRING);
-    }
+    public static final ColumnType MEDIUMTEXT = new ColumnType("MEDIUMTEXT", Reader.STRING, SQLDataValue.Writer.STRING);
+    public static final ColumnType LONGTEXT = new ColumnType("LONGTEXT", Reader.STRING, SQLDataValue.Writer.STRING);
 
     // Blobs
     public static final ColumnType TINYBLOB = new ColumnType("TINYBLOB", Reader.BLOB, SQLDataValue.Writer.BLOB);
@@ -89,14 +85,8 @@ public class ColumnType {
         if(size > 0xFFFF || size < 0) throw new IllegalArgumentException("Invalid BLOB length! " + size);
         return new ColumnType("BLOB(" + size + ")", Reader.BLOB, SQLDataValue.Writer.BLOB);
     }
-    public static ColumnType MEDIUMBLOB(int size) {
-        if(size > 0xFFFFFF || size < 0) throw new IllegalArgumentException("Invalid MEDIUMBLOB length! " + size);
-        return new ColumnType("MEDIUMBLOB(" + size + ")", Reader.BLOB, SQLDataValue.Writer.BLOB);
-    }
-    public static ColumnType LONGBLOB(long size) {
-        if(size > 0xFFFFFFFFL || size < 0) throw new IllegalArgumentException("Invalid LONGBLOB length! " + size);
-        return new ColumnType("LONGBLOB(" + size + ")", Reader.BLOB, SQLDataValue.Writer.BLOB);
-    }
+    public static final ColumnType MEDIUMBLOB = new ColumnType("MEDIUMBLOB", Reader.BLOB, SQLDataValue.Writer.BLOB);
+    public static final ColumnType LONGBLOB = new ColumnType("LONGBLOB", Reader.BLOB, SQLDataValue.Writer.BLOB);
 
 
     public interface Reader {
@@ -176,9 +166,11 @@ public class ColumnType {
             @Override
             public <T> T get(SerializeContext<T> ctx, ResultSet set, String str) throws SQLException {
                 Blob b = set.getBlob(str);
-                ByteBuffer out = ByteBuffer.allocate((int) b.length());
-                out.put(b.getBytes(0, (int) b.length()));
-                return ctx.toBlob(out);
+                try {
+                    return ConfigContext.INSTANCE.convert(ctx, ConfigBlob.read(b.getBinaryStream()));
+                } catch (IOException ex) {
+                    throw new SQLException("An error occurred while reading a blob!", ex);
+                }
             }
         };
 

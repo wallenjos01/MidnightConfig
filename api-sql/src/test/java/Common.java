@@ -79,8 +79,8 @@ public class Common {
                 .withColumn("_varchar", ColumnType.VARCHAR(999))
                 .withColumn("_tinytext", ColumnType.TINYTEXT)
                 .withColumn("_text", ColumnType.TEXT(3000))
-                .withColumn("_mediumtext", ColumnType.MEDIUMTEXT(98342))
-                .withColumn("_longtext", ColumnType.LONGTEXT(17000000))
+                .withColumn("_mediumtext", ColumnType.MEDIUMTEXT)
+                .withColumn("_longtext", ColumnType.LONGTEXT)
                 .build();
 
         if(conn.hasTable("test_strings")) {
@@ -113,8 +113,8 @@ public class Common {
         TableSchema schema = TableSchema.builder()
                 .withColumn("_tinyblob", ColumnType.TINYBLOB)
                 .withColumn("_blob", ColumnType.BLOB(3000))
-                .withColumn("_mediumblob", ColumnType.MEDIUMBLOB(98342))
-                .withColumn("_longblob", ColumnType.LONGBLOB(17000000))
+                .withColumn("_mediumblob", ColumnType.MEDIUMBLOB)
+                .withColumn("_longblob", ColumnType.LONGBLOB)
                 .build();
 
         if(conn.hasTable("test_blobs")) {
