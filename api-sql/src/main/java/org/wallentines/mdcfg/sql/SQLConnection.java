@@ -15,7 +15,6 @@ public class SQLConnection implements AutoCloseable {
 
     private final DatabaseType type;
     private final Connection internal;
-    private String db;
 
 
     public SQLConnection(DatabaseType type, Connection internal) {
@@ -33,11 +32,6 @@ public class SQLConnection implements AutoCloseable {
 
     public DatabaseType getType() {
         return type;
-    }
-
-    @Nullable
-    public String getActiveDatabase() {
-        return db;
     }
 
     public Set<String> getTables() {
@@ -69,16 +63,6 @@ public class SQLConnection implements AutoCloseable {
             throw new IllegalArgumentException("Invalid table name: " + name);
         }
         execute(type.getDialect().createTable(name, schema));
-    }
-
-    public void setActiveDatabase(String db) {
-        if(type.isSingleDB()) return;
-        if (!SQLUtil.VALID_NAME.matcher(db).matches()) {
-            throw new IllegalArgumentException("Invalid database name: " + db);
-        }
-        if(execute(type.getDialect().useDB(db)) > 0) {
-            this.db = db;
-        }
     }
 
     private int execute(String statement) {

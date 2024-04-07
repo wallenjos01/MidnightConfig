@@ -7,18 +7,12 @@ public class DatabaseType {
 
     private final String prefix;
     private final String driverClass;
-    private final boolean singleDB;
     private final SQLDialect dialect;
 
-    public DatabaseType(String prefix, String driverClass, boolean singleDB, SQLDialect dialect) {
+    public DatabaseType(String prefix, String driverClass, SQLDialect dialect) {
         this.prefix = prefix;
         this.driverClass = driverClass;
-        this.singleDB = singleDB;
         this.dialect = dialect;
-    }
-
-    public boolean isSingleDB() {
-        return singleDB;
     }
 
     public SQLDialect getDialect() {
@@ -41,10 +35,10 @@ public class DatabaseType {
     }
 
 
-    public static final DatabaseType MYSQL = new DatabaseType("mysql://", "com.mysql.cj.jdbc.Driver", false, SQLDialect.STANDARD);
-    public static final DatabaseType MARIADB = new DatabaseType("mariadb://", "org.mariadb.jdbc.Driver", false, SQLDialect.STANDARD);
-    public static final DatabaseType SQLITE = new DatabaseType("sqlite:", "org.sqlite.JDBC", true, SQLDialect.STANDARD);
-    public static final DatabaseType H2 = new DatabaseType("h2:", "org.h2.Driver", true, SQLDialect.H2);
+    public static final DatabaseType MYSQL = new DatabaseType("mysql://", "com.mysql.cj.jdbc.Driver", SQLDialect.STANDARD);
+    public static final DatabaseType MARIADB = new DatabaseType("mariadb://", "org.mariadb.jdbc.Driver", SQLDialect.STANDARD);
+    public static final DatabaseType SQLITE = new DatabaseType("sqlite:", "org.sqlite.JDBC", SQLDialect.STANDARD);
+    public static final DatabaseType H2 = new DatabaseType("h2:", "org.h2.Driver", SQLDialect.H2);
 
 
 }
