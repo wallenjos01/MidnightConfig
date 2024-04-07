@@ -6,6 +6,8 @@ import org.wallentines.mdcfg.ConfigPrimitive;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.serializer.SerializeContext;
 
+import java.text.DecimalFormat;
+
 public class SQLDataValue<T> {
 
     private final Writer writer;
@@ -65,6 +67,19 @@ public class SQLDataValue<T> {
                 return ctx.asNumber(obj).toString();
             }
         };
+
+
+        static Writer DECIMAL(int decimalDigits) {
+            DecimalFormat fmt = new DecimalFormat("#." + "#".repeat(decimalDigits));
+            return new Writer() {
+                @Override
+                public <T> String write(SerializeContext<T> ctx, T obj) {
+                    Number num = ctx.asNumber(obj);
+                    return fmt.format(num);
+                }
+            };
+        }
+
 
         Writer BLOB = new Writer() {
             @Override

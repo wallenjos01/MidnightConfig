@@ -54,8 +54,10 @@ public class ColumnType {
     public static ColumnType DECIMAL(int digits, int precision) {
         if(digits > 65 || digits < 1) throw new IllegalArgumentException("Invalid DECIMAL size! " + digits);
         if(precision > 30 || precision < 1) throw new IllegalArgumentException("Invalid DECIMAL precision digits! " + precision);
-        return new ColumnType("DECIMAL(" + digits + "," + precision + ")", Reader.DOUBLE, SQLDataValue.Writer.NUMBER);
+        return new ColumnType("DECIMAL(" + digits + "," + precision + ")", Reader.DOUBLE, SQLDataValue.Writer.DECIMAL(precision));
     }
+    public static final ColumnType FLOAT = FLOAT(24);
+    public static final ColumnType DOUBLE = FLOAT(53);
 
     // Strings
     public static ColumnType CHAR(int length) {
