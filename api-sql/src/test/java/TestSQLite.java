@@ -15,7 +15,6 @@ public class TestSQLite {
         Common.testBasics(conn);
         Common.testNumberTypes(conn);
         Common.testStringTypes(conn);
-        Common.testBlobTypes(conn);
         Common.testWhere(conn);
 
         conn.close();

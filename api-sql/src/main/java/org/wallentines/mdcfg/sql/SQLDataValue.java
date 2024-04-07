@@ -1,13 +1,18 @@
 package org.wallentines.mdcfg.sql;
 
+import org.wallentines.mdcfg.ByteBufferInputStream;
 import org.wallentines.mdcfg.ConfigBlob;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigPrimitive;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.serializer.SerializeContext;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
+import java.sql.Blob;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
@@ -146,10 +151,20 @@ public class SQLDataValue<T> {
         Writer BLOB = new Writer() {
             @Override
             public <T> void write(SerializeContext<T> ctx, T obj, int index, PreparedStatement statement) throws SQLException {
-
                 ByteBuffer buf = ctx.asBlob(obj);
-                // TODO: ByteBuffer to InputStream
+                Blob b = statement.getConnection().createBlob();
+                try(OutputStream os = b.setBinaryStream(1L); InputStream is = new ByteBufferInputStream(buf)) {
 
+                    byte[] copyBuffer = new byte[1024];
+                    int read;
+                    while((read = is.read(copyBuffer)) > 0) {
+                        os.write(copyBuffer, 0, read);
+                    }
+                } catch (IOException ex) {
+                    throw new SQLException("Unable to encode blob!", ex);
+                }
+
+                statement.setBlob(index, b);
             }
         };
 

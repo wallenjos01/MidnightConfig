@@ -36,7 +36,12 @@ public class SQLEncoder {
         }
         query.append(";");
 
-        return conn.prepareStatement(query.toString());
+        PreparedStatement stmt = conn.prepareStatement(query.toString());
+        if(where != null) {
+            where.writeArguments(stmt, 1);
+        }
+
+        return stmt;
     }
 
 
@@ -99,7 +104,7 @@ public class SQLEncoder {
         PreparedStatement stmt = conn.prepareStatement(out.toString());
 
         if(where != null) {
-            where.writeArguments(stmt, 0);
+            where.writeArguments(stmt, 1);
         }
 
         return stmt;
