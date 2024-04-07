@@ -291,6 +291,17 @@ public class ConfigSection extends ConfigObject {
     }
 
     /**
+     * Gets a reference to the Blob associated with the given key
+     * @param key The key to lookup
+     * @return The value associated with the given key
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a Blob
+     */
+    public ConfigBlob getBlob(String key) {
+        return getOptional(key).orElseThrow().asBlob();
+    }
+
+    /**
      * Gets a reference to the ConfigList associated with the given key
      * @param key The key to lookup
      * @return The value associated with the given key

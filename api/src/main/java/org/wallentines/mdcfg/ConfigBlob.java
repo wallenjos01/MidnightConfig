@@ -3,6 +3,8 @@ package org.wallentines.mdcfg;
 import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
@@ -19,6 +21,20 @@ public class ConfigBlob extends ConfigObject {
         this(ByteBuffer.wrap(data));
     }
 
+    public ConfigBlob(InputStream stream) throws IOException {
+
+        super(SerializeContext.Type.BLOB);
+        int remaining = stream.available();
+        this.data = ByteBuffer.allocate(remaining);
+
+        byte[] copyBuffer = new byte[1024];
+        while(remaining > 0) {
+            int read = stream.read(copyBuffer);
+            remaining -= read;
+            this.data.put(copyBuffer, 0, read);
+        }
+    }
+
     public ConfigBlob(ByteArrayOutputStream stream) {
         this(stream.toByteArray());
     }
@@ -29,6 +45,10 @@ public class ConfigBlob extends ConfigObject {
 
     public ByteBuffer getData() {
         return data;
+    }
+
+    public ByteBufferInputStream asStream() {
+        return new ByteBufferInputStream(data.asReadOnlyBuffer());
     }
 
     @Override
@@ -74,7 +94,11 @@ public class ConfigBlob extends ConfigObject {
 
     @Override
     public ConfigObject copy() {
-        return new ConfigBlob(data.duplicate());
+        try {
+            return new ConfigBlob(asStream());
+        } catch (IOException ex) {
+            throw new IllegalStateException("Unable to copy blob!", ex);
+        }
     }
 
 
