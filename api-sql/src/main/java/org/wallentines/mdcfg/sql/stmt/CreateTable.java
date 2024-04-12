@@ -38,7 +38,7 @@ public class CreateTable extends DDLStatement {
 
         stmt.append(" (")
                 .append(schema.getColumnNames().stream()
-                        .map(key -> key + " " + schema.getType(key).getEncoded())
+                        .map(key -> key + " " + schema.encodeColumn(key))
                         .collect(Collectors.joining(", ")))
                 .append(");");
 

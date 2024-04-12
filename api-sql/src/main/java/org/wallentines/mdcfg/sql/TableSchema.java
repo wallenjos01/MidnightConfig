@@ -3,10 +3,11 @@ package org.wallentines.mdcfg.sql;
 import org.wallentines.mdcfg.Tuples;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TableSchema {
 
-    private final List<Column> values = new ArrayList<>();
+    private final List<Column> columns = new ArrayList<>();
     private final List<String> columnNames = new ArrayList<>();
     private final HashMap<String, Integer> indicesByName = new HashMap<>();
 
@@ -14,8 +15,8 @@ public class TableSchema {
     private TableSchema(List<Tuples.T2<String, Column>> columns) {
 
         for(Tuples.T2<String, Column> t : columns) {
-            int index = values.size();
-            values.add(t.p2);
+            int index = this.columns.size();
+            this.columns.add(t.p2);
             columnNames.add(t.p1);
             indicesByName.put(t.p1, index);
         }
@@ -30,38 +31,46 @@ public class TableSchema {
     }
 
     public ColumnType<?> getType(String column) {
-        return values.get(indicesByName.get(column)).type;
+        return columns.get(indicesByName.get(column)).type;
     }
 
     public ColumnType<?> getType(int column) {
-        return values.get(column).type;
+        return columns.get(column).type;
     }
 
     public EnumSet<ColumnFlag> getFlags(String column) {
-        return values.get(indicesByName.get(column)).flags;
+        return columns.get(indicesByName.get(column)).flags;
     }
 
     public EnumSet<ColumnFlag> getFlags(int column) {
-        return values.get(column).flags;
+        return columns.get(column).flags;
     }
 
     public String getColumnName(int column) {
         return columnNames.get(column);
     }
 
+    public String encodeColumn(int column) {
+        return columns.get(column).encode();
+    }
+
+    public String encodeColumn(String column) {
+        return columns.get(indicesByName.get(column)).encode();
+    }
+
 
     public TableSchema toUpperCase() {
         Builder out = builder();
-        for(int i = 0 ; i < values.size() ; i++) {
-            out.addColumn(columnNames.get(i).toUpperCase(), values.get(i));
+        for(int i = 0; i < columns.size() ; i++) {
+            out.addColumn(columnNames.get(i).toUpperCase(), columns.get(i));
         }
         return out.build();
     }
 
     public Builder asBuilder() {
         Builder out = builder();
-        for(int i = 0 ; i < values.size() ; i++) {
-            out.addColumn(columnNames.get(i), values.get(i));
+        for(int i = 0; i < columns.size() ; i++) {
+            out.addColumn(columnNames.get(i), columns.get(i));
         }
         return out;
     }
@@ -69,7 +78,7 @@ public class TableSchema {
     public TableSchema subSchema(String... keys) {
         Builder out = builder();
         for(String key : keys) {
-            out.addColumn(key, values.get(indicesByName.get(key)));
+            out.addColumn(key, columns.get(indicesByName.get(key)));
         }
         return out.build();
     }
@@ -77,7 +86,7 @@ public class TableSchema {
     public TableSchema subSchema(List<String> keys) {
         Builder out = builder();
         for(String key : keys) {
-            out.addColumn(key, values.get(indicesByName.get(key)));
+            out.addColumn(key, columns.get(indicesByName.get(key)));
         }
         return out.build();
     }
@@ -127,10 +136,20 @@ public class TableSchema {
     }
 
     public enum ColumnFlag {
-        PRIMARY_KEY,
-        NOT_NULL,
-        AUTO_INCREMENT,
-        UNIQUE
+        PRIMARY_KEY("PRIMARY KEY"),
+        NOT_NULL("NOT NULL"),
+        AUTO_INCREMENT("AUTO INCREMENT"),
+        UNIQUE("UNIQUE");
+
+        final String name;
+
+        ColumnFlag(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
     }
 
     private static class Column {
@@ -146,6 +165,10 @@ public class TableSchema {
         public Column(ColumnType<?> type) {
             this.type = type;
             this.flags = EnumSet.noneOf(ColumnFlag.class);
+        }
+
+        public String encode() {
+            return type.getEncoded() + " " + flags.stream().map(ColumnFlag::getName).collect(Collectors.joining(" "));
         }
     }
 }
