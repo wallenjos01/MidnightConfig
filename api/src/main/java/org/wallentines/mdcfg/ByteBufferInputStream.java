@@ -27,6 +27,8 @@ public class ByteBufferInputStream extends InputStream {
     public int read(byte @NotNull [] data, int off, int len) throws IOException {
 
         int remaining = available();
+        if(remaining == 0) return -1;
+
         int length = Math.min(remaining, len);
         internal.get(data, 0, length);
         return length;

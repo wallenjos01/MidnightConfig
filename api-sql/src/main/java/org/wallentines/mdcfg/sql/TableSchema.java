@@ -19,7 +19,6 @@ public class TableSchema {
             columnNames.add(t.p1);
             indicesByName.put(t.p1, index);
         }
-
     }
 
     public Collection<String> getColumnNames() {
@@ -30,11 +29,11 @@ public class TableSchema {
         return columnNames.size();
     }
 
-    public ColumnType getType(String column) {
+    public ColumnType<?> getType(String column) {
         return values.get(indicesByName.get(column)).type;
     }
 
-    public ColumnType getType(int column) {
+    public ColumnType<?> getType(int column) {
         return values.get(column).type;
     }
 
@@ -49,6 +48,7 @@ public class TableSchema {
     public String getColumnName(int column) {
         return columnNames.get(column);
     }
+
 
     public TableSchema toUpperCase() {
         Builder out = builder();
@@ -88,9 +88,13 @@ public class TableSchema {
 
     public static class Builder {
         List<Tuples.T2<String, Column>> values = new ArrayList<>();
-        public Builder() { }
 
-        public Builder withColumn(String key, ColumnType type, ColumnFlag... flags) {
+        public Builder withColumn(String key, DataType<?> type, ColumnFlag... flags) {
+
+            return withColumn(key, new ColumnType<>(type), flags);
+        }
+
+        public Builder withColumn(String key, ColumnType<?> type, ColumnFlag... flags) {
 
             EnumSet<ColumnFlag> outFlags;
             if(flags.length == 0) {
@@ -102,7 +106,7 @@ public class TableSchema {
         }
 
 
-        public Builder withColumn(String key, ColumnType type, EnumSet<ColumnFlag> flags) {
+        public Builder withColumn(String key, ColumnType<?> type, EnumSet<ColumnFlag> flags) {
 
             if(!SQLUtil.VALID_NAME.matcher(key).matches()) {
                 throw new IllegalArgumentException("Invalid column name " + key + "!");
@@ -131,15 +135,15 @@ public class TableSchema {
 
     private static class Column {
 
-        private final ColumnType type;
+        private final ColumnType<?> type;
         private final EnumSet<ColumnFlag> flags;
 
-        public Column(ColumnType type, EnumSet<ColumnFlag> flags) {
+        public Column(ColumnType<?> type, EnumSet<ColumnFlag> flags) {
             this.type = type;
             this.flags = flags;
         }
 
-        public Column(ColumnType type) {
+        public Column(ColumnType<?> type) {
             this.type = type;
             this.flags = EnumSet.noneOf(ColumnFlag.class);
         }

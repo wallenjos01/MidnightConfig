@@ -1,8 +1,12 @@
 package org.wallentines.mdcfg.serializer;
 
+import org.wallentines.mdcfg.ConfigPrimitive;
 import org.wallentines.mdcfg.Functions;
 import org.wallentines.mdcfg.Tuples;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -276,9 +280,77 @@ public interface Serializer<T> {
     Serializer<Short> SHORT = NumberSerializer.forShort(Short.MIN_VALUE, Short.MAX_VALUE);
     Serializer<Integer> INT = NumberSerializer.forInt(Integer.MIN_VALUE, Integer.MAX_VALUE);
     Serializer<Long> LONG = NumberSerializer.forLong(Long.MIN_VALUE, Long.MAX_VALUE);
-    Serializer<Float> FLOAT = NumberSerializer.forFloat(-Float.MAX_VALUE, Float.MAX_VALUE);
-    Serializer<Double> DOUBLE = NumberSerializer.forDouble(-Double.MAX_VALUE, Double.MAX_VALUE);
+    Serializer<Float> FLOAT = NumberSerializer.forFloat(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY);
+    Serializer<Double> DOUBLE = NumberSerializer.forDouble(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
     Serializer<Boolean> BOOLEAN = BooleanSerializer.RAW.or(BooleanSerializer.NUMBER).or(BooleanSerializer.STRING);
+
+    Serializer<BigInteger> BIG_INTEGER = new Serializer<BigInteger>() {
+        @Override
+        public <O> SerializeResult<O> serialize(SerializeContext<O> context, BigInteger value) {
+            return SerializeResult.success(context.toNumber(value));
+        }
+
+        @Override
+        public <O> SerializeResult<BigInteger> deserialize(SerializeContext<O> context, O value) {
+            switch (context.getType(value)) {
+                case STRING:
+                    return SerializeResult.success(new BigInteger(context.asString(value)));
+                case NUMBER:
+                    Number num = context.asNumber(value);
+                    BigInteger out;
+                    if(num instanceof BigInteger) {
+                        out = (BigInteger) num;
+                    } else if(ConfigPrimitive.isInteger(num)) {
+                        out = BigInteger.valueOf(num.longValue());
+                    } else {
+                        out = BigInteger.valueOf((long) num.doubleValue());
+                    }
+                    return SerializeResult.success(out);
+                default:
+                    return SerializeResult.failure("Unable to read " + value + " as a BigInteger!");
+            }
+        }
+    };
+    Serializer<BigDecimal> BIG_DECIMAL = new Serializer<BigDecimal>() {
+        @Override
+        public <O> SerializeResult<O> serialize(SerializeContext<O> context, BigDecimal value) {
+            return SerializeResult.success(context.toNumber(value));
+        }
+
+        @Override
+        public <O> SerializeResult<BigDecimal> deserialize(SerializeContext<O> context, O value) {
+            switch (context.getType(value)) {
+                case STRING:
+                    return SerializeResult.success(new BigDecimal(context.asString(value)));
+                case NUMBER:
+                    Number num = context.asNumber(value);
+                    BigDecimal out;
+                    if(num instanceof BigDecimal) {
+                        out = (BigDecimal) num;
+                    } else if(ConfigPrimitive.isInteger(num)) {
+                        out = BigDecimal.valueOf(num.longValue());
+                    } else {
+                        out = BigDecimal.valueOf((long) num.doubleValue());
+                    }
+                    return SerializeResult.success(out);
+                default:
+                    return SerializeResult.failure("Unable to read " + value + " as a BigDecimal!");
+            }
+        }
+    };
+
+    Serializer<ByteBuffer> BLOB = new Serializer<ByteBuffer>() {
+        @Override
+        public <O> SerializeResult<O> serialize(SerializeContext<O> context, ByteBuffer value) {
+            return SerializeResult.success(context.toBlob(value));
+        }
+
+        @Override
+        public <O> SerializeResult<ByteBuffer> deserialize(SerializeContext<O> context, O value) {
+            return SerializeResult.success(context.asBlob(value));
+        }
+    };
+
 
     Serializer<UUID> UUID = new Serializer<>() {
         @Override
@@ -295,6 +367,18 @@ public interface Serializer<T> {
                     return SerializeResult.failure("Unable to parse " + str + " as a UUID!");
                 }
             });
+        }
+    };
+
+    Serializer<Object> NULL = new Serializer<Object>() {
+        @Override
+        public <O> SerializeResult<O> serialize(SerializeContext<O> context, Object value) {
+            return SerializeResult.success(context.nullValue());
+        }
+
+        @Override
+        public <O> SerializeResult<Object> deserialize(SerializeContext<O> context, O value) {
+            return SerializeResult.success(null);
         }
     };
 

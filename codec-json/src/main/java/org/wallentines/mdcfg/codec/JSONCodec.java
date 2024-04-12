@@ -7,6 +7,7 @@ import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.io.*;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -360,7 +361,7 @@ public class JSONCodec implements Codec {
                     }
 
                 } catch (NumberFormatException ex) {
-                    out = new BigDecimal(value);
+                    out = new BigInteger(value);
 
                 }
 

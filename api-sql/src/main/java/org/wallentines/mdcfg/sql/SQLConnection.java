@@ -4,23 +4,24 @@ import org.jetbrains.annotations.Nullable;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.serializer.ConfigContext;
+import org.wallentines.mdcfg.sql.stmt.*;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class SQLConnection implements AutoCloseable {
 
     private final DatabaseType type;
     private final Connection internal;
-    private final SQLEncoder encoder;
+    private final IDCase idCase;
+    private String idQuote;
 
-    public SQLConnection(DatabaseType type, Connection internal, SQLEncoder encoder) {
+    public SQLConnection(DatabaseType type, Connection internal) {
         this.type = type;
         this.internal = internal;
-        this.encoder = encoder;
+
+        this.idCase = getIDCase();
+
     }
 
     public boolean isConnected() {
@@ -33,6 +34,53 @@ public class SQLConnection implements AutoCloseable {
 
     public DatabaseType getType() {
         return type;
+    }
+
+    public Connection getInternal() {
+        return internal;
+    }
+
+    public String fixIdentifier(String id) {
+        switch (idCase) {
+            default:
+            case MIXED:
+                return id;
+            case LOWER:
+                return id.toLowerCase();
+            case UPPER:
+                return id.toUpperCase();
+            case MIXED_QUOTED:
+                return idQuote + id + idQuote;
+            case LOWER_QUOTED:
+                return idQuote + id.toLowerCase() + idQuote;
+            case UPPER_QUOTED:
+                return idQuote + id.toUpperCase() + idQuote;
+        }
+    }
+
+    private IDCase getIDCase() {
+        try {
+            DatabaseMetaData meta = internal.getMetaData();
+            if(meta.storesMixedCaseIdentifiers()) {
+                return IDCase.MIXED;
+            } else if (meta.storesUpperCaseIdentifiers()) {
+                return IDCase.UPPER;
+            } else if (meta.storesLowerCaseIdentifiers()) {
+                return IDCase.LOWER;
+            } else if(meta.storesMixedCaseQuotedIdentifiers()) {
+                idQuote = meta.getIdentifierQuoteString();
+                return IDCase.MIXED_QUOTED;
+            } else if(meta.storesUpperCaseQuotedIdentifiers()) {
+                idQuote = meta.getIdentifierQuoteString();
+                return IDCase.UPPER_QUOTED;
+            } else if(meta.storesLowerCaseQuotedIdentifiers()) {
+                idQuote = meta.getIdentifierQuoteString();
+                return IDCase.LOWER_QUOTED;
+            }
+        } catch (SQLException ex) {
+            throw new IllegalStateException("Unable to determine SQL identifier case!", ex);
+        }
+        return IDCase.MIXED;
     }
 
     public Set<String> getTables() {
@@ -53,91 +101,38 @@ public class SQLConnection implements AutoCloseable {
     }
 
     public boolean hasTable(String name) {
-        if(type.namesAreUppercase) {
-            name = name.toUpperCase();
-        }
-        return getTables().contains(name);
+        return getTables().contains(fixIdentifier(name));
+    }
+
+    public CreateTable createTable(String name, TableSchema schema) {
+        return new CreateTable(this, name, schema);
+    }
+
+    public Select select(String table) {
+        return new Select(this, table);
+    }
+
+    public Insert insert(String table, Collection<String> columns) {
+        return new Insert(this, table, columns);
+    }
+
+    public Insert insert(String table, TableSchema schema) {
+        return new Insert(this, table, schema.getColumnNames());
+    }
+
+    public Update update(String table) {
+        return new Update(this, table);
+    }
+
+    public Delete delete(String table) {
+        return new Delete(this, table);
+    }
+
+    public DropTable dropTable(String table) {
+        return new DropTable(this, table);
     }
 
 
-    public void createTable(String name, TableSchema schema) {
-        if(!isConnected()) {
-            throw new IllegalStateException("Database is not connected!");
-        }
-
-        try {
-            PreparedStatement stmt = encoder.createTable(internal, name, schema);
-            stmt.execute();
-
-        } catch (SQLException ex) {
-            throw new IllegalArgumentException("Unable to create table!", ex);
-        }
-    }
-
-    public List<ConfigSection> select(String table, TableSchema schema, @Nullable Where where) {
-
-        List<ConfigSection> out = new ArrayList<>();
-        try {
-
-            PreparedStatement stmt = encoder.select(internal, table, schema, where);
-            ResultSet set = stmt.executeQuery();
-
-            while(set.next()) {
-                ConfigSection row = new ConfigSection();
-                for (String key : schema.getColumnNames()) {
-                    SQLDataValue<ConfigObject> obj = schema.getType(key).read(ConfigContext.INSTANCE, set, key);
-                    row.set(key, obj.getValue());
-                }
-                out.add(row);
-            }
-
-        } catch (SQLException ex) {
-            throw new IllegalArgumentException("Unable to select from table " + table + "!", ex);
-        }
-        return out;
-    }
-
-    public List<ConfigSection> select(String table, TableSchema schema) {
-        return select(table, schema, null);
-    }
-
-
-    public void insert(String table, TableSchema schema, ConfigSection row) {
-
-        try {
-            encoder.insert(internal, table, schema, row).execute();
-        } catch (SQLException ex) {
-            throw new IllegalArgumentException("Unable to insert into table " + table + "!", ex);
-        }
-    }
-
-    public void update(String table, TableSchema schema, ConfigSection row, @Nullable Where where) {
-        try {
-            encoder.update(internal, table, schema, row, where).execute();
-        } catch (SQLException ex) {
-            throw new IllegalArgumentException("Unable to update table " + table + "!", ex);
-        }
-    }
-
-    public void delete(String table, @Nullable Where where) {
-        try {
-            encoder.delete(internal, table, where).execute();
-        } catch (SQLException ex) {
-            throw new IllegalArgumentException("Unable to delete from table " + table + "!", ex);
-        }
-    }
-
-    public void clearTable(String table) {
-        delete(table, null);
-    }
-
-    public void dropTable(String table) {
-        try {
-            encoder.dropTable(internal, table).execute();
-        } catch (SQLException ex) {
-            throw new IllegalArgumentException("Unable to drop table " + table + "!", ex);
-        }
-    }
 
     @Override
     public void close() {
@@ -146,5 +141,14 @@ public class SQLConnection implements AutoCloseable {
         } catch (SQLException ex) {
             // Ignore
         }
+    }
+
+    private enum IDCase {
+        MIXED,
+        MIXED_QUOTED,
+        LOWER,
+        LOWER_QUOTED,
+        UPPER,
+        UPPER_QUOTED
     }
 }

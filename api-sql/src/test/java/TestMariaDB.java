@@ -19,7 +19,7 @@ public class TestMariaDB {
                 Common.testBasics(conn);
                 Common.testNumberTypes(conn);
                 Common.testStringTypes(conn);
-                Common.testBlobTypes(conn);
+                Common.testBlob(conn);
                 Common.testWhere(conn);
 
             }

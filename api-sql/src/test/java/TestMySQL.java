@@ -1,4 +1,3 @@
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.wallentines.mdcfg.sql.DatabaseType;
 import org.wallentines.mdcfg.sql.SQLConnection;
@@ -20,7 +19,7 @@ public class TestMySQL {
                 Common.testBasics(conn);
                 Common.testNumberTypes(conn);
                 Common.testStringTypes(conn);
-                Common.testBlobTypes(conn);
+                Common.testBlob(conn);
                 Common.testWhere(conn);
 
             }
