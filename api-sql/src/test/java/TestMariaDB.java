@@ -13,7 +13,7 @@ public class TestMariaDB {
 
         if(url != null && user != null && pass != null) {
 
-            DatabaseType type = DatabaseType.MARIADB;
+            DatabaseType type = Common.getDBType("mariadb");
             try(SQLConnection conn = type.create(url, user, pass)) {
 
                 Common.testBasics(conn);

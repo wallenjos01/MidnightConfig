@@ -13,7 +13,7 @@ public class TestMySQL {
 
         if(url != null && user != null && pass != null) {
 
-            DatabaseType type = DatabaseType.MYSQL;
+            DatabaseType type = Common.getDBType("mysql");
             try(SQLConnection conn = type.create(url, user, pass)) {
 
                 Common.testBasics(conn);

@@ -7,6 +7,13 @@ import java.math.BigDecimal;
 
 public class Common {
 
+    private static final DriverRepository REPOSITORY = new DriverRepository.Classpath();
+
+    public static DatabaseType getDBType(String name) {
+
+        return REPOSITORY.getDriver(name);
+    }
+
     public static void testBasics(SQLConnection conn) {
         TableSchema schema = TableSchema.builder()
                 .withColumn("id", DataType.TINYINT)
@@ -19,7 +26,9 @@ public class Common {
 
         conn.createTable("test", schema).execute();
         conn.insert("test", schema)
-                .addRow(new ConfigSection().with("id", 1).with("name", "Test User"))
+                .addRow(new ConfigSection()
+                        .with("id", 1)
+                        .with("name", "Test User"))
                 .execute();
 
         QueryResult results = conn.select("test").execute();
