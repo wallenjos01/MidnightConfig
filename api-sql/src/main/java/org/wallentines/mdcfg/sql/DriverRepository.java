@@ -6,6 +6,9 @@ import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Loads and manages JDBC drivers
+ */
 public abstract class DriverRepository {
 
     private final Map<String, DriverSpec> registry;
@@ -16,6 +19,13 @@ public abstract class DriverRepository {
         this.loaded = new HashMap<>();
     }
 
+    /**
+     * Gets a driver with the given name, loading it if necessary
+     * @param name The name of the driver to lookup or load
+     * @return A DatabaseType corresponding to the given driver name
+     * @throws NoSuchDriverException If no driver spec with the given name is registered
+     * @throws DriverLoadException If the driver could not be loaded
+     */
     public DatabaseType getDriver(String name) {
 
         return loaded.computeIfAbsent(name, k -> {
@@ -27,6 +37,9 @@ public abstract class DriverRepository {
         });
     }
 
+    /**
+     * Loads a driver with the given name and spec
+     */
     protected abstract DatabaseType loadDriver(String name, DriverSpec spec);
 
 
@@ -37,15 +50,28 @@ public abstract class DriverRepository {
 
         private final File folder;
 
+        /**
+         * Sets up a folder driver repository in the given folder, using default driver registry
+         * @param folder The folder to store drivers in
+         */
         public Folder(File folder) {
             this(folder, DEFAULT_DRIVERS);
         }
 
+        /**
+         * Sets up a folder driver repository in the given folder, using the given driver registry
+         * @param folder The folder to store drivers in
+         * @param registry The driver specifications, and their names
+         */
         protected Folder(File folder, Map<String, DriverSpec> registry) {
             super(registry);
             this.folder = folder;
         }
 
+        /**
+         * Gets the folder drivers are stored in
+         * @return The folder drivers are stored in.
+         */
         public File getFolder() {
             return folder;
         }
@@ -116,10 +142,17 @@ public abstract class DriverRepository {
      */
     public static class Classpath extends DriverRepository {
 
+        /**
+         * Creates a classpath driver repository using the default driver registry
+         */
         public Classpath() {
             super(DEFAULT_DRIVERS);
         }
 
+        /**
+         * Creates a classpath driver repository using the given driver registry.
+         * @param registry The drivers specifications to use to load drivers.
+         */
         public Classpath(Map<String, DriverSpec> registry) {
             super(registry);
         }
@@ -144,30 +177,32 @@ public abstract class DriverRepository {
         }
     }
 
-
+    /**
+     * Represents a driver which can be loaded
+     */
     public static class DriverSpec {
 
-        private final String repository;
+        private final DatabaseType.Factory factory;
         private final String prefix;
         private final String className;
-        private final DatabaseType.Factory factory;
+        private final String repository;
         private final MavenUtil.ArtifactSpec artifact;
 
-        public DriverSpec(String prefix, String className, DatabaseType.Factory factory, MavenUtil.ArtifactSpec artifact) {
-            this("https://repo1.maven.org/maven2/", prefix, className, factory, artifact);
+        public DriverSpec(DatabaseType.Factory factory, String prefix, String className, MavenUtil.ArtifactSpec artifact) {
+            this(factory, prefix, className, "https://repo1.maven.org/maven2/", artifact);
         }
 
-        public DriverSpec(String repository, String prefix, String className, DatabaseType.Factory factory, MavenUtil.ArtifactSpec artifact) {
-            this.repository = repository;
+        public DriverSpec(DatabaseType.Factory factory, String prefix, String className, String repository, MavenUtil.ArtifactSpec artifact) {
+            this.factory = factory;
             this.prefix = prefix;
             this.className = className;
+            this.repository = repository;
             this.artifact = artifact;
-            this.factory = factory;
         }
 
         public DriverSpec forVersion(String version) {
 
-            return new DriverSpec(repository, prefix, className, factory, artifact.withVersion(version));
+            return new DriverSpec(factory, prefix, className, repository, artifact.withVersion(version));
         }
 
         public DriverSpec forLatestVersion() {
@@ -181,14 +216,17 @@ public abstract class DriverRepository {
 
     }
 
+    /**
+     * Contains the default supported driver specifications
+     */
     public static final Map<String, DriverSpec> DEFAULT_DRIVERS = new HashMap<>();
 
 
     static {
-        DEFAULT_DRIVERS.put("mysql",   new DriverSpec("mysql://",   "com.mysql.cj.jdbc.Driver", DatabaseType.Factory.DEFAULT, new MavenUtil.ArtifactSpec("com.mysql", "mysql-connector-j", null)));
-        DEFAULT_DRIVERS.put("mariadb", new DriverSpec("mariadb://", "org.mariadb.jdbc.Driver",  DatabaseType.Factory.DEFAULT, new MavenUtil.ArtifactSpec("org.mariadb.jdbc", "mariadb-java-client", null)));
-        DEFAULT_DRIVERS.put("sqlite",  new DriverSpec("sqlite:",    "org.sqlite.JDBC",          DatabaseType.Factory.DEFAULT, new MavenUtil.ArtifactSpec("org.xerial", "sqlite-jdbc", null)));
-        DEFAULT_DRIVERS.put("h2",      new DriverSpec("h2:",        "org.h2.Driver",            DatabaseType.Factory.DEFAULT, new MavenUtil.ArtifactSpec("com.h2database", "h2", null)));
+        DEFAULT_DRIVERS.put("mysql",   new DriverSpec(DatabaseType.Factory.DEFAULT, "mysql://",   "com.mysql.cj.jdbc.Driver", new MavenUtil.ArtifactSpec("com.mysql", "mysql-connector-j", null)));
+        DEFAULT_DRIVERS.put("mariadb", new DriverSpec(DatabaseType.Factory.DEFAULT, "mariadb://", "org.mariadb.jdbc.Driver",  new MavenUtil.ArtifactSpec("org.mariadb.jdbc", "mariadb-java-client", null)));
+        DEFAULT_DRIVERS.put("sqlite",  new DriverSpec(DatabaseType.Factory.DEFAULT, "sqlite:",    "org.sqlite.JDBC",          new MavenUtil.ArtifactSpec("org.xerial", "sqlite-jdbc", null)));
+        DEFAULT_DRIVERS.put("h2",      new DriverSpec(DatabaseType.Factory.DEFAULT, "h2:",        "org.h2.Driver",            new MavenUtil.ArtifactSpec("com.h2database", "h2", null)));
     }
 
 }

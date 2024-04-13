@@ -22,51 +22,89 @@ public class TableSchema {
         }
     }
 
+    /**
+     * Gets the names of the columns in the table
+     * @return The column names
+     */
     public Collection<String> getColumnNames() {
         return columnNames;
     }
 
+    /**
+     * Gets the number of columns in the table
+     * @return The number of columns
+     */
     public int getColumnCount() {
         return columnNames.size();
     }
 
+    /**
+     * Gets the type of the column with the given name
+     * @param column The column name to lookup
+     * @return The column's data type
+     */
     public ColumnType<?> getType(String column) {
         return columns.get(indicesByName.get(column)).type;
     }
 
+    /**
+     * Gets the type of the column at the given index
+     * @param column The column index
+     * @return The column's data type
+     */
     public ColumnType<?> getType(int column) {
         return columns.get(column).type;
     }
 
-    public EnumSet<ColumnFlag> getFlags(String column) {
+    /**
+     * Gets the constraints of the column with the given name
+     * @param column The column name to lookup
+     * @return The column's constraints
+     */
+    public EnumSet<Constraint> getConstraints(String column) {
         return columns.get(indicesByName.get(column)).flags;
     }
 
-    public EnumSet<ColumnFlag> getFlags(int column) {
+    /**
+     * Gets the constraints of the column at the given index
+     * @param column The column index
+     * @return The column's constraints
+     */
+    public EnumSet<Constraint> getConstraints(int column) {
         return columns.get(column).flags;
     }
 
+    /**
+     * Gets the name of the column at the given index
+     * @param column The column index
+     * @return The column's name
+     */
     public String getColumnName(int column) {
         return columnNames.get(column);
     }
 
+    /**
+     * Encodes the type and constraints of the column at the given index, for use in a CREATE COLUMN statement
+     * @param column The column index
+     * @return The column's encoded type
+     */
     public String encodeColumn(int column) {
         return columns.get(column).encode();
     }
 
+    /**
+     * Encodes the type and constraints of the column with the given name, for use in a CREATE COLUMN statement
+     * @param column The column's name
+     * @return The column's encoded type
+     */
     public String encodeColumn(String column) {
         return columns.get(indicesByName.get(column)).encode();
     }
 
-
-    public TableSchema toUpperCase() {
-        Builder out = builder();
-        for(int i = 0; i < columns.size() ; i++) {
-            out.addColumn(columnNames.get(i).toUpperCase(), columns.get(i));
-        }
-        return out.build();
-    }
-
+    /**
+     * Creates a new table schema builder with the same columns
+     * @return A new builder
+     */
     public Builder asBuilder() {
         Builder out = builder();
         for(int i = 0; i < columns.size() ; i++) {
@@ -75,6 +113,10 @@ public class TableSchema {
         return out;
     }
 
+    /**
+     * Creates a new table schema builder with only the given columns
+     * @return A new builder
+     */
     public TableSchema subSchema(String... keys) {
         Builder out = builder();
         for(String key : keys) {
@@ -83,6 +125,10 @@ public class TableSchema {
         return out.build();
     }
 
+    /**
+     * Creates a new table schema builder with only the given columns
+     * @return A new builder
+     */
     public TableSchema subSchema(List<String> keys) {
         Builder out = builder();
         for(String key : keys) {
@@ -91,51 +137,84 @@ public class TableSchema {
         return out.build();
     }
 
+    /**
+     * Creates a new column builder
+     * @return An empty builder
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * Used for creating table schemas
+     */
     public static class Builder {
-        List<Tuples.T2<String, Column>> values = new ArrayList<>();
+        private final List<Tuples.T2<String, Column>> values = new ArrayList<>();
 
-        public Builder withColumn(String key, DataType<?> type, ColumnFlag... flags) {
+        /**
+         * Adds a column to the table schema
+         * @param key The column's name
+         * @param type The column's type
+         * @param constraints The column's constraints
+         * @return A reference to self
+         */
+        public Builder withColumn(String key, DataType<?> type, Constraint... constraints) {
 
-            return withColumn(key, new ColumnType<>(type), flags);
+            return withColumn(key, new ColumnType<>(type), constraints);
         }
 
-        public Builder withColumn(String key, ColumnType<?> type, ColumnFlag... flags) {
+        /**
+         * Adds a column to the table schema
+         * @param key The column's name
+         * @param type The column's type
+         * @param constraints The column's constraints
+         * @return A reference to self
+         */
+        public Builder withColumn(String key, ColumnType<?> type, Constraint... constraints) {
 
-            EnumSet<ColumnFlag> outFlags;
-            if(flags.length == 0) {
-                outFlags = EnumSet.noneOf(ColumnFlag.class);
+            EnumSet<Constraint> outFlags;
+            if(constraints.length == 0) {
+                outFlags = EnumSet.noneOf(Constraint.class);
             } else {
-                outFlags = EnumSet.copyOf(Arrays.asList(flags));
+                outFlags = EnumSet.copyOf(Arrays.asList(constraints));
             }
             return withColumn(key, type, outFlags);
         }
 
-
-        public Builder withColumn(String key, ColumnType<?> type, EnumSet<ColumnFlag> flags) {
+        /**
+         * Adds a column to the table schema
+         * @param key The column's name
+         * @param type The column's type
+         * @param constraints The column's constraints
+         * @return A reference to self
+         */
+        public Builder withColumn(String key, ColumnType<?> type, EnumSet<Constraint> constraints) {
 
             if(!SQLUtil.VALID_NAME.matcher(key).matches()) {
                 throw new IllegalArgumentException("Invalid column name " + key + "!");
             }
 
-            values.add(new Tuples.T2<>(key, new Column(type, flags)));
+            values.add(new Tuples.T2<>(key, new Column(type, constraints)));
             return this;
         }
-
 
         private void addColumn(String key, Column column) {
             values.add(new Tuples.T2<>(key, column));
         }
 
+        /**
+         * Constructs a table schema from this builder
+         * @return A new table schema
+         */
         public TableSchema build() {
             return new TableSchema(values);
         }
     }
 
-    public enum ColumnFlag {
+    /**
+     * Represents a column constraint
+     */
+    public enum Constraint {
         PRIMARY_KEY("PRIMARY KEY"),
         NOT_NULL("NOT NULL"),
         AUTO_INCREMENT("AUTO INCREMENT"),
@@ -143,7 +222,7 @@ public class TableSchema {
 
         final String name;
 
-        ColumnFlag(String name) {
+        Constraint(String name) {
             this.name = name;
         }
 
@@ -155,20 +234,20 @@ public class TableSchema {
     private static class Column {
 
         private final ColumnType<?> type;
-        private final EnumSet<ColumnFlag> flags;
+        private final EnumSet<Constraint> flags;
 
-        public Column(ColumnType<?> type, EnumSet<ColumnFlag> flags) {
+        public Column(ColumnType<?> type, EnumSet<Constraint> flags) {
             this.type = type;
             this.flags = flags;
         }
 
         public Column(ColumnType<?> type) {
             this.type = type;
-            this.flags = EnumSet.noneOf(ColumnFlag.class);
+            this.flags = EnumSet.noneOf(Constraint.class);
         }
 
         public String encode() {
-            return type.getEncoded() + " " + flags.stream().map(ColumnFlag::getName).collect(Collectors.joining(" "));
+            return type.getEncoded() + " " + flags.stream().map(Constraint::getName).collect(Collectors.joining(" "));
         }
     }
 }

@@ -13,6 +13,10 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents an SQL data type
+ * @param <T> The corresponding java type
+ */
 public class DataType<T> {
 
     private final JDBCType parent;
@@ -27,39 +31,70 @@ public class DataType<T> {
         this.serializer = serializer;
     }
 
-
+    /**
+     * Creates a value with this type
+     * @param value The raw value
+     * @return A new data value
+     */
     public DataValue<T> create(T value) {
         return new DataValue<>(this, value);
     }
 
+    /**
+     * Returns the internal JDBC type associated with this value
+     * @return The internal JDBC type
+     */
     public JDBCType getSQLType() {
         return parent;
     }
 
+    /**
+     * Gets the type name
+     * @return The type name
+     */
     public String getName() {
         return parent.getName();
     }
 
+    /**
+     * Gets a serializer for the corresponding Java type
+     * @return A serializer
+     */
     public Serializer<T> getSerializer() {
         return serializer;
     }
 
+    /**
+     * Reads a value of this type from the given result set at the given index
+     * @param set The result set to read from
+     * @param index The index to read from
+     * @return A new data value
+     * @throws SQLException If reading fails
+     */
     public DataValue<T> read(ResultSet set, int index) throws SQLException {
         return new DataValue<>(this, reader.read(set, index));
     }
 
+    /**
+     * Reads a value of this type from the given result set at the given column name
+     * @param set The result set to read from
+     * @param columnName The column name to read from
+     * @return A new data value
+     * @throws SQLException If reading fails
+     */
     public DataValue<T> read(ResultSet set, String columnName) throws SQLException {
         return new DataValue<>(this, reader.read(set, columnName));
     }
 
     public static final Map<Integer, DataType<?>> REGISTRY = new HashMap<>();
 
+    /**
+     * Gets the data type with the given ID
+     * @param id The ID to lookup
+     * @return The type with the given ID, or null if no type with that index could be found
+     */
     public static DataType<?> get(int id) {
         return REGISTRY.get(id);
-    }
-
-    public static DataType<?> get(SQLType type) {
-        return REGISTRY.get(type.getVendorTypeNumber());
     }
 
     private static <T> DataType<T> register(DataType<T> type) {

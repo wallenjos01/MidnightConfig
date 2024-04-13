@@ -1,20 +1,25 @@
 package org.wallentines.mdcfg.sql;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.wallentines.mdcfg.ConfigPrimitive;
-
 import java.util.regex.Pattern;
 
+/**
+ * Utilities for interacting with SQL databases
+ */
 public class SQLUtil {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger("MidnightConfig SQL");
-
+    /**
+     * A regex representing valid SQL identifiers
+     */
     public static final Pattern VALID_NAME = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*$");
 
-    public static void validate(String name) {
-        if(!VALID_NAME.matcher(name).matches()) {
-            throw new IllegalArgumentException("Invalid name " + name + "!");
+    /**
+     * Validates the given identifier
+     * @param identifier The identifier
+     * @throws IllegalArgumentException If the identifier is not valid
+     */
+    public static void validate(String identifier) {
+        if(!VALID_NAME.matcher(identifier).matches()) {
+            throw new IllegalArgumentException("Invalid name " + identifier + "!");
         }
     }
 

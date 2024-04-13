@@ -8,28 +8,59 @@ import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+/**
+ * Represents a data value for use in SQL statements and query results
+ * @param <T> The type of value
+ */
 public class DataValue<T> {
 
     private final DataType<T> type;
     private final T value;
 
+    /**
+     * Creates a new data value with the given associated type
+     * @param type The data type
+     * @param value The value
+     */
     public DataValue(DataType<T> type, T value) {
         this.type = type;
         this.value = value;
     }
 
+    /**
+     * Gets the type of data
+     * @return The data type
+     */
     public DataType<T> getType() {
         return type;
     }
 
+    /**
+     * Gets the value
+     * @return The value
+     */
     public T getValue() {
         return value;
     }
 
+    /**
+     * Writes the value to the given PreparedStatement argument at the given index
+     * @param statement The prepared statement
+     * @param index The argument index
+     * @throws SQLException If the statement does not accept a parameter at the given index, or the data type is not supported in the current database.
+     */
     public void write(PreparedStatement statement, int index) throws SQLException {
         type.writer.write(statement, index, value);
     }
 
+    /**
+     * Writes a serialized value to the given prepared statement at the given index
+     * @param ctx The context associated with the serialized value
+     * @param value The serialized value
+     * @param statement The prepared statement to write to
+     * @param index The index of the argument of the prepared statement
+     * @param <T> The type of serialized object
+     */
     public static <T> void writeSerialized(SerializeContext<T> ctx, T value, PreparedStatement statement, int index) {
         try {
             switch (ctx.getType(value)) {
