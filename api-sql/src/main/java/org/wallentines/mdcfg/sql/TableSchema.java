@@ -217,7 +217,7 @@ public class TableSchema {
     public enum Constraint {
         PRIMARY_KEY("PRIMARY KEY"),
         NOT_NULL("NOT NULL"),
-        AUTO_INCREMENT("AUTO INCREMENT"),
+        AUTO_INCREMENT("AUTO_INCREMENT"),
         UNIQUE("UNIQUE");
 
         final String name;
