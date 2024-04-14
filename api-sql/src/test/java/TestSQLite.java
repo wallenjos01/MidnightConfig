@@ -9,8 +9,7 @@ public class TestSQLite {
     @Test
     public void testSQLite() {
 
-        File db = new File("test.db");
-        SQLConnection conn = Common.getDBType("sqlite").create(db.getAbsolutePath());
+        SQLConnection conn = Common.getDBType("sqlite").create("test");
 
         Common.testBasics(conn);
         Common.testNumberTypes(conn);

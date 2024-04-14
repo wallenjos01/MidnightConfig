@@ -236,8 +236,8 @@ public abstract class DriverRepository {
     static {
         DEFAULT_DRIVERS.put("mysql",   new DriverSpec(DatabaseType.Factory.DEFAULT, "mysql://",   "com.mysql.cj.jdbc.Driver", new MavenUtil.ArtifactSpec("com.mysql", "mysql-connector-j", null)));
         DEFAULT_DRIVERS.put("mariadb", new DriverSpec(DatabaseType.Factory.DEFAULT, "mariadb://", "org.mariadb.jdbc.Driver",  new MavenUtil.ArtifactSpec("org.mariadb.jdbc", "mariadb-java-client", null)));
-        DEFAULT_DRIVERS.put("sqlite",  new DriverSpec(DatabaseType.Factory.DEFAULT, "sqlite:",    "org.sqlite.JDBC",          new MavenUtil.ArtifactSpec("org.xerial", "sqlite-jdbc", null)));
-        DEFAULT_DRIVERS.put("h2",      new DriverSpec(DatabaseType.Factory.DEFAULT, "h2:",        "org.h2.Driver",            new MavenUtil.ArtifactSpec("com.h2database", "h2", null)));
+        DEFAULT_DRIVERS.put("sqlite",  new DriverSpec(DatabaseType.Factory.SQLITE,  "sqlite:",    "org.sqlite.JDBC",          new MavenUtil.ArtifactSpec("org.xerial", "sqlite-jdbc", null)));
+        DEFAULT_DRIVERS.put("h2",      new DriverSpec(DatabaseType.Factory.H2,      "h2:",        "org.h2.Driver",            new MavenUtil.ArtifactSpec("com.h2database", "h2", null)));
     }
 
 }

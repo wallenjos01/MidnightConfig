@@ -8,8 +8,7 @@ public class TestH2 {
     @Test
     public void testH2() {
 
-        File db = new File("h2");
-        SQLConnection conn = Common.getDBType("h2").create(db.getAbsolutePath());
+        SQLConnection conn = Common.getDBType("h2").create("h2");
 
         Common.testBasics(conn);
         Common.testNumberTypes(conn);

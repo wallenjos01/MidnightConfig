@@ -1,8 +1,11 @@
 package org.wallentines.mdcfg.sql;
 
+import org.h2.Driver;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
@@ -74,10 +77,14 @@ public class DatabaseType {
         if(password != null) properties.put("password", password);
 
         try {
-            return new SQLConnection(this, DriverManager.getConnection("jdbc:" + prefix + url, properties));
+            return new SQLConnection(this, DriverManager.getConnection(getConnectionString(url), properties));
         } catch (SQLException ex) {
             throw new IllegalArgumentException("Unable to connect to database with URL " + prefix + url + "!", ex);
         }
+    }
+
+    protected String getConnectionString(String url) {
+        return "jdbc:" + prefix + url;
     }
 
     /**
@@ -86,6 +93,44 @@ public class DatabaseType {
     public interface Factory {
         DatabaseType create(String prefix);
         Factory DEFAULT = DatabaseType::new;
+        Factory SQLITE = SQLite::new;
+        Factory H2 = H2::new;
+    }
+
+    private static class SQLite extends DatabaseType {
+        public SQLite(String prefix) {
+            super(prefix);
+        }
+
+        @Override
+        protected String getConnectionString(String url) {
+
+            String path = new File(url).getAbsolutePath();
+            if(!path.endsWith(".db")) path += ".db";
+
+            return super.getConnectionString(path);
+        }
+    }
+
+    private static class H2 extends DatabaseType {
+        public H2(String prefix) {
+            super(prefix);
+        }
+
+        @Override
+        protected String getConnectionString(String url) {
+
+            if(url.startsWith("tcp://") ||
+                    url.startsWith("ssl://") ||
+                    url.startsWith(".") ||
+                    url.startsWith("mem:")
+            ) return super.getConnectionString(url);
+
+            String file = url;
+            if(file.startsWith("file:")) file = file.substring(5);
+
+            return super.getConnectionString("file:" + new File(file).getAbsolutePath());
+        }
     }
 
 
