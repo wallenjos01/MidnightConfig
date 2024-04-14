@@ -67,7 +67,7 @@ public abstract class DriverRepository {
          * @param folder The folder to store drivers in
          * @param registry The driver specifications, and their names
          */
-        protected Folder(File folder, Map<String, DriverSpec> registry) {
+        public Folder(File folder, Map<String, DriverSpec> registry) {
             super(registry);
             this.folder = folder;
         }
