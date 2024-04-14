@@ -90,13 +90,15 @@ public class DataValue<T> {
 
                     } else if(num instanceof BigDecimal) {
                         statement.setBigDecimal(index, (BigDecimal) num);
-                    } else if(num instanceof BigInteger) {
 
-                        statement.setObject(index, num);
+                    } else if(num instanceof BigInteger) {
+                        statement.setBigDecimal(index, new BigDecimal(num.toString()));
+
                     } else {
                         throw new IllegalArgumentException("Unknown number type " + num + "!");
                     }
                     break;
+
                 case BOOLEAN:
                     statement.setBoolean(index, ctx.asBoolean(value));
                     break;

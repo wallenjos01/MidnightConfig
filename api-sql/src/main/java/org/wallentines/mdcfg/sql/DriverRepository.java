@@ -1,5 +1,9 @@
 package org.wallentines.mdcfg.sql;
 
+import org.wallentines.mdcfg.serializer.ObjectSerializer;
+import org.wallentines.mdcfg.serializer.SerializeResult;
+import org.wallentines.mdcfg.serializer.Serializer;
+
 import java.io.*;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -215,6 +219,13 @@ public abstract class DriverRepository {
         }
 
     }
+
+    public static final Serializer<DriverSpec> DRIVER_SERIALIZER = ObjectSerializer.<DriverSpec>builder()
+            .withEntry(Serializer.STRING.entry("prefix", ds -> ds.prefix))
+            .withEntry(Serializer.STRING.entry("class_name", ds -> ds.className))
+            .withEntry(Serializer.STRING.<DriverSpec>entry("repository", ds -> ds.repository).orElse("https://repo1.maven.org/maven2/"))
+            .withEntry(MavenUtil.ArtifactSpec.SERIALIZER.<DriverSpec>entry("artifact", ds -> ds.artifact).optional())
+            .build(es -> SerializeResult.success(new DriverSpec(DatabaseType.Factory.DEFAULT, es.get(0), es.get(1), es.get(2), es.get(3))));
 
     /**
      * Contains the default supported driver specifications
