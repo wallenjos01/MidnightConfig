@@ -9,7 +9,7 @@ public class TestSQLite {
     @Test
     public void testSQLite() {
 
-        SQLConnection conn = Common.getDBType("sqlite").create("test");
+        SQLConnection conn = Common.getDBType("sqlite").create("sqlite/test");
 
         Common.testBasics(conn);
         Common.testNumberTypes(conn);

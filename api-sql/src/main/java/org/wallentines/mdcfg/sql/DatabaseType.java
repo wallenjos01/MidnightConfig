@@ -105,7 +105,13 @@ public class DatabaseType {
         @Override
         protected String getConnectionString(String url) {
 
-            String path = new File(url).getAbsolutePath();
+            File file = new File(url);
+            File parent = file.getParentFile();
+            if(!parent.isDirectory() && !parent.mkdirs()) {
+                throw new IllegalArgumentException("Unable to create sqlite database in " + parent + "!");
+            }
+
+            String path = file.getAbsolutePath();
             if(!path.endsWith(".db")) path += ".db";
 
             return super.getConnectionString(path);

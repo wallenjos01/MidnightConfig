@@ -50,15 +50,15 @@ public abstract class DriverRepository {
     /**
      * Loads drivers from the classpath or downloads them from the internet and stores them in a folder
      */
-    public static class Folder extends DriverRepository {
+    protected static abstract class Disk extends DriverRepository {
 
-        private final File folder;
+        protected final File folder;
 
         /**
          * Sets up a folder driver repository in the given folder, using default driver registry
          * @param folder The folder to store drivers in
          */
-        public Folder(File folder) {
+        protected Disk(File folder) {
             this(folder, DEFAULT_DRIVERS);
         }
 
@@ -67,7 +67,7 @@ public abstract class DriverRepository {
          * @param folder The folder to store drivers in
          * @param registry The driver specifications, and their names
          */
-        public Folder(File folder, Map<String, DriverSpec> registry) {
+        protected Disk(File folder, Map<String, DriverSpec> registry) {
             super(registry);
             this.folder = folder;
         }
@@ -96,6 +96,41 @@ public abstract class DriverRepository {
                 }
             }
 
+            File file = locateFile(name, prefix, spec);
+            if(file == null) {
+                throw new DriverLoadException("Unable to find driver file for " + name + "!");
+            }
+            return loadDriver(file, prefix, spec);
+        }
+
+        protected abstract File locateFile(String name, String prefix, DriverSpec spec);
+    }
+
+    /**
+     * Loads drivers from the classpath or downloads them from the internet and stores them in a folder
+     */
+    public static class Maven extends Disk {
+
+
+        /**
+         * Sets up a folder driver repository in the given folder, using default driver registry
+         * @param folder The folder to store drivers in
+         */
+        public Maven(File folder) {
+            this(folder, DEFAULT_DRIVERS);
+        }
+
+        /**
+         * Sets up a folder driver repository in the given folder, using the given driver registry
+         * @param folder The folder to store drivers in
+         * @param registry The driver specifications, and their names
+         */
+        public Maven(File folder, Map<String, DriverSpec> registry) {
+            super(folder, registry);
+        }
+
+        @Override
+        protected File locateFile(String name, String prefix, DriverSpec spec) {
             if(spec.artifact.getVersion() == null) {
                 spec = spec.forLatestVersion();
                 if(spec == null) {
@@ -113,31 +148,49 @@ public abstract class DriverRepository {
                     throw new DriverLoadException("Unable to download driver " + name + "!", ex);
                 }
             }
+            return file;
+        }
+    }
 
-            try(URLClassLoader loader = new URLClassLoader(new URL[] { file.toURI().toURL() }, getClass().getClassLoader())) {
 
-                String className = spec.className;
-                if(className != null) {
-                    InputStream is = loader.getResourceAsStream("/META-INF/services/java.sql.Driver");
-                    if (is == null) {
-                        throw new DriverLoadException("Downloaded jar does not contain a JDBC driver!");
-                    }
+    /**
+     * Loads drivers from the classpath or downloads them from the internet and stores them in a folder
+     */
+    public static class Folder extends Disk {
 
-                    BufferedReader br = new BufferedReader(new InputStreamReader(is));
-                    className = br.readLine();
+        private final File folder;
+
+        /**
+         * Sets up a folder driver repository in the given folder, using default driver registry
+         * @param folder The folder to store drivers in
+         */
+        public Folder(File folder) {
+            this(folder, DEFAULT_DRIVERS);
+        }
+
+        /**
+         * Sets up a folder driver repository in the given folder, using the given driver registry
+         * @param folder The folder to store drivers in
+         * @param registry The driver specifications, and their names
+         */
+        public Folder(File folder, Map<String, DriverSpec> registry) {
+            super(folder, registry);
+            this.folder = folder;
+        }
+
+        @Override
+        protected File locateFile(String name, String prefix, DriverSpec spec) {
+
+            String filePrefix = spec.artifact.getNamespace() + "." + spec.artifact.getId();
+            File[] files = folder.listFiles();
+            if(files != null) for(File f : files) {
+                String fileName = f.getName();
+                if(fileName.startsWith(filePrefix) && fileName.endsWith(".jar")) {
+                    return f;
                 }
-
-                try {
-                    loader.loadClass(className);
-                } catch (ClassNotFoundException ex) {
-                    throw new DriverLoadException("Unable to find SQL driver class!", ex);
-                }
-                return spec.factory.create(prefix);
-
-            } catch (IOException ex) {
-
-                throw new DriverLoadException("An error occurred while loading an SQL driver!", ex);
             }
+
+            return null;
         }
     }
 
@@ -180,6 +233,35 @@ public abstract class DriverRepository {
             }
         }
     }
+
+
+    protected static DatabaseType loadDriver(File file, String prefix, DriverSpec spec) {
+        try(URLClassLoader loader = new URLClassLoader(new URL[] { file.toURI().toURL() }, DriverRepository.class.getClassLoader())) {
+
+            String className = spec.className;
+            if(className == null) {
+                InputStream is = loader.getResourceAsStream("/META-INF/services/java.sql.Driver");
+                if (is == null) {
+                    throw new DriverLoadException("Downloaded jar does not contain a JDBC driver!");
+                }
+
+                BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                className = br.readLine();
+            }
+
+            try {
+                loader.loadClass(className);
+            } catch (ClassNotFoundException ex) {
+                throw new DriverLoadException("Unable to find SQL driver class!", ex);
+            }
+            return spec.factory.create(prefix);
+
+        } catch (IOException ex) {
+
+            throw new DriverLoadException("An error occurred while loading an SQL driver!", ex);
+        }
+    }
+
 
     /**
      * Represents a driver which can be loaded
