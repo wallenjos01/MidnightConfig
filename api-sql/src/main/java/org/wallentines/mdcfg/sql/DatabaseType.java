@@ -1,6 +1,7 @@
 package org.wallentines.mdcfg.sql;
 
 import org.h2.Driver;
+import org.jetbrains.annotations.Nullable;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
 
@@ -31,7 +32,7 @@ public class DatabaseType {
      * @return A new SQL connection
      */
     public SQLConnection create(String url) {
-        return create(url, null, null, new ConfigSection());
+        return create(url, null, null, null, new ConfigSection());
     }
 
     /**
@@ -41,7 +42,7 @@ public class DatabaseType {
      * @return A new SQL connection
      */
     public SQLConnection create(String url, ConfigSection config) {
-        return create(url, null, null, config);
+        return create(url, null, null, null, config);
     }
 
     /**
@@ -52,7 +53,7 @@ public class DatabaseType {
      * @return A new SQL connection
      */
     public SQLConnection create(String url, String username, String password) {
-        return create(url, username, password, new ConfigSection());
+        return create(url, username, password, null, new ConfigSection());
     }
 
     /**
@@ -60,10 +61,11 @@ public class DatabaseType {
      * @param url The address/path database to connect to
      * @param username The database username
      * @param password The database password
+     * @param tablePrefix A prefix to append to all table names
      * @param config Properties to be passed to the JDBC driver
      * @return A new SQL connection
      */
-    public SQLConnection create(String url, String username, String password, ConfigSection config) {
+    public SQLConnection create(String url, String username, String password, @Nullable String tablePrefix, ConfigSection config) {
 
         Properties properties = new Properties();
         for(String s : config.getKeys()) {
@@ -77,7 +79,7 @@ public class DatabaseType {
         if(password != null) properties.put("password", password);
 
         try {
-            return new SQLConnection(this, DriverManager.getConnection(getConnectionString(url), properties));
+            return new SQLConnection(this, DriverManager.getConnection(getConnectionString(url), properties), tablePrefix);
         } catch (SQLException ex) {
             throw new IllegalArgumentException("Unable to connect to database with URL " + prefix + url + "!", ex);
         }

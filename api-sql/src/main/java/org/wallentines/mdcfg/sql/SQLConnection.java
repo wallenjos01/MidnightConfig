@@ -1,5 +1,6 @@
 package org.wallentines.mdcfg.sql;
 
+import org.jetbrains.annotations.Nullable;
 import org.wallentines.mdcfg.sql.stmt.*;
 
 import java.sql.*;
@@ -13,6 +14,7 @@ public class SQLConnection implements AutoCloseable {
     private final DatabaseType type;
     private final Connection internal;
     private final IDCase idCase;
+    private final String tablePrefix;
     private String idQuote;
 
     /**
@@ -20,9 +22,10 @@ public class SQLConnection implements AutoCloseable {
      * @param type The database type
      * @param internal The JDBC connection
      */
-    public SQLConnection(DatabaseType type, Connection internal) {
+    public SQLConnection(DatabaseType type, Connection internal, @Nullable String tablePrefix) {
         this.type = type;
         this.internal = internal;
+        this.tablePrefix = tablePrefix == null ? "" : tablePrefix;
 
         this.idCase = getIDCase();
 
@@ -116,7 +119,19 @@ public class SQLConnection implements AutoCloseable {
             ResultSet set = internal.getMetaData().getTables(null, null, null, null);
             while(set.next()) {
                 String table = set.getString("TABLE_NAME");
-                out.add(table);
+                String prefix = tablePrefix;
+                switch (idCase) {
+                    case LOWER:
+                        prefix = prefix.toLowerCase();
+                        break;
+                    case UPPER:
+                        prefix = prefix.toUpperCase();
+                        break;
+                }
+
+                if(table.startsWith(prefix)) {
+                    out.add(table.substring(prefix.length()));
+                }
             }
         } catch (SQLException ex) {
             throw new IllegalStateException("Unable to query tables!", ex);
@@ -141,7 +156,7 @@ public class SQLConnection implements AutoCloseable {
      * @return A new CREATE TABLE statement
      */
     public CreateTable createTable(String name, TableSchema schema) {
-        return new CreateTable(this, name, schema);
+        return new CreateTable(this, tablePrefix + name, schema);
     }
 
     /**
@@ -150,7 +165,7 @@ public class SQLConnection implements AutoCloseable {
      * @return A new SELECT statement
      */
     public Select select(String table) {
-        return new Select(this, table);
+        return new Select(this, tablePrefix + table);
     }
 
     /**
@@ -160,7 +175,7 @@ public class SQLConnection implements AutoCloseable {
      * @return A new INSERT statement
      */
     public Insert insert(String table, Collection<String> columns) {
-        return new Insert(this, table, columns);
+        return new Insert(this, tablePrefix + table, columns);
     }
 
     /**
@@ -170,7 +185,7 @@ public class SQLConnection implements AutoCloseable {
      * @return A new INSERT statement
      */
     public Insert insert(String table, TableSchema schema) {
-        return new Insert(this, table, schema.getColumnNames());
+        return new Insert(this, tablePrefix + table, schema.getColumnNames());
     }
 
     /**
@@ -179,7 +194,7 @@ public class SQLConnection implements AutoCloseable {
      * @return A new UPDATE statement
      */
     public Update update(String table) {
-        return new Update(this, table);
+        return new Update(this, tablePrefix + table);
     }
 
     /**
@@ -188,7 +203,7 @@ public class SQLConnection implements AutoCloseable {
      * @return A new DELETE statement
      */
     public Delete delete(String table) {
-        return new Delete(this, table);
+        return new Delete(this,tablePrefix +  table);
     }
 
     /**
@@ -197,7 +212,7 @@ public class SQLConnection implements AutoCloseable {
      * @return A new DROP TABLE statement
      */
     public DropTable dropTable(String table) {
-        return new DropTable(this, table);
+        return new DropTable(this, tablePrefix + table);
     }
 
 
