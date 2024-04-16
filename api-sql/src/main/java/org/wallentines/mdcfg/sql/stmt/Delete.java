@@ -26,17 +26,12 @@ public class Delete extends DMLStatement {
     @Override
     public int[] execute() {
 
-        StringBuilder out = new StringBuilder("DELETE FROM ").append(table);
+        StatementBuilder out = new StatementBuilder().append("DELETE FROM " + table);
         if(where != null) {
-            out.append(" WHERE ").append(where.encode());
+            out.append(" WHERE ").appendCondition(where);
         }
-        out.append(";");
 
-        try(PreparedStatement stmt = connection.getInternal().prepareStatement(out.toString())) {
-
-            if(where != null) {
-                where.writeArguments(stmt, 1);
-            }
+        try(PreparedStatement stmt = out.prepare(connection)) {
             return stmt.executeBatch();
         } catch (SQLException ex) {
             throw new IllegalStateException("Unable to execute DELETE statement!");

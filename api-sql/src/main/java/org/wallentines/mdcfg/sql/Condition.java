@@ -1,6 +1,7 @@
 package org.wallentines.mdcfg.sql;
 
 import org.wallentines.mdcfg.Tuples;
+import org.wallentines.mdcfg.sql.stmt.StatementBuilder;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -117,29 +118,28 @@ public class Condition {
         IN
     }
 
-    public String encode() {
-        StringBuilder builder = new StringBuilder();
+    public void encode(StatementBuilder builder) {
         if(inverted) {
             builder.append("NOT ");
         }
         builder.append(key);
 
         switch (operand) {
-            case EQUALS: builder.append(" = ?"); break;
-            case GREATER_THAN: builder.append(" > ?"); break;
-            case LESS_THAN: builder.append(" < ?"); break;
-            case AT_LEAST: builder.append(" >= ?"); break;
-            case AT_MOST: builder.append(" <= ?"); break;
-            case BETWEEN: builder.append(" BETWEEN ? AND ?"); break;
+            case EQUALS: builder.append(" = ").appendValue(arguments.get(0)); break;
+            case GREATER_THAN: builder.append(" > ").appendValue(arguments.get(0)); break;
+            case LESS_THAN: builder.append(" < ").appendValue(arguments.get(0)); break;
+            case AT_LEAST: builder.append(" >= ").appendValue(arguments.get(0)); break;
+            case AT_MOST: builder.append(" <= ").appendValue(arguments.get(0)); break;
+            case BETWEEN: builder.append(" BETWEEN ").appendValue(arguments.get(0)).append(" AND ").appendValue(arguments.get(1)); break;
             case IN: {
                 builder.append(" IN(");
                 for(int i = 0; i < getArgumentCount() ; i++) {
                     if(i > 0) {
-                        builder.append(',');
+                        builder.append(",");
                     }
-                    builder.append('?');
+                    builder.appendValue(arguments.get(i));
                 }
-                builder.append(')');
+                builder.append(")");
                 break;
             }
         }
@@ -150,11 +150,9 @@ public class Condition {
             } else {
                 builder.append(" OR (");
             }
-            builder.append(child.p2.encode());
+            child.p2.encode(builder);
             builder.append(")");
         }
-
-        return builder.toString();
     }
 
 }

@@ -43,7 +43,7 @@ public class Select extends DQLStatement {
     @Override
     public QueryResult execute() {
 
-        StringBuilder query = new StringBuilder("SELECT ");
+        StatementBuilder query = new StatementBuilder("SELECT ");
         if(columns.isEmpty()) {
             query.append("*");
         } else {
@@ -52,15 +52,10 @@ public class Select extends DQLStatement {
         query.append(" FROM ").append(table);
 
         if (where != null) {
-            query.append(" WHERE ").append(where.encode());
+            query.append(" WHERE ").appendCondition(where);
         }
-        query.append(";");
 
-        try(PreparedStatement stmt = connection.getInternal().prepareStatement(query.toString())) {
-
-            if (where != null) {
-                where.writeArguments(stmt, 1);
-            }
+        try(PreparedStatement stmt = query.prepare(connection)) {
 
             ResultSet set = stmt.executeQuery();
             int cols = set.getMetaData().getColumnCount();

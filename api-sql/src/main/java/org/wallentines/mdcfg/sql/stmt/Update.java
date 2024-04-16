@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Update extends DMLStatement {
@@ -50,28 +51,32 @@ public class Update extends DMLStatement {
     @Override
     public int[] execute() {
 
-        StringBuilder query = new StringBuilder("UPDATE ")
-                .append(table).append(" SET ")
-                .append(values.stream().map(c -> c.p1 + " = ?").collect(Collectors.joining(", ")))
-                .append(serialized.stream().map(c -> c.p1 + " = ?").collect(Collectors.joining(", ")));
+        StatementBuilder query = new StatementBuilder("UPDATE ")
+                .append(table).append(" SET ");
+
+        int index = 0;
+        for(Tuples.T2<String, DataValue<?>> ent : values) {
+            if(index++ > 0) {
+                query.append(",");
+            }
+            query.append(ent.p1 + " = ").appendValue(ent.p2);
+        }
+        for(Tuples.T2<String, ConfigObject> ent : serialized) {
+            if (index++ > 0) {
+                query.append(",");
+            }
+            query.append(ent.p1 + " = ").appendUnknown();
+        }
 
         if (where != null) {
-            query.append(" WHERE ").append(where.encode());
+            query.append(" WHERE ").appendCondition(where);
         }
-        query.append(";");
 
-        try(PreparedStatement pst = connection.getInternal().prepareStatement(query.toString())) {
+        try(PreparedStatement pst = query.prepare(connection)) {
 
-            int index = 1;
-            for(Tuples.T2<String, DataValue<?>> s : values) {
-                s.p2.write(pst, index++);
-            }
+            index = 1;
             for(Tuples.T2<String, ConfigObject> s : serialized) {
                 DataValue.writeSerialized(ConfigContext.INSTANCE, s.p2, pst, index++);
-            }
-
-            if(where != null) {
-                where.writeArguments(pst, index);
             }
 
             return new int[] { pst.executeUpdate() };

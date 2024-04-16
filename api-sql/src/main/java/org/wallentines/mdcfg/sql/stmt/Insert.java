@@ -44,18 +44,17 @@ public class Insert extends DMLStatement {
 
     protected PreparedStatement prepare(String table, Collection<String> columns) {
         try {
-            StringBuilder builder = new StringBuilder("INSERT INTO ")
-                    .append(table);
+            StatementBuilder builder = new StatementBuilder("INSERT INTO ").append(table);
             if(!columns.isEmpty()) builder.append("(").append(String.join(",", columns)).append(")");
 
             builder.append(" VALUES (");
             for(int i = 0 ; i < columns.size() ; i++) {
                 if(i > 0) builder.append(",");
-                builder.append("?");
+                builder.appendUnknown();
             }
-            builder.append(");");
+            builder.append(")");
 
-            return connection.getInternal().prepareStatement(builder.toString());
+            return builder.prepare(connection);
         } catch (SQLException ex) {
             throw new IllegalArgumentException("Unable to prepare INSERT statement!", ex);
         }

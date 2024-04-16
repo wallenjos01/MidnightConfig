@@ -29,21 +29,19 @@ public class CreateTable extends DDLStatement {
     @Override
     public boolean execute() {
 
-        StringBuilder stmt = new StringBuilder("CREATE TABLE ");
+        StatementBuilder stmt = new StatementBuilder().append("CREATE TABLE ");
 
         if(ifNotExists) {
             stmt.append("IF NOT EXISTS ");
         }
 
-        stmt.append(table)
-                .append(" (")
+        stmt.append(table + "(")
                 .append(connection.getType().getDialect().writeTableSchema(connection, schema))
                 .append(");");
 
-        try(PreparedStatement prep = connection.getInternal().prepareStatement(stmt.toString())) {
+        try(PreparedStatement prep = stmt.prepare(connection)) {
             return prep.execute();
         } catch (SQLException ex) {
-
             throw new IllegalStateException("Unable to execute CREATE TABLE statement!", ex);
         }
     }

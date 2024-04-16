@@ -1,14 +1,14 @@
 package org.wallentines.mdcfg.sql;
 
-import java.util.stream.Collectors;
+import org.wallentines.mdcfg.sql.stmt.StatementBuilder;
 
 public interface SQLDialect {
 
-    String writeTableSchema(SQLConnection connection, TableSchema schema);
+    StatementBuilder writeTableSchema(SQLConnection connection, TableSchema schema);
 
 
     class Standard implements SQLDialect {
-        protected void writeConstraint(SQLConnection conn, Column def, Constraint<?> constraint, StringBuilder column, StringBuilder table) {
+        protected void writeConstraint(SQLConnection conn, Column def, Constraint<?> constraint, StatementBuilder column, StatementBuilder table) {
 
             switch (constraint.type) {
                 case NOT_NULL: column.append(" NOT NULL"); break;
@@ -25,20 +25,23 @@ public interface SQLDialect {
                     break;
                 }
                 case CHECK: {
-                    Condition ref = (Condition) constraint.param;
-                    column.append(" CHECK(").append(ref.encode()).append(")");
-                    // TODO: Apply data value
+                    Condition check = (Condition) constraint.param;
+                    column.append(" CHECK(");
+                    check.encode(column);
+                    column.append(")");
                     break;
                 }
-                case DEFAULT: column.append(" DEFAULT ?"); {
-                    // TODO: Apply data value
+                case DEFAULT: {
+
+                    DataValue<?> val = (DataValue<?>) constraint.param;
+                    column.append(" DEFAULT ").appendValue(val);
                     break;
                 }
             }
 
         }
 
-        protected void writeColumn(SQLConnection conn, Column def, StringBuilder column, StringBuilder table) {
+        protected void writeColumn(SQLConnection conn, Column def, StatementBuilder column, StatementBuilder table) {
             column.append(def.getName()).append(" ").append(def.getType().getEncoded());
             for(Constraint<?> con : def.getConstraints()) {
                 writeConstraint(conn, def, con, column, table);
@@ -46,23 +49,27 @@ public interface SQLDialect {
         }
 
         @Override
-        public String writeTableSchema(SQLConnection connection, TableSchema schema) {
+        public StatementBuilder writeTableSchema(SQLConnection connection, TableSchema schema) {
 
-            StringBuilder postTable = new StringBuilder();
-            return schema.getColumns().stream().map(col -> {
-
-                StringBuilder out = new StringBuilder();
+            StatementBuilder out = new StatementBuilder();
+            StatementBuilder postTable = new StatementBuilder();
+            int index = 0;
+            for(Column col : schema.getColumns()) {
+                if(index++ > 0) {
+                    out.append(",");
+                }
                 writeColumn(connection, col, out, postTable);
+            }
 
-                return out.toString();
-            }).collect(Collectors.joining(", ")) + postTable;
+            out.append(postTable);
+            return out;
         }
     }
 
     class SQLite extends Standard {
 
         @Override
-        protected void writeConstraint(SQLConnection conn, Column def, Constraint<?> constraint, StringBuilder column, StringBuilder table) {
+        protected void writeConstraint(SQLConnection conn, Column def, Constraint<?> constraint, StatementBuilder column, StatementBuilder table) {
             if(constraint.type == Constraint.Type.PRIMARY_KEY) {
                 column.append(" PRIMARY KEY");
                 return;
