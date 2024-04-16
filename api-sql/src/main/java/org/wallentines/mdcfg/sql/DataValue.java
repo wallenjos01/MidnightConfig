@@ -1,7 +1,9 @@
 package org.wallentines.mdcfg.sql;
 
 import org.wallentines.mdcfg.ByteBufferInputStream;
+import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.serializer.SerializeContext;
+import org.wallentines.mdcfg.serializer.SerializeResult;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -52,6 +54,26 @@ public class DataValue<T> {
     public void write(PreparedStatement statement, int index) throws SQLException {
         type.writer.write(statement, index, value);
     }
+
+    /**
+     * Serializes this value using the given context
+     * @param ctx The serialize context
+     * @return The result of serializing this value
+     * @param <O> The serialized type
+     */
+    public <O> SerializeResult<O> serialize(SerializeContext<O> ctx) {
+        return getType().getSerializer().serialize(ctx, getValue());
+    }
+
+    /**
+     * Sets the value into a ConfigSection using the given name
+     * @param sec The section to set
+     * @param columnName The name of the key to set
+     */
+    public void setConfig(ConfigSection sec, String columnName) {
+        sec.set(columnName, getValue(), getType().getSerializer());
+    }
+
 
     /**
      * Writes a serialized value to the given prepared statement at the given index

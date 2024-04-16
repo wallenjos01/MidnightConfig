@@ -1,5 +1,6 @@
 package org.wallentines.mdcfg.sql;
 
+import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.Tuples;
 
 import java.util.*;
@@ -63,6 +64,25 @@ public class TableSchema {
     public Column getColumn(String name) {
         return columns.get(indicesByName.get(name));
     }
+
+    /**
+     * Creates a ConfigSection from the given row, using this schema as a template
+     * @param row The row from a query result
+     * @return A new config section created from that row
+     */
+    public ConfigSection createSection(QueryResult.Row row) {
+
+        ConfigSection out = new ConfigSection();
+        for(Column c : columns) {
+            String name = c.getName();
+            if(row.hasColumn(name)) {
+                row.get(name).setConfig(out, name);
+            }
+        }
+
+        return out;
+    }
+
 
     /**
      * Creates a new table schema builder with the same columns

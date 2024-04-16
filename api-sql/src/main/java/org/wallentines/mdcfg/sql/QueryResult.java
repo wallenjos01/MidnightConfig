@@ -188,15 +188,11 @@ public class QueryResult {
         public ConfigSection toConfigSection() {
             ConfigSection out = new ConfigSection();
             for(Tuples.T2<String, DataValue<?>> t : values) {
-                genericSet(out, t.p1, t.p2);
+                t.p2.setConfig(out, t.p1);
             }
             return out;
         }
 
-    }
-
-    private static <T> void genericSet(ConfigSection sec, String columnName, DataValue<T> value) {
-        sec.set(columnName, value.getValue(), value.getType().getSerializer());
     }
 
 }
