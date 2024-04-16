@@ -74,7 +74,7 @@ public class Update extends DMLStatement {
 
         try(PreparedStatement pst = query.prepare(connection)) {
 
-            index = 1;
+            index = values.size() + 1;
             for(Tuples.T2<String, ConfigObject> s : serialized) {
                 DataValue.writeSerialized(ConfigContext.INSTANCE, s.p2, pst, index++);
             }
