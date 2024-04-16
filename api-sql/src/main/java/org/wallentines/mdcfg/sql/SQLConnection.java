@@ -14,7 +14,7 @@ public class SQLConnection implements AutoCloseable {
     private final DatabaseType type;
     private final Connection internal;
     private final IDCase idCase;
-    private final String tablePrefix;
+    public final String tablePrefix;
     private String idQuote;
 
     /**
@@ -185,7 +185,7 @@ public class SQLConnection implements AutoCloseable {
      * @return A new INSERT statement
      */
     public Insert insert(String table, TableSchema schema) {
-        return new Insert(this, tablePrefix + table, schema.getColumnNames());
+        return new Insert(this, tablePrefix + table, schema);
     }
 
     /**

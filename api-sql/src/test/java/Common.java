@@ -16,7 +16,7 @@ public class Common {
 
     public static void testBasics(SQLConnection conn) {
         TableSchema schema = TableSchema.builder()
-                .withColumn("id", DataType.TINYINT)
+                .withColumn(Column.builder("id", DataType.INTEGER).withConstraint(Constraint.PRIMARY_KEY).withConstraint(Constraint.AUTO_INCREMENT))
                 .withColumn("name", DataType.VARCHAR(255))
                 .build();
 
@@ -27,7 +27,6 @@ public class Common {
         conn.createTable("test", schema).execute();
         conn.insert("test", schema)
                 .addRow(new ConfigSection()
-                        .with("id", 1)
                         .with("name", "Test User"))
                 .execute();
 
@@ -35,7 +34,7 @@ public class Common {
 
         Assertions.assertEquals(1, results.rows());
         Assertions.assertEquals(2, results.get(0).columns());
-        Assertions.assertEquals((byte) 1, results.get(0).get("id").getValue());
+        Assertions.assertEquals(1, results.get(0).get("id").getValue());
         Assertions.assertEquals("Test User", results.get(0).get("name").getValue());
     }
 

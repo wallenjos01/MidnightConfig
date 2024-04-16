@@ -43,4 +43,11 @@ public class ColumnType<T> {
         return builder.toString();
     }
 
+    /**
+     * Gets the data type corresponding to this column type
+     * @return The column's data type
+     */
+    public DataType<T> getDataType() {
+        return dataType;
+    }
 }

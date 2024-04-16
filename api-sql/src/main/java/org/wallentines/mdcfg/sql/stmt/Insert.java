@@ -2,12 +2,11 @@ package org.wallentines.mdcfg.sql.stmt;
 
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.serializer.ConfigContext;
-import org.wallentines.mdcfg.sql.DataValue;
-import org.wallentines.mdcfg.sql.SQLConnection;
-import org.wallentines.mdcfg.sql.TableSchema;
+import org.wallentines.mdcfg.sql.*;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -16,17 +15,33 @@ public class Insert extends DMLStatement {
     private final PreparedStatement statement;
     private final List<String> columns;
 
+    public Insert(SQLConnection connection, String table, TableSchema columns) {
+        super(connection);
+        List<String> names = new ArrayList<>();
+        for(Column col : columns.getColumns()) {
+            if(col.hasConstraint(Constraint.Type.AUTO_INCREMENT)) continue;
+            names.add(col.getName());
+        }
+
+        this.columns = List.copyOf(names);
+        this.statement = prepare(table, names);
+    }
+
+
     public Insert(SQLConnection connection, String table, Collection<String> columns) {
         super(connection);
         this.columns = List.copyOf(columns);
         this.statement = prepare(table, columns);
     }
 
+
     protected PreparedStatement prepare(String table, Collection<String> columns) {
         try {
             StringBuilder builder = new StringBuilder("INSERT INTO ")
-                    .append(table)
-                    .append("(").append(String.join(",", columns)).append(") VALUES (");
+                    .append(table);
+            if(!columns.isEmpty()) builder.append("(").append(String.join(",", columns)).append(")");
+
+            builder.append(" VALUES (");
             for(int i = 0 ; i < columns.size() ; i++) {
                 if(i > 0) builder.append(",");
                 builder.append("?");

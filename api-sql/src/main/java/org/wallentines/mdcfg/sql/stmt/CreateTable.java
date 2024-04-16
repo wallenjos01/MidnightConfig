@@ -29,17 +29,15 @@ public class CreateTable extends DDLStatement {
     @Override
     public boolean execute() {
 
-        StringBuilder stmt = new StringBuilder("CREATE TABLE ")
-                .append(table);
+        StringBuilder stmt = new StringBuilder("CREATE TABLE ");
 
         if(ifNotExists) {
-            stmt.append(" IF NOT EXISTS");
+            stmt.append("IF NOT EXISTS ");
         }
 
-        stmt.append(" (")
-                .append(schema.getColumnNames().stream()
-                        .map(key -> key + " " + schema.encodeColumn(key))
-                        .collect(Collectors.joining(", ")))
+        stmt.append(table)
+                .append(" (")
+                .append(connection.getType().getDialect().writeTableSchema(connection, schema))
                 .append(");");
 
         try(PreparedStatement prep = connection.getInternal().prepareStatement(stmt.toString())) {

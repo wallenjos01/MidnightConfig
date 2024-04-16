@@ -1,12 +1,10 @@
 package org.wallentines.mdcfg.sql;
 
-import org.h2.Driver;
 import org.jetbrains.annotations.Nullable;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
@@ -17,13 +15,23 @@ import java.util.Properties;
 public class DatabaseType {
 
     protected final String prefix;
+    protected final SQLDialect dialect;
 
     /**
      * Creates a database type with the given JDBC prefix
      * @param prefix The JDBC connection prefix.
      */
-    public DatabaseType(String prefix) {
+    public DatabaseType(String prefix, SQLDialect dialect) {
         this.prefix = prefix;
+        this.dialect = dialect;
+    }
+
+    /**
+     * Gets a reference to the SQL dialect corresponding to this database type
+     * @return The SQL dialect for this database type
+     */
+    public SQLDialect getDialect() {
+        return dialect;
     }
 
     /**
@@ -94,14 +102,14 @@ public class DatabaseType {
      */
     public interface Factory {
         DatabaseType create(String prefix);
-        Factory DEFAULT = DatabaseType::new;
+        Factory DEFAULT = pre -> (new DatabaseType(pre, SQLDialect.STANDARD));
         Factory SQLITE = SQLite::new;
         Factory H2 = H2::new;
     }
 
     private static class SQLite extends DatabaseType {
         public SQLite(String prefix) {
-            super(prefix);
+            super(prefix, SQLDialect.SQLITE);
         }
 
         @Override
@@ -122,7 +130,7 @@ public class DatabaseType {
 
     private static class H2 extends DatabaseType {
         public H2(String prefix) {
-            super(prefix);
+            super(prefix, SQLDialect.STANDARD);
         }
 
         @Override
