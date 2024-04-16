@@ -25,10 +25,7 @@ public class Common {
         }
 
         conn.createTable("test", schema).execute();
-        conn.insert("test", schema)
-                .addRow(new ConfigSection()
-                        .with("name", "Test User"))
-                .execute();
+        conn.insert("test", new ConfigSection().with("name", "Test User")).execute();
 
         QueryResult results = conn.select("test").execute();
 

@@ -34,6 +34,13 @@ public class Insert extends DMLStatement {
         this.statement = prepare(table, columns);
     }
 
+    public Insert(SQLConnection connection, String table, ConfigSection values) {
+        super(connection);
+        this.columns = List.copyOf(values.getKeys());
+        this.statement = prepare(table, columns);
+        addRow(values);
+    }
+
 
     protected PreparedStatement prepare(String table, Collection<String> columns) {
         try {

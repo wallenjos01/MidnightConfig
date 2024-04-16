@@ -1,6 +1,7 @@
 package org.wallentines.mdcfg.sql;
 
 import org.jetbrains.annotations.Nullable;
+import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.sql.stmt.*;
 
 import java.sql.*;
@@ -186,6 +187,15 @@ public class SQLConnection implements AutoCloseable {
      */
     public Insert insert(String table, TableSchema schema) {
         return new Insert(this, tablePrefix + table, schema);
+    }
+    /**
+     * Starts a INSERT statement with columns and a row defined by the given config section
+     * @param table The name of the table to insert into
+     * @param row The row to insert
+     * @return A new INSERT statement
+     */
+    public Insert insert(String table, ConfigSection row) {
+        return new Insert(this, tablePrefix + table, row);
     }
 
     /**
