@@ -2,6 +2,8 @@ package org.wallentines.mdcfg.sql;
 
 import org.wallentines.mdcfg.ByteBufferInputStream;
 import org.wallentines.mdcfg.ConfigBlob;
+import org.wallentines.mdcfg.serializer.SerializeContext;
+import org.wallentines.mdcfg.serializer.SerializeResult;
 import org.wallentines.mdcfg.serializer.Serializer;
 
 import java.io.IOException;
@@ -84,6 +86,10 @@ public class DataType<T> {
      */
     public DataValue<T> read(ResultSet set, String columnName) throws SQLException {
         return new DataValue<>(this, reader.read(set, columnName));
+    }
+
+    public SerializeResult<DataValue<T>> deserialize(SerializeContext<T> ctx, T value) {
+        return serializer.deserialize(ctx, value).flatMap(raw -> new DataValue<>(this, raw));
     }
 
     public static final Map<Integer, DataType<?>> REGISTRY = new HashMap<>();
