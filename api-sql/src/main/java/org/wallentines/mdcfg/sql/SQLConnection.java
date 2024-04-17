@@ -4,8 +4,13 @@ import org.jetbrains.annotations.Nullable;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.sql.stmt.*;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Represents a connection to an SQL database

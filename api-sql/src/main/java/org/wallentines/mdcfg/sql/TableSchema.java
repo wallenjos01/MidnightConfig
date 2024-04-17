@@ -1,10 +1,11 @@
 package org.wallentines.mdcfg.sql;
 
 import org.wallentines.mdcfg.ConfigSection;
-import org.wallentines.mdcfg.Tuples;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 
 public class TableSchema {
 

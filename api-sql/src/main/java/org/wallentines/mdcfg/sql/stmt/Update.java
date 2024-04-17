@@ -4,14 +4,15 @@ import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.Tuples;
 import org.wallentines.mdcfg.serializer.ConfigContext;
-import org.wallentines.mdcfg.sql.*;
+import org.wallentines.mdcfg.sql.Condition;
+import org.wallentines.mdcfg.sql.DataValue;
+import org.wallentines.mdcfg.sql.SQLConnection;
+import org.wallentines.mdcfg.sql.SQLUtil;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class Update extends DMLStatement {
 

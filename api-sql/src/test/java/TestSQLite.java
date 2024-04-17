@@ -1,9 +1,6 @@
 import org.junit.jupiter.api.Test;
 import org.wallentines.mdcfg.ConfigSection;
-import org.wallentines.mdcfg.sql.DatabaseType;
 import org.wallentines.mdcfg.sql.SQLConnection;
-
-import java.io.File;
 
 public class TestSQLite {
 

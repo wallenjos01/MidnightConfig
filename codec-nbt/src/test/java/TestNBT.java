@@ -1,4 +1,3 @@
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.wallentines.mdcfg.ConfigObject;
@@ -6,7 +5,6 @@ import org.wallentines.mdcfg.ConfigPrimitive;
 import org.wallentines.mdcfg.codec.DecodeException;
 import org.wallentines.mdcfg.codec.EncodeException;
 import org.wallentines.mdcfg.codec.NBTCodec;
-import org.wallentines.mdcfg.codec.NBTUtil;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.serializer.Serializer;
 

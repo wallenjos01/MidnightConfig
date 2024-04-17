@@ -1,7 +1,6 @@
 package org.wallentines.mdcfg.sql;
 
 import org.jetbrains.annotations.Nullable;
-import org.wallentines.mdcfg.serializer.InlineSerializer;
 import org.wallentines.mdcfg.serializer.SerializeContext;
 import org.wallentines.mdcfg.serializer.SerializeResult;
 import org.wallentines.mdcfg.serializer.Serializer;
@@ -17,7 +16,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.text.ParseException;
 import java.util.Stack;
 
 /**
