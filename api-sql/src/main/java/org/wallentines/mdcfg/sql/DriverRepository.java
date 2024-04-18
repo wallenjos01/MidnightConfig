@@ -5,10 +5,14 @@ import org.wallentines.mdcfg.serializer.SerializeResult;
 import org.wallentines.mdcfg.serializer.Serializer;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
+import java.util.logging.Logger;
 
 /**
  * Loads and manages JDBC drivers
@@ -53,7 +57,7 @@ public abstract class DriverRepository {
     protected static abstract class Disk extends DriverRepository {
 
         protected final File folder;
-
+        private final DriverLoader loader;
         /**
          * Sets up a folder driver repository in the given folder, using default driver registry
          * @param folder The folder to store drivers in
@@ -70,6 +74,7 @@ public abstract class DriverRepository {
         protected Disk(File folder, Map<String, DriverSpec> registry) {
             super(registry);
             this.folder = folder;
+            this.loader = new DriverLoader(new URL[] {}, getClass().getClassLoader());
         }
 
         /**
@@ -102,6 +107,46 @@ public abstract class DriverRepository {
             }
             return loadDriver(file, prefix, spec);
         }
+
+        protected DatabaseType loadDriver(File file, String prefix, DriverSpec spec) {
+
+            try {
+
+                loader.addURL(file.toURI().toURL());
+
+                String className = spec.className;
+                if(className == null) {
+                    InputStream is = loader.getResourceAsStream("/META-INF/services/java.sql.Driver");
+                    if (is == null) {
+                        throw new DriverLoadException("Downloaded jar does not contain a JDBC driver!");
+                    }
+
+                    BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                    className = br.readLine();
+                }
+
+                try {
+                    Class<?> clazz = loader.loadClass(className);
+                    Driver driver = (Driver) clazz.getConstructor().newInstance();
+                    WrappedDriver wd = new WrappedDriver(driver);
+                    DriverManager.registerDriver(wd);
+
+                } catch (ClassNotFoundException ex) {
+                    throw new DriverLoadException("Unable to load SQL driver class!", ex);
+                } catch(InvocationTargetException | InstantiationException | IllegalAccessException |
+                        NoSuchMethodException ex) {
+                    throw new DriverLoadException("Unable to instantiate SQL driver!", ex);
+                } catch (SQLException ex) {
+                    throw new DriverLoadException("Unable to register SQL driver!", ex);
+                }
+                return spec.factory.create(prefix);
+
+            } catch (IOException ex) {
+
+                throw new DriverLoadException("An error occurred while loading an SQL driver!", ex);
+            }
+        }
+
 
         protected abstract File locateFile(String name, String prefix, DriverSpec spec);
     }
@@ -235,34 +280,6 @@ public abstract class DriverRepository {
     }
 
 
-    protected static DatabaseType loadDriver(File file, String prefix, DriverSpec spec) {
-        try(URLClassLoader loader = new URLClassLoader(new URL[] { file.toURI().toURL() }, DriverRepository.class.getClassLoader())) {
-
-            String className = spec.className;
-            if(className == null) {
-                InputStream is = loader.getResourceAsStream("/META-INF/services/java.sql.Driver");
-                if (is == null) {
-                    throw new DriverLoadException("Downloaded jar does not contain a JDBC driver!");
-                }
-
-                BufferedReader br = new BufferedReader(new InputStreamReader(is));
-                className = br.readLine();
-            }
-
-            try {
-                loader.loadClass(className);
-            } catch (ClassNotFoundException ex) {
-                throw new DriverLoadException("Unable to find SQL driver class!", ex);
-            }
-            return spec.factory.create(prefix);
-
-        } catch (IOException ex) {
-
-            throw new DriverLoadException("An error occurred while loading an SQL driver!", ex);
-        }
-    }
-
-
     /**
      * Represents a driver which can be loaded
      */
@@ -275,7 +292,7 @@ public abstract class DriverRepository {
         private final MavenUtil.ArtifactSpec artifact;
 
         public DriverSpec(DatabaseType.Factory factory, String prefix, String className, MavenUtil.ArtifactSpec artifact) {
-            this(factory, prefix, className, "https://repo1.maven.org/maven2/", artifact);
+            this(factory, prefix, className, "https://repo1.maven.org/maven2", artifact);
         }
 
         public DriverSpec(DatabaseType.Factory factory, String prefix, String className, String repository, MavenUtil.ArtifactSpec artifact) {
@@ -320,6 +337,63 @@ public abstract class DriverRepository {
         DEFAULT_DRIVERS.put("mariadb", new DriverSpec(DatabaseType.Factory.DEFAULT, "mariadb://", "org.mariadb.jdbc.Driver",  new MavenUtil.ArtifactSpec("org.mariadb.jdbc", "mariadb-java-client", null)));
         DEFAULT_DRIVERS.put("sqlite",  new DriverSpec(DatabaseType.Factory.SQLITE,  "sqlite:",    "org.sqlite.JDBC",          new MavenUtil.ArtifactSpec("org.xerial", "sqlite-jdbc", null)));
         DEFAULT_DRIVERS.put("h2",      new DriverSpec(DatabaseType.Factory.H2,      "h2:",        "org.h2.Driver",            new MavenUtil.ArtifactSpec("com.h2database", "h2", null)));
+    }
+
+
+    private static class DriverLoader extends URLClassLoader {
+
+        public DriverLoader(URL[] urls, ClassLoader parent) {
+            super(urls, parent);
+        }
+
+        public void addURL(URL url) {
+            super.addURL(url);
+        }
+
+    }
+
+    private static class WrappedDriver implements Driver {
+
+        private final Driver driver;
+
+        public WrappedDriver(Driver driver) {
+            this.driver = driver;
+        }
+
+        @Override
+        public Connection connect(String url, Properties info) throws SQLException {
+            return driver.connect(url, info);
+        }
+
+        @Override
+        public boolean acceptsURL(String url) throws SQLException {
+            return driver.acceptsURL(url);
+        }
+
+        @Override
+        public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
+            return driver.getPropertyInfo(url, info);
+        }
+
+        @Override
+        public int getMajorVersion() {
+            return driver.getMajorVersion();
+        }
+
+        @Override
+        public int getMinorVersion() {
+            return driver.getMinorVersion();
+        }
+
+        @Override
+        public boolean jdbcCompliant() {
+            return driver.jdbcCompliant();
+        }
+
+        @Override
+        public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+            return driver.getParentLogger();
+        }
     }
 
 }

@@ -3,11 +3,12 @@ import org.wallentines.mdcfg.ConfigBlob;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.sql.*;
 
+import java.io.File;
 import java.math.BigDecimal;
 
 public class Common {
 
-    private static final DriverRepository REPOSITORY = new DriverRepository.Classpath();
+    private static final DriverRepository REPOSITORY = new DriverRepository.Maven(new File("drivers"));
 
     public static DatabaseType getDBType(String name) {
 
