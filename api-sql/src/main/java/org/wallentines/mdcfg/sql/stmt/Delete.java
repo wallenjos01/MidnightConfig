@@ -32,7 +32,7 @@ public class Delete extends DMLStatement {
         }
 
         try(PreparedStatement stmt = out.prepare(connection)) {
-            return stmt.executeBatch();
+            return new int[] { stmt.executeUpdate() };
         } catch (SQLException ex) {
             throw new IllegalStateException("Unable to execute DELETE statement!");
         }
