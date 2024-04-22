@@ -120,6 +120,9 @@ public class DataType<T> {
     public static final DataType<String> VARCHAR = register(new DataType<>(JDBCType.VARCHAR, Reader.STRING, Writer.STRING, Serializer.STRING));
     public static final DataType<String> LONGVARCHAR = register(new DataType<>(JDBCType.LONGVARCHAR, Reader.STRING, Writer.STRING, Serializer.STRING));
     public static final DataType<ByteBuffer> BLOB = register(new DataType<>(JDBCType.BLOB, Reader.BLOB, Writer.BLOB, Serializer.BLOB));
+    public static final DataType<ByteBuffer> BINARY = register(new DataType<>(JDBCType.BINARY, Reader.BLOB, Writer.BLOB, Serializer.BLOB));
+    public static final DataType<ByteBuffer> VARBINARY = register(new DataType<>(JDBCType.VARBINARY, Reader.BLOB, Writer.BLOB, Serializer.BLOB));
+    public static final DataType<ByteBuffer> LONGVARBINARY = register(new DataType<>(JDBCType.LONGVARBINARY, Reader.BLOB, Writer.BLOB, Serializer.BLOB));
     public static final DataType<Boolean> BOOLEAN = register(new DataType<>(JDBCType.BOOLEAN, Reader.BOOLEAN, Writer.BOOLEAN, Serializer.BOOLEAN));
 
 
@@ -137,6 +140,14 @@ public class DataType<T> {
 
     public static ColumnType<ByteBuffer> BLOB(int length) {
         return new ColumnType<>(BLOB, length);
+    }
+
+    public static ColumnType<ByteBuffer> BINARY(int length) {
+        return new ColumnType<>(BINARY, length);
+    }
+
+    public static ColumnType<ByteBuffer> VARBINARY(int length) {
+        return new ColumnType<>(VARBINARY, length);
     }
 
 

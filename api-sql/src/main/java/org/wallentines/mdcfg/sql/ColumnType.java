@@ -32,15 +32,13 @@ public class ColumnType<T> {
     }
 
     /**
-     * Encodes the column type to a string
-     * @return A string containing the data type name and a comma-separated list of parameters in parentheses.
+     * Encodes the column parameters to a string
+     * @return A string containing a comma-separated list of parameters in parentheses.
      */
-    public String getEncoded() {
-        StringBuilder builder = new StringBuilder(dataType.getName());
-        if(parameter != null) {
-            builder.append('(').append(parameter).append(')');
-        }
-        return builder.toString();
+    public String getParameters() {
+
+        if(parameter == null) return "";
+        return "(" + parameter + ")";
     }
 
     /**

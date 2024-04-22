@@ -6,6 +6,7 @@ import org.wallentines.mdcfg.sql.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -66,6 +67,10 @@ public class Select extends DQLStatement {
                 for(int i = 1 ; i <= cols ; i++) {
 
                     int type = set.getMetaData().getColumnType(i);
+                    if(type == Types.NULL) {
+                        continue;
+                    }
+
                     DataType<?> dt = DataType.get(type);
                     if(dt == null) {
                         throw new IllegalStateException("Unknown column type " + type + "!");

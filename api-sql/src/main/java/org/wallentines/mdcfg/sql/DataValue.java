@@ -74,7 +74,6 @@ public class DataValue<T> {
         sec.set(columnName, getValue(), getType().getSerializer());
     }
 
-
     /**
      * Writes a serialized value to the given prepared statement at the given index
      * @param ctx The context associated with the serialized value

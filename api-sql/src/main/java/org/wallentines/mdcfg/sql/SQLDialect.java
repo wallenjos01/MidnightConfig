@@ -2,9 +2,13 @@ package org.wallentines.mdcfg.sql;
 
 import org.wallentines.mdcfg.sql.stmt.StatementBuilder;
 
+import java.sql.Types;
+
 public interface SQLDialect {
 
     StatementBuilder writeTableSchema(SQLConnection connection, TableSchema schema);
+
+    String writeColumnType(ColumnType<?> type);
 
 
     class Standard implements SQLDialect {
@@ -42,7 +46,7 @@ public interface SQLDialect {
         }
 
         protected void writeColumn(SQLConnection conn, Column def, StatementBuilder column, StatementBuilder table) {
-            column.append(def.getName()).append(" ").append(def.getType().getEncoded());
+            column.append(def.getName()).append(" ").append(writeColumnType(def.getType()));
             for(Constraint<?> con : def.getConstraints()) {
                 writeConstraint(conn, def, con, column, table);
             }
@@ -64,6 +68,12 @@ public interface SQLDialect {
             out.append(postTable);
             return out;
         }
+
+        @Override
+        public String writeColumnType(ColumnType<?> type) {
+            return type.getDataType().getName() + type.getParameters();
+        }
+
     }
 
     class SQLite extends Standard {
@@ -82,8 +92,20 @@ public interface SQLDialect {
         }
     }
 
+    class MySQL extends Standard {
+        @Override
+        public String writeColumnType(ColumnType<?> type) {
+
+            if(type.getDataType() == DataType.LONGVARCHAR) {
+                return "MEDIUMTEXT";
+            }
+            return super.writeColumnType(type);
+        }
+    }
+
     Standard STANDARD = new Standard();
     SQLite SQLITE = new SQLite();
+    MySQL MYSQL = new MySQL();
 
 
 }

@@ -77,7 +77,7 @@ public class Common {
         Assertions.assertEquals((short) 12374, results.get(0).get("_smallint").getValue());
         Assertions.assertEquals(588865932, results.get(0).get("_int").getValue());
         Assertions.assertEquals(12031984858L, results.get(0).get("_bigint").getValue());
-        Assertions.assertEquals(100.0f, results.get(0).get("_float").getValue());
+        Assertions.assertEquals(100.0f, ((Number) results.get(0).get("_float").getValue()).floatValue());
         Assertions.assertEquals(300000.0, results.get(0).get("_double").getValue());
         Assertions.assertEquals(10.12575, ((BigDecimal) results.get(0).get("_decimal").getValue()).doubleValue());
 

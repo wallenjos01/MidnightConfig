@@ -103,6 +103,7 @@ public class DatabaseType {
     public interface Factory {
         DatabaseType create(String prefix);
         Factory DEFAULT = pre -> (new DatabaseType(pre, SQLDialect.STANDARD));
+        Factory MYSQL = pre -> (new DatabaseType(pre, SQLDialect.MYSQL));
         Factory SQLITE = SQLite::new;
         Factory H2 = H2::new;
     }
