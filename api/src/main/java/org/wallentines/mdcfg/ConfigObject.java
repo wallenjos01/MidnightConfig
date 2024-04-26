@@ -154,6 +154,13 @@ public abstract class ConfigObject {
         return type;
     }
 
+
+    /**
+     * Gets an immutable version of this ConfigObject
+     * @return An immutable version of this object
+     */
+    public ConfigObject freeze() { return this; }
+
     /**
      * Attempts to convert the given object to a ConfigObject
      * @param obj The object to attempt to convert

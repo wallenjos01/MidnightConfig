@@ -8,27 +8,26 @@ import org.wallentines.mdcfg.serializer.Serializer;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
 public class ConfigList extends ConfigObject {
 
-    private final ArrayList<ConfigObject> values = new ArrayList<>();
+    private final List<ConfigObject> values;
+
+    private ConfigList(Collection<ConfigObject> values) {
+        super(SerializeContext.Type.LIST);
+        this.values = List.copyOf(values);
+    }
 
     /**
      * Creates an empty ConfigList
      */
     public ConfigList() {
         super(SerializeContext.Type.LIST);
-    }
-
-    /**
-     * Creates a ConfigList using the given values
-     */
-    public ConfigList(Collection<ConfigObject> collection) {
-        super(SerializeContext.Type.LIST);
-        values.addAll(collection);
+        this.values = new ArrayList<>();
     }
 
     /**
@@ -145,6 +144,17 @@ public class ConfigList extends ConfigObject {
      */
     public void addAll(Collection<ConfigObject> objects) {
         objects.forEach(this::append);
+    }
+
+    /**
+     * Adds a group of objects to the list
+     * @param objects The objects to add
+     * @return A reference to self
+     * @throws IllegalArgumentException If any of the values could not be added
+     */
+    public ConfigList appendAll(Collection<ConfigObject> objects) {
+        objects.forEach(this::append);
+        return this;
     }
 
     /**
@@ -285,6 +295,18 @@ public class ConfigList extends ConfigObject {
         return out;
     }
 
+    /**
+     * Creates a ConfigList using the given values
+     * @param collection The objects to and add to the list
+     * @return A new ConfigList with the given ConfigObjects
+     */
+    public static ConfigList create(Collection<ConfigObject> collection) {
+
+        ConfigList out = new ConfigList();
+        out.values.addAll(collection);
+        return out;
+    }
+
     @Override
     public boolean isPrimitive() {
         return false;
@@ -335,6 +357,11 @@ public class ConfigList extends ConfigObject {
     }
 
     @Override
+    public ConfigList freeze() {
+        return new Frozen(this);
+    }
+
+    @Override
     public String toString() {
         return "ConfigList{" +
                 "size=" + size() +
@@ -356,4 +383,92 @@ public class ConfigList extends ConfigObject {
 
         return true;
     }
+
+    /**
+     * Frozen ConfigList
+     */
+    private static class Frozen extends ConfigList {
+
+        static UnsupportedOperationException exception() { return new UnsupportedOperationException("ConfigList is frozen!"); }
+
+        private Frozen(ConfigList list) {
+            super(list.values.stream().map(ConfigObject::freeze).toList());
+        }
+
+        @Override
+        public boolean add(ConfigObject value) {
+            throw exception();
+        }
+
+        @Override
+        public <T> boolean add(T value, @NotNull Serializer<T> serializer) {
+            throw exception();
+        }
+
+        @Override
+        public boolean add(String value) {
+            throw exception();
+        }
+
+        @Override
+        public boolean add(Number value) {
+            throw exception();
+        }
+
+        @Override
+        public boolean add(Boolean value) {
+            throw exception();
+        }
+
+        @Override
+        public ConfigList append(ConfigObject value) {
+            return copy().append(value);
+        }
+
+        @Override
+        public ConfigList append(String value) {
+            return copy().append(value);
+        }
+
+        @Override
+        public ConfigList append(Number value) {
+            return copy().append(value);
+        }
+
+        @Override
+        public ConfigList append(Boolean value) {
+            return copy().append(value);
+        }
+
+        @Override
+        public <T> ConfigList append(T value, @NotNull Serializer<T> serializer) {
+            return copy().append(value, serializer);
+        }
+
+        @Override
+        public void addAll(Collection<ConfigObject> objects) {
+            throw exception();
+        }
+
+        @Override
+        public ConfigList appendAll(Collection<ConfigObject> objects) {
+            return copy().appendAll(objects);
+        }
+
+        @Override
+        public void clear() {
+            throw exception();
+        }
+
+        @Override
+        public void remove(int index) {
+            throw exception();
+        }
+
+        @Override
+        public boolean remove(ConfigObject value) {
+            throw exception();
+        }
+    }
+
 }

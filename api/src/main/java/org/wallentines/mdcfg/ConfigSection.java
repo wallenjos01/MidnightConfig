@@ -11,15 +11,26 @@ import java.util.stream.Stream;
 @SuppressWarnings("unused")
 public class ConfigSection extends ConfigObject {
 
-    private final List<ConfigObject> values = new ArrayList<>();
-    private final List<String> orderedKeys = new ArrayList<>();
-    private final HashMap<String, Integer> indicesByKey = new HashMap<>();
+    private final List<ConfigObject> values;
+    private final List<String> orderedKeys;
+    private final Map<String, Integer> indicesByKey;
+
+
+    private ConfigSection(Collection<ConfigObject> objects, Collection<String> orderedKeys, Map<String, Integer> indicesByKey) {
+        super(SerializeContext.Type.MAP);
+        this.values = List.copyOf(objects);
+        this.orderedKeys = List.copyOf(orderedKeys);
+        this.indicesByKey = Map.copyOf(indicesByKey);
+    }
 
     /**
      * Creates an empty ConfigSection
      */
     public ConfigSection() {
         super(SerializeContext.Type.MAP);
+        this.values = new ArrayList<>();
+        this.orderedKeys = new ArrayList<>();
+        this.indicesByKey = new HashMap<>();
     }
 
     /**
@@ -629,6 +640,10 @@ public class ConfigSection extends ConfigObject {
         throw new IllegalStateException("Cannot convert a section to a blob!");
     }
 
+    public ConfigSection freeze() {
+        return new Frozen(this);
+    }
+
     @Override
     public String toString() {
         return "ConfigSection{" +
@@ -687,4 +702,83 @@ public class ConfigSection extends ConfigObject {
             });
         }
     };
+
+
+    /**
+     * An immutable ConfigSection
+     */
+    private static class Frozen extends ConfigSection {
+
+        static UnsupportedOperationException exception() { return new UnsupportedOperationException("ConfigSection is frozen!"); }
+
+        private Frozen(ConfigSection section) {
+            super(section.values.stream().map(ConfigObject::freeze).toList(), section.orderedKeys, section.indicesByKey);
+        }
+
+        @Override
+        public ConfigObject set(String key, @Nullable ConfigObject value) {
+            throw exception();
+        }
+
+        @Override
+        public <T> ConfigObject set(String key, T value, Serializer<T> serializer) {
+            throw exception();
+        }
+
+        @Override
+        public ConfigObject set(String key, String value) {
+            throw exception();
+        }
+
+        @Override
+        public ConfigObject set(String key, Number value) {
+            throw exception();
+        }
+
+        @Override
+        public ConfigObject set(String key, Boolean value) {
+            throw exception();
+        }
+
+        @Override
+        public ConfigObject remove(String key) {
+            throw exception();
+        }
+
+        @Override
+        public void fill(ConfigSection other) {
+            throw exception();
+        }
+
+        @Override
+        public void fillOverwrite(ConfigSection other) {
+            throw exception();
+        }
+
+        @Override
+        public ConfigSection with(String key, ConfigObject value) {
+            return copy().with(key, value);
+        }
+
+        @Override
+        public <T> ConfigSection with(String key, T value, Serializer<T> serializer) {
+            return copy().with(key, value, serializer);
+        }
+
+        @Override
+        public ConfigSection with(String key, String value) {
+            return copy().with(key, value);
+        }
+
+        @Override
+        public ConfigSection with(String key, Number value) {
+            return copy().with(key, value);
+        }
+
+        @Override
+        public ConfigSection with(String key, Boolean value) {
+            return copy().with(key, value);
+        }
+    }
+
 }
