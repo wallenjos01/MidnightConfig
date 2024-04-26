@@ -5,6 +5,6 @@
     ],
     "type": "replace",
     "find": "Map.copyOf(",
-    "replace": "new HashMap<>("
+    "replace": "java.util.Collections.unmodifiableMap("
   }
 ]

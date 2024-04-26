@@ -6,6 +6,7 @@ import org.wallentines.mdcfg.serializer.*;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
@@ -712,7 +713,7 @@ public class ConfigSection extends ConfigObject {
         static UnsupportedOperationException exception() { return new UnsupportedOperationException("ConfigSection is frozen!"); }
 
         private Frozen(ConfigSection section) {
-            super(section.values.stream().map(ConfigObject::freeze).toList(), section.orderedKeys, section.indicesByKey);
+            super(section.values.stream().map(ConfigObject::freeze).collect(Collectors.toList()), section.orderedKeys, section.indicesByKey);
         }
 
         @Override

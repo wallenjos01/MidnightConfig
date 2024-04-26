@@ -45,6 +45,6 @@
     ],
     "type": "replace",
     "find": "List.copyOf(",
-    "replace": "new ArrayList<>("
+    "replace": "org.wallentines.mdcfg.util.Java8Util.copyList("
   }
 ]

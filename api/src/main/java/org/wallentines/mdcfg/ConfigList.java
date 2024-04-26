@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
@@ -392,7 +393,7 @@ public class ConfigList extends ConfigObject {
         static UnsupportedOperationException exception() { return new UnsupportedOperationException("ConfigList is frozen!"); }
 
         private Frozen(ConfigList list) {
-            super(list.values.stream().map(ConfigObject::freeze).toList());
+            super(list.values.stream().map(ConfigObject::freeze).collect(Collectors.toList()));
         }
 
         @Override

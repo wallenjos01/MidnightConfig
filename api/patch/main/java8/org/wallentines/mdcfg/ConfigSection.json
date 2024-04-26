@@ -13,7 +13,15 @@
     ],
     "type": "replace",
     "find": "List.copyOf(",
-    "replace": "new ArrayList<>("
+    "replace": "org.wallentines.mdcfg.util.Java8Util.copyList("
+  },
+  {
+    "lines": [
+      "all"
+    ],
+    "type": "replace",
+    "find": "Map.copyOf(",
+    "replace": "java.util.Collections.unmodifiableMap("
   },
   {
     "lines": [ "all" ],
