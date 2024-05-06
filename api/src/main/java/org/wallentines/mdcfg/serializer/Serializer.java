@@ -1,9 +1,10 @@
 package org.wallentines.mdcfg.serializer;
 
-import org.wallentines.mdcfg.ConfigPrimitive;
-import org.wallentines.mdcfg.Functions;
-import org.wallentines.mdcfg.Tuples;
+import org.wallentines.mdcfg.*;
+import org.wallentines.mdcfg.codec.Codec;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -199,6 +200,34 @@ public interface Serializer<T> {
             @Override
             public <O1> SerializeResult<O> deserialize(SerializeContext<O1> context, O1 value) {
                 return Serializer.this.deserialize(context, value).flatMap(construct);
+            }
+        };
+    }
+
+
+    /**
+     * Creates a new serializer which maps data to a blob
+     * @return A new serializer of the mapped type.
+     */
+    default Serializer<T> mapToBlob(Codec codec) {
+        return new Serializer<T>() {
+            @Override
+            public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
+                try(ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+                    codec.encode(context, Serializer.this, value, bos);
+                    return BLOB.serialize(context, ByteBuffer.wrap(bos.toByteArray()));
+                } catch (IOException ex) {
+                    return SerializeResult.failure("Unable to write a value to a blob! " + ex.getMessage());
+                }
+            }
+
+            @Override
+            public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
+                try(ByteBufferInputStream bis = new ByteBufferInputStream(context.asBlob(value))) {
+                    return Serializer.this.deserialize(context, codec.decode(context, bis));
+                } catch (IOException ex) {
+                    return SerializeResult.failure("Unable to read a value from a blob! " + ex.getMessage());
+                }
             }
         };
     }
