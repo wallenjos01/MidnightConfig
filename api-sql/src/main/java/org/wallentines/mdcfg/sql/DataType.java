@@ -222,6 +222,7 @@ public class DataType<T> {
         Reader<ByteBuffer> BLOB = new Reader<ByteBuffer>() {
 
             private ByteBuffer convertBlob(Blob b) {
+                if(b == null) return null;
                 try {
                     return ConfigBlob.read(b.getBinaryStream()).getData();
                 } catch (SQLException | IOException ex) {
