@@ -39,7 +39,7 @@ public class Update extends DMLStatement {
 
     public Update withRow(ConfigSection section) {
         for(String key : section.getKeys()) {
-            serialized.add(new Tuples.T2<>(key, section.get(key)));
+            if(section.has(key)) serialized.add(new Tuples.T2<>(key, section.get(key)));
         }
         return this;
     }

@@ -14,6 +14,7 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Stack;
@@ -34,7 +35,7 @@ public class MavenUtil {
         String url = repo + "/" + spec.getMetadataPath();
 
         try {
-            URL actualUrl = new URL(url);
+            URL actualUrl = URI.create(url).toURL();
             URLConnection conn = actualUrl.openConnection();
 
             SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
