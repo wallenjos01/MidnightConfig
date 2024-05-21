@@ -3,9 +3,7 @@ package org.wallentines.mdcfg.serializer;
 import com.google.gson.*;
 
 import java.nio.ByteBuffer;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -20,16 +18,25 @@ public class GsonContext implements SerializeContext<JsonElement> {
     public static final GsonContext INSTANCE = new GsonContext();
 
     private final boolean hasKeySet;
+    private final boolean hasAsMap;
 
     public GsonContext() {
+
         boolean old = false;
         try {
             JsonObject.class.getMethod("keySet");
         } catch (NoSuchMethodException err) {
             old = true;
         }
-
         hasKeySet = old;
+
+        old = false;
+        try {
+            JsonObject.class.getMethod("asMap");
+        } catch (NoSuchMethodException err) {
+            old = true;
+        }
+        hasAsMap = old;
     }
 
     @Override
@@ -58,19 +65,32 @@ public class GsonContext implements SerializeContext<JsonElement> {
     @Override
     public Collection<JsonElement> asList(JsonElement object) {
         if(!isList(object)) return null;
+        if(!hasAsMap) {
+            List<JsonElement> ele = new ArrayList<>();
+            for(JsonElement e : object.getAsJsonArray()) {
+                ele.add(e);
+            }
+            return ele;
+        }
         return object.getAsJsonArray().asList();
     }
 
     @Override
     public Map<String, JsonElement> asMap(JsonElement object) {
         if(!isMap(object)) return null;
+        if(!hasAsMap) {
+            Map<String, JsonElement> ele = new LinkedHashMap<>();
+            for(Map.Entry<String, JsonElement> e : object.getAsJsonObject().entrySet()) {
+                ele.put(e.getKey(), e.getValue());
+            }
+            return ele;
+        }
         return object.getAsJsonObject().asMap();
     }
 
     @Override
     public Map<String, JsonElement> asOrderedMap(JsonElement object) {
-        if(!isMap(object)) return null;
-        return object.getAsJsonObject().asMap();
+        return asMap(object);
     }
 
     @Override
