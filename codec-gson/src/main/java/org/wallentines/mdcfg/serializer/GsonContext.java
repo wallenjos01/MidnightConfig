@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * A {@link org.wallentines.mdcfg.serializer.SerializeContext SerializeContext} for serializing to or deserializing from
@@ -17,6 +18,19 @@ public class GsonContext implements SerializeContext<JsonElement> {
      * The global GSON Context instance
      */
     public static final GsonContext INSTANCE = new GsonContext();
+
+    private final boolean hasKeySet;
+
+    public GsonContext() {
+        boolean old = false;
+        try {
+            JsonObject.class.getMethod("keySet");
+        } catch (NoSuchMethodException err) {
+            old = true;
+        }
+
+        hasKeySet = old;
+    }
 
     @Override
     public String asString(JsonElement object) {
@@ -103,6 +117,9 @@ public class GsonContext implements SerializeContext<JsonElement> {
     @Override
     public Collection<String> getOrderedKeys(JsonElement object) {
         if(!isMap(object)) return null;
+        if(hasKeySet) {
+            return object.getAsJsonObject().entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList());
+        }
         return object.getAsJsonObject().keySet();
     }
 
