@@ -53,3 +53,4 @@ bin/
 /codec-gson/run
 
 /codec-nbt/run/test/*.out
+/codec-nbt/run/test/*.snbt

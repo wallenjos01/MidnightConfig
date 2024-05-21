@@ -463,7 +463,7 @@ public class JSONCodec implements Codec {
                     break;
                 }
 
-                escaped = lastReadChar == '\\';
+                escaped = !escaped && lastReadChar == '\\';
                 copyBuffer.put((byte) lastReadChar);
 
                 if(!copyBuffer.hasRemaining()) {

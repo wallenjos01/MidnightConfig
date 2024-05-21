@@ -21,7 +21,11 @@ public class NBTCodec implements Codec {
 
         DataOutput dos = new DataOutputStream(os);
 
-        TagType type = getTagType(ctx, t);
+        TagType type = NBTUtil.getTagType(ctx, t);
+        if(type == null) {
+            throw new EncodeException("Unable to determine NBT type of" + t + "!");
+        }
+
         dos.writeByte(type.getValue());
 
         if(expectRootName && ctx.isMap(t)) {
@@ -39,7 +43,10 @@ public class NBTCodec implements Codec {
 
     private <T> void encode(SerializeContext<T> ctx, T t, DataOutput dos) throws IOException {
 
-        TagType type = getTagType(ctx, t);
+        TagType type = NBTUtil.getTagType(ctx, t);
+        if(type == null) {
+            throw new EncodeException("Unable to determine NBT type of" + t + "!");
+        }
 
         switch (type) {
             case BYTE: dos.writeByte(ctx.isBoolean(t) ? ctx.asBoolean(t) ? 0b1 : 0b0 : ctx.asNumber(t).byteValue()); break;
@@ -79,7 +86,12 @@ public class NBTCodec implements Codec {
             }
             case LIST: {
                 Collection<T> list = ctx.asList(t);
-                dos.writeByte(getListType(ctx, list).getValue());
+                TagType lt = NBTUtil.getListType(ctx, list);
+                if(lt == null) {
+                    throw new EncodeException("Unable to determine NBT list type of" + t + "!");
+                }
+
+                dos.writeByte(lt.getValue());
                 dos.writeInt(list.size());
                 for (T t1 : list) {
                     encode(ctx, t1, dos);
@@ -90,7 +102,12 @@ public class NBTCodec implements Codec {
                 Map<String, T> values = ctx.asMap(t);
                 for (Map.Entry<String, T> ent : values.entrySet()) {
 
-                    dos.writeByte(getTagType(ctx, ent.getValue()).getValue());
+                    TagType tt = NBTUtil.getTagType(ctx, ent.getValue());
+                    if(tt == null) {
+                        throw new EncodeException("Unable to determine NBT list type of" + t + "!");
+                    }
+
+                    dos.writeByte(tt.getValue());
                     dos.writeUTF(ent.getKey());
                     encode(ctx, ent.getValue(), dos);
                 }
@@ -100,81 +117,6 @@ public class NBTCodec implements Codec {
         }
     }
 
-    private <T> TagType getTagType(SerializeContext<T> ctx, T value) {
-
-        if(ctx.supportsMeta(value)) {
-            TagType type = TagType.parse(ctx.getMetaProperty(value, "nbt.tag_type"));
-            if(type != null) return type;
-        }
-
-        switch (ctx.getType(value)) {
-            case STRING: return TagType.STRING;
-            case NUMBER: {
-                Number num = ctx.asNumber(value);
-                if(num instanceof Byte) {
-                    return TagType.BYTE;
-                }
-                else if(num instanceof Short) {
-                    return TagType.SHORT;
-                }
-                else if(num instanceof Integer) {
-                    return TagType.INT;
-                }
-                else if(num instanceof Long) {
-                    return TagType.LONG;
-                }
-                else if(num instanceof Float) {
-                    return TagType.FLOAT;
-                }
-                else if(num instanceof Double) {
-                    return TagType.DOUBLE;
-                }
-            }
-            case BOOLEAN: return TagType.BYTE;
-            case BLOB: return TagType.BYTE_ARRAY;
-            case LIST: {
-                TagType type;
-                if (ctx.supportsMeta(value)) {
-                    String tagStr = ctx.getMetaProperty(value, "nbt.list_type");
-                    type = TagType.parse(tagStr);
-                    if(type != null) return type;
-                }
-
-                Collection<T> values = ctx.asList(value);
-                type = getListType(ctx, values);
-
-                return switch (type) {
-                    case BYTE -> TagType.BYTE_ARRAY;
-                    case INT -> TagType.INT_ARRAY;
-                    case LONG -> TagType.LONG_ARRAY;
-                    default -> TagType.LIST;
-                };
-            }
-            case MAP: return TagType.COMPOUND;
-            default:
-                throw new EncodeException("Unable to determine NBT type of" + value + "!");
-        }
-    }
-
-    private <T> TagType getListType(SerializeContext<T> ctx, Collection<T> values) {
-
-        if(values.isEmpty()) {
-            return TagType.END;
-        }
-
-        TagType tag = null;
-        for(T val : values) {
-            if(tag == null) {
-                tag = getTagType(ctx, val);
-            } else {
-                if(tag != getTagType(ctx, val)) {
-                    throw new EncodeException("Found list tag with multiple types!");
-                }
-            }
-        }
-
-        return tag;
-    }
 
     @Override
     public <T> T decode(@NotNull SerializeContext<T> ctx, @NotNull InputStream is, Charset charset) throws DecodeException, IOException {
