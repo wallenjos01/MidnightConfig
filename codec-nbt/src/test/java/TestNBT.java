@@ -81,7 +81,7 @@ public class TestNBT {
             codec.encode(ConfigContext.INSTANCE, new ConfigPrimitive(true), bos);
             value = bos.toByteArray();
         } catch (IOException | EncodeException ex) {
-            Assertions.fail("An exception occurred while encoding a boolean!");
+            Assertions.fail("An exception occurred while encoding a boolean!", ex);
             return;
         }
 
@@ -91,7 +91,7 @@ public class TestNBT {
             Assertions.assertTrue(bl);
 
         } catch(IOException | DecodeException ex) {
-            Assertions.fail("An exception occurred while decoding boolean!");
+            Assertions.fail("An exception occurred while decoding a boolean!", ex);
         }
 
     }

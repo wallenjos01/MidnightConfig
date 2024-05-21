@@ -85,7 +85,7 @@ public class SNBTCodec implements Codec {
             }
             switch (type) {
                 case STRING:
-                    stream.write("\"" + context.asString(input).replace("\"", "\\\"") + "\"");
+                    encodeString(context.asString(input));
                     break;
                 case BYTE:
                     stream.write(context.asNumber(input) + "b");
@@ -97,7 +97,7 @@ public class SNBTCodec implements Codec {
                     stream.write(context.asNumber(input).toString());
                     break;
                 case LONG:
-                    stream.write(context.asNumber(input) + "l");
+                    stream.write(context.asNumber(input) + "L");
                     break;
                 case FLOAT:
                     stream.write(context.asNumber(input) + "f");
@@ -169,20 +169,27 @@ public class SNBTCodec implements Codec {
                     break;
                 case COMPOUND: {
 
-                    Map<String, T> values = context.asMap(input);
                     stream.write('{');
                     int i = 0;
-                    for (Map.Entry<String, T> ent : values.entrySet()) {
+                    for (String key : context.getOrderedKeys(input)) {
                         if (i++ > 0) {
                             stream.write(',');
                         }
-                        encodeKey(ent.getKey());
+                        encodeKey(key);
                         stream.write(':');
-                        encodeValue(ent.getValue());
+                        encodeValue(context.get(key, input));
 
                     }
                     stream.write('}');
                 }
+            }
+        }
+
+        private void encodeString(String string) throws IOException {
+            if(string.contains("\"")) {
+                stream.write("'" + string.replace("'", "\\'") + "'");
+            } else {
+                stream.write("\"" + string + "\"");
             }
         }
 
@@ -279,19 +286,28 @@ public class SNBTCodec implements Codec {
 
         T decodeCompound() throws IOException {
 
-            Map<String, T> values = new HashMap<>();
-            do {
-                nextReal();
+            Map<String, T> values = new LinkedHashMap<>();
+
+            if(nextReal() != '}') {
+
                 String key = decodeKey();
 
                 nextReal();
                 T value = decodeElement();
                 values.put(key, value);
 
-            } while(lastRead == ',');
+                while (lastRead == ',') {
 
+                    nextReal();
+                    key = decodeKey();
+
+                    nextReal();
+                    value = decodeElement();
+                    values.put(key, value);
+                }
+            }
             if(lastRead != '}') {
-                throw new DecodeException("Found invalid character after reading compound!");
+                throw new DecodeException("Found invalid character after reading compound! Keys: " + Arrays.toString(values.keySet().toArray(new String[0])));
             }
             nextReal();
 
@@ -468,6 +484,12 @@ public class SNBTCodec implements Codec {
                     break;
                 case 'L':
                     listType = TagType.LONG_ARRAY;
+                    break;
+                case ']':
+                    T out = context.toList(new ArrayList<>());
+                    NBTUtil.setTagType(context, out, TagType.LIST);
+                    nextReal();
+                    return out;
             }
             if(listType != TagType.LIST) {
                 if(nextReal() != ';') {

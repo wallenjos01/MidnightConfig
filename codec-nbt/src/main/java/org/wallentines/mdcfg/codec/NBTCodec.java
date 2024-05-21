@@ -99,17 +99,17 @@ public class NBTCodec implements Codec {
                 break;
             }
             case COMPOUND: {
-                Map<String, T> values = ctx.asMap(t);
-                for (Map.Entry<String, T> ent : values.entrySet()) {
+                for (String key : ctx.getOrderedKeys(t)) {
 
-                    TagType tt = NBTUtil.getTagType(ctx, ent.getValue());
+                    T value = ctx.get(key, t);
+                    TagType tt = NBTUtil.getTagType(ctx, value);
                     if(tt == null) {
                         throw new EncodeException("Unable to determine NBT list type of" + t + "!");
                     }
 
                     dos.writeByte(tt.getValue());
-                    dos.writeUTF(ent.getKey());
-                    encode(ctx, ent.getValue(), dos);
+                    dos.writeUTF(key);
+                    encode(ctx, value, dos);
                 }
                 dos.writeByte(TagType.END.getValue());
                 break;
