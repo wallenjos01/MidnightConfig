@@ -22,21 +22,17 @@ public class GsonContext implements SerializeContext<JsonElement> {
 
     public GsonContext() {
 
-        boolean old = false;
-        try {
-            JsonObject.class.getMethod("keySet");
-        } catch (NoSuchMethodException err) {
-            old = true;
-        }
-        hasKeySet = old;
+        hasAsMap = methodExists("asMap");
+        hasKeySet = methodExists("keySet");
+    }
 
-        old = false;
+    private static boolean methodExists(String method) {
         try {
-            JsonObject.class.getMethod("asMap");
+            JsonObject.class.getMethod(method);
+            return true;
         } catch (NoSuchMethodException err) {
-            old = true;
+            return false;
         }
-        hasAsMap = old;
     }
 
     @Override
@@ -65,27 +61,27 @@ public class GsonContext implements SerializeContext<JsonElement> {
     @Override
     public Collection<JsonElement> asList(JsonElement object) {
         if(!isList(object)) return null;
-        if(!hasAsMap) {
-            List<JsonElement> ele = new ArrayList<>();
-            for(JsonElement e : object.getAsJsonArray()) {
-                ele.add(e);
-            }
-            return ele;
+        if(hasAsMap) {
+            return object.getAsJsonArray().asList();
         }
-        return object.getAsJsonArray().asList();
+        List<JsonElement> ele = new ArrayList<>();
+        for (JsonElement e : object.getAsJsonArray()) {
+            ele.add(e);
+        }
+        return ele;
     }
 
     @Override
     public Map<String, JsonElement> asMap(JsonElement object) {
         if(!isMap(object)) return null;
-        if(!hasAsMap) {
-            Map<String, JsonElement> ele = new LinkedHashMap<>();
-            for(Map.Entry<String, JsonElement> e : object.getAsJsonObject().entrySet()) {
-                ele.put(e.getKey(), e.getValue());
-            }
-            return ele;
+        if(hasAsMap) {
+            return object.getAsJsonObject().asMap();
         }
-        return object.getAsJsonObject().asMap();
+        Map<String, JsonElement> ele = new LinkedHashMap<>();
+        for(Map.Entry<String, JsonElement> e : object.getAsJsonObject().entrySet()) {
+            ele.put(e.getKey(), e.getValue());
+        }
+        return ele;
     }
 
     @Override
@@ -138,9 +134,9 @@ public class GsonContext implements SerializeContext<JsonElement> {
     public Collection<String> getOrderedKeys(JsonElement object) {
         if(!isMap(object)) return null;
         if(hasKeySet) {
-            return object.getAsJsonObject().entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList());
+            return object.getAsJsonObject().keySet();
         }
-        return object.getAsJsonObject().keySet();
+        return object.getAsJsonObject().entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList());
     }
 
     @Override
@@ -207,7 +203,7 @@ public class GsonContext implements SerializeContext<JsonElement> {
         JsonObject base = object.getAsJsonObject();
         JsonObject fill = other.getAsJsonObject();
 
-        for(String key : fill.keySet()) {
+        for(String key : getOrderedKeys(fill)) {
             JsonElement value = fill.get(key);
             if(value != null && !base.has(key)) base.add(key, fill.get(key));
         }
@@ -221,7 +217,7 @@ public class GsonContext implements SerializeContext<JsonElement> {
         JsonObject base = object.getAsJsonObject();
         JsonObject fill = other.getAsJsonObject();
 
-        for(String key : fill.keySet()) {
+        for(String key : getOrderedKeys(fill)) {
             JsonElement value = fill.get(key);
             if(value != null) {
                 base.add(key, value);

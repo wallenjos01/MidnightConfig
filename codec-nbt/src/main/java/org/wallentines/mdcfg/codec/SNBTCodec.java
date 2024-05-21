@@ -23,18 +23,29 @@ public class SNBTCodec implements Codec {
     public static final SNBTCodec INSTANCE = new SNBTCodec(false);
 
     private final boolean expectRootName;
+    private final boolean expectArrayIndices;
 
     /**
      * Creates an SNBT Codec.
      * @param expectRootName Whether a root name should be encoded into and decoded from the SNBT stream.
      */
     public SNBTCodec(boolean expectRootName) {
-        this.expectRootName = expectRootName;
+        this(expectRootName, false);
     }
+    /**
+     * Creates an SNBT Codec.
+     * @param expectRootName Whether a root name should be encoded into and decoded from the SNBT stream.
+     * @param expectArrayIndices Whether elements in arrays should be prefixed with their indices
+     */
+    public SNBTCodec(boolean expectRootName, boolean expectArrayIndices) {
+        this.expectRootName = expectRootName;
+        this.expectArrayIndices = expectArrayIndices;
+    }
+
 
     @Override
     public <T> void encode(@NotNull SerializeContext<T> context, T input, @NotNull OutputStream stream, Charset charset) throws EncodeException, IOException {
-        try(Encoder<T> enc = new Encoder<>(context, new BufferedWriter(new OutputStreamWriter(stream, charset)), expectRootName)) {
+        try(Encoder<T> enc = new Encoder<>(context, new BufferedWriter(new OutputStreamWriter(stream, charset)), expectRootName, expectArrayIndices)) {
             enc.encode(input);
         } catch (EncodeException | IOException ex) {
             throw ex;
@@ -46,7 +57,7 @@ public class SNBTCodec implements Codec {
     @Override
     public <T> T decode(@NotNull SerializeContext<T> context, @NotNull InputStream stream, Charset charset) throws DecodeException, IOException {
 
-        try(Decoder<T> dec = new Decoder<>(context, new BufferedReader(new InputStreamReader(stream, charset)), expectRootName)) {
+        try(Decoder<T> dec = new Decoder<>(context, new BufferedReader(new InputStreamReader(stream, charset)), expectRootName, expectArrayIndices)) {
             return dec.decode();
         } catch (DecodeException | IOException ex) {
             throw ex;
@@ -60,11 +71,13 @@ public class SNBTCodec implements Codec {
         final SerializeContext<T> context;
         final Writer stream;
         final boolean expectRootName;
+        final boolean expectArrayIndices;
 
-        public Encoder(SerializeContext<T> context, Writer stream, boolean expectRootName) {
+        public Encoder(SerializeContext<T> context, Writer stream, boolean expectRootName, boolean expectArrayIndices) {
             this.context = context;
             this.stream = stream;
             this.expectRootName = expectRootName;
+            this.expectArrayIndices = expectArrayIndices;
         }
 
         private void encode(T input) throws EncodeException, IOException {
@@ -116,16 +129,23 @@ public class SNBTCodec implements Codec {
                             if(i > 0) {
                                 stream.write(',');
                             }
+                            if(expectArrayIndices) {
+                                stream.write(i + ":");
+                            }
                             stream.write(Objects.toString(buf.get(i)));
                         }
 
                     } else {
                         int index = 0;
                         for (T t : context.asList(input)) {
-                            if (index++ > 0) {
+                            if (index > 0) {
                                 stream.write(',');
                             }
-                            stream.write(Objects.toString(context.asNumber(t).longValue()));
+                            if(expectArrayIndices) {
+                                stream.write(index + ":");
+                            }
+                            index++;
+                            stream.write(context.asNumber(t).byteValue() + "b");
                         }
                     }
                     stream.write(']');
@@ -135,9 +155,13 @@ public class SNBTCodec implements Codec {
                     stream.write("[I;");
                     int index = 0;
                     for (T t : context.asList(input)) {
-                        if (index++ > 0) {
+                        if (index > 0) {
                             stream.write(',');
                         }
+                        if(expectArrayIndices) {
+                            stream.write(index + ":");
+                        }
+                        index++;
                         stream.write(Objects.toString(context.asNumber(t).intValue()));
                     }
                     stream.write(']');
@@ -147,10 +171,14 @@ public class SNBTCodec implements Codec {
                     stream.write("[L;");
                     int index = 0;
                     for (T t : context.asList(input)) {
-                        if (index++ > 0) {
+                        if (index > 0) {
                             stream.write(',');
                         }
-                        stream.write(Objects.toString(context.asNumber(t).longValue()));
+                        if(expectArrayIndices) {
+                            stream.write(index + ":");
+                        }
+                        index++;
+                        stream.write(context.asNumber(t).longValue() + "L");
                     }
 
                     stream.write(']');
@@ -160,10 +188,15 @@ public class SNBTCodec implements Codec {
                     stream.write("[");
                     int index = 0;
                     for (T t : context.asList(input)) {
-                        if (index++ > 0) {
+                        if (index > 0) {
                             stream.write(',');
                         }
+                        if(expectArrayIndices) {
+                            stream.write(index + ":");
+                        }
                         encodeValue(t);
+
+                        index++;
                     }
                     stream.write(']');
                     break;
@@ -195,7 +228,9 @@ public class SNBTCodec implements Codec {
 
         private void encodeKey(String key) throws IOException {
 
-            if(UNQUOTED_KEY_INVALID.matcher(key).find()) {
+            if(key.isEmpty()) {
+                stream.write("\"\"");
+            } else if(UNQUOTED_KEY_INVALID.matcher(key).find()) {
                 stream.write("\"" + key.replace("\"", "\\\"") + "\"");
             } else {
                 stream.write(key);
@@ -215,12 +250,14 @@ public class SNBTCodec implements Codec {
         final SerializeContext<T> context;
         final Reader stream;
         final boolean expectRootName;
+        final boolean expectArrayIndices;
         int lastRead;
 
-        Decoder(@NotNull SerializeContext<T> context, @NotNull Reader stream, boolean expectRootName) {
+        Decoder(@NotNull SerializeContext<T> context, @NotNull Reader stream, boolean expectRootName, boolean expectArrayIndices) {
             this.context = context;
             this.stream = stream;
             this.expectRootName = expectRootName;
+            this.expectArrayIndices = expectArrayIndices;
         }
 
         void readUntil(int chara, ByteArrayOutputStream bos) throws IOException {
@@ -502,6 +539,17 @@ public class SNBTCodec implements Codec {
             do {
                 if(!values.isEmpty()) nextReal();
                 try {
+                    if(expectArrayIndices) {
+                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                        bos.write(lastRead);
+                        readUntil(':', bos);
+                        String num = bos.toString();
+                        int index = Integer.parseInt(num);
+                        if(index != values.size()) {
+                            throw new DecodeException("Found out-of-order element with index " + index + "!");
+                        }
+                        nextReal();
+                    }
                     values.add(decodeElement());
                 } catch (DecodeException ex) {
                     throw new DecodeException("An error occurred while decoding a list value at index " + values.size(), ex);

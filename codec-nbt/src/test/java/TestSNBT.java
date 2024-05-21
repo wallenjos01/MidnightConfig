@@ -1,6 +1,8 @@
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.wallentines.mdcfg.ConfigList;
 import org.wallentines.mdcfg.ConfigObject;
+import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.codec.*;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 
@@ -72,6 +74,23 @@ public class TestSNBT {
 
         String dump = SNBTCodec.INSTANCE.encodeToString(ConfigContext.INSTANCE, obj);
         Assertions.assertEquals(snbt, dump);
+
+    }
+
+    @Test
+    public void testIndexed() {
+
+        ConfigSection sec = new ConfigSection()
+                .with("test", new ConfigList().append(10L).append(11L).append(13L));
+
+        SNBTCodec codec = new SNBTCodec(false, true);
+        String encoded = codec.encodeToString(ConfigContext.INSTANCE, sec);
+
+        System.out.println(encoded);
+
+        ConfigSection out = codec.decode(ConfigContext.INSTANCE, encoded).asSection();
+
+        Assertions.assertEquals(sec, out);
 
     }
 
