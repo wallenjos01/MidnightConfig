@@ -7,13 +7,27 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+/**
+ * A codec for Stringified NBT (SNBT) data
+ */
 public class SNBTCodec implements Codec {
 
+    private static final Pattern UNQUOTED_KEY_INVALID = Pattern.compile("[\\[\\]\\{\\}\\(\\),\"':]");
+
+    /**
+     * The standard SNBT codec instance. Does not expect a root name.
+     */
     public static final SNBTCodec INSTANCE = new SNBTCodec(false);
 
     private final boolean expectRootName;
 
+    /**
+     * Creates an SNBT Codec.
+     * @param expectRootName Whether a root name should be encoded into and decoded from the SNBT stream.
+     */
     public SNBTCodec(boolean expectRootName) {
         this.expectRootName = expectRootName;
     }
@@ -173,7 +187,13 @@ public class SNBTCodec implements Codec {
         }
 
         private void encodeKey(String key) throws IOException {
-            stream.write("\"" + key.replace("\"", "\\\"") + "\"");
+
+            if(UNQUOTED_KEY_INVALID.matcher(key).find()) {
+                stream.write("\"" + key.replace("\"", "\\\"") + "\"");
+            } else {
+                stream.write(key);
+            }
+
         }
 
         @Override
@@ -226,11 +246,7 @@ public class SNBTCodec implements Codec {
                 rootName = decodeKey();
                 nextReal();
             }
-
-            if(lastRead != '{') {
-                throw new DecodeException("Expected a compound!");
-            }
-            T out = decodeCompound();
+            T out = decodeElement();
 
             if(expectRootName) {
                 context.setMetaProperty(out, "nbt.root_name", rootName);
@@ -243,24 +259,22 @@ public class SNBTCodec implements Codec {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             if(lastRead == '\'' || lastRead == '"') {
                 readUntil(lastRead, bos);
-                nextReal();
-                if(lastRead != ':') {
+                if(nextReal() != ':') {
                     throw new DecodeException("Found invalid character " + lastRead + " after reading a key!");
                 }
+                return bos.toString();
             } else {
-                do {
-                    if(lastRead == -1) {
-                        throw new DecodeException("Found EOF while decoding an NBT key!");
-                    }
-                    bos.write(lastRead);
-                    if(Character.isWhitespace(lastRead) || lastRead == '\'' || lastRead == '"') {
-                        throw new DecodeException("Found invalid character " + lastRead + " in a key! Current key: " + bos.toString());
-                    }
-                } while((lastRead = stream.read()) != ':');
-                nextReal();
-            }
 
-            return bos.toString().trim();
+                bos.write(lastRead);
+                readUntil(':', bos);
+                String key = bos.toString();
+
+                Matcher matcher = UNQUOTED_KEY_INVALID.matcher(key);
+                if(matcher.find()) {
+                    throw new DecodeException("Found invalid character in a key! Current key: " + key);
+                }
+                return key;
+            }
         }
 
         T decodeCompound() throws IOException {
@@ -397,14 +411,17 @@ public class SNBTCodec implements Codec {
             try {
                 if (value.indexOf('.') == -1) {
                     switch (suffix) {
+                        case 'B':
                         case 'b':
                             num = Byte.parseByte(value.substring(0, value.length() - 1));
                             type = TagType.BYTE;
                             break;
+                        case 'S':
                         case 's':
                             num = Short.parseShort(value.substring(0, value.length() - 1));
                             type = TagType.SHORT;
                             break;
+                        case 'L':
                         case 'l':
                             num = Long.parseLong(value.substring(0, value.length() - 1));
                             type = TagType.LONG;
@@ -415,10 +432,12 @@ public class SNBTCodec implements Codec {
                     }
                 } else {
                     switch (suffix) {
+                        case 'F':
                         case 'f':
                             num = Float.parseFloat(value.substring(0, value.length() - 1));
                             type = TagType.FLOAT;
                             break;
+                        case 'D':
                         case 'd':
                             num = Double.parseDouble(value.substring(0, value.length() - 1));
                             type = TagType.DOUBLE;
@@ -439,9 +458,8 @@ public class SNBTCodec implements Codec {
 
         private T decodeList() throws IOException {
 
-            nextReal();
             TagType listType = TagType.LIST;
-            switch (lastRead) {
+            switch (nextReal()) {
                 case 'I':
                     listType = TagType.INT_ARRAY;
                     break;
@@ -452,8 +470,7 @@ public class SNBTCodec implements Codec {
                     listType = TagType.LONG_ARRAY;
             }
             if(listType != TagType.LIST) {
-                nextReal();
-                if(lastRead != ';') {
+                if(nextReal() != ';') {
                     throw new DecodeException("Found invalid characters at the beginning of a list!");
                 }
                 nextReal();
