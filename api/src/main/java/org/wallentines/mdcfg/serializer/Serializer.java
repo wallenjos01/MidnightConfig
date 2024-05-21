@@ -2,6 +2,8 @@ package org.wallentines.mdcfg.serializer;
 
 import org.wallentines.mdcfg.*;
 import org.wallentines.mdcfg.codec.Codec;
+import org.wallentines.mdcfg.codec.DecodeException;
+import org.wallentines.mdcfg.codec.EncodeException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -206,7 +208,7 @@ public interface Serializer<T> {
 
 
     /**
-     * Creates a new serializer which maps data to a blob
+     * Creates a new serializer which maps data to a blob encoded using the given codec.
      * @return A new serializer of the mapped type.
      */
     default Serializer<T> mapToBlob(Codec codec) {
@@ -216,17 +218,51 @@ public interface Serializer<T> {
                 try(ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
                     codec.encode(context, Serializer.this, value, bos);
                     return BLOB.serialize(context, ByteBuffer.wrap(bos.toByteArray()));
-                } catch (IOException ex) {
+                } catch (IOException | EncodeException ex) {
                     return SerializeResult.failure("Unable to write a value to a blob! " + ex.getMessage());
                 }
             }
 
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
+                if(!context.isString(value)) {
+                    return SerializeResult.failure("Expected a blob!");
+                }
                 try(ByteBufferInputStream bis = new ByteBufferInputStream(context.asBlob(value))) {
                     return Serializer.this.deserialize(context, codec.decode(context, bis));
-                } catch (IOException ex) {
+                } catch (IOException | DecodeException ex) {
                     return SerializeResult.failure("Unable to read a value from a blob! " + ex.getMessage());
+                }
+            }
+        };
+    }
+
+    /**
+     * Creates a new serializer which maps data to a string encoded using the given codec.
+     * @return A new serializer of the mapped type.
+     */
+    default Serializer<T> mapToString(Codec codec) {
+        return new Serializer<T>() {
+            @Override
+            public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
+
+                try(ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+                    codec.encode(context, Serializer.this, value, bos);
+                    return STRING.serialize(context, bos.toString());
+                } catch (IOException | EncodeException ex) {
+                    return SerializeResult.failure("Unable to write a value to a string! " + ex.getMessage());
+                }
+            }
+
+            @Override
+            public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
+                if(!context.isString(value)) {
+                    return SerializeResult.failure("Expected a string!");
+                }
+                try {
+                    return Serializer.this.deserialize(context, codec.decode(context, context.asString(value)));
+                } catch (DecodeException ex) {
+                    return SerializeResult.failure("Unable to read a value from a string! " + ex.getMessage());
                 }
             }
         };
