@@ -46,6 +46,30 @@ public class TestNBT {
 
         Assertions.assertTrue(decoded.isSection());
 
+        byte[] buffer;
+        try(FileInputStream fis = new FileInputStream(f);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+
+            byte[] copyBuffer = new byte[1024];
+            int read;
+            while((read = fis.read(copyBuffer)) != -1) {
+                bos.write(copyBuffer, 0, read);
+            }
+
+            buffer = bos.toByteArray();
+
+        } catch (IOException ex) {
+            Assertions.fail("An error occurred while decoding NBT! File: " + name + ", Compressed: " + compress, ex);
+            return;
+        }
+
+        try {
+            InputStream is = new BufferedInputStream(compress ? new GZIPInputStream(new ByteArrayInputStream(buffer)) : new ByteArrayInputStream(buffer));
+            ConfigObject fromBuffer = codec.decode(ConfigContext.INSTANCE, is);
+            Assertions.assertEquals(decoded, fromBuffer);
+        } catch (Exception ex) {
+            Assertions.fail("An exception occurred while reading from a buffer!", ex);
+        }
 
         try(FileOutputStream fos = new FileOutputStream(fOut)) {
 
