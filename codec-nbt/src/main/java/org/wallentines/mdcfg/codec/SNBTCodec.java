@@ -335,7 +335,9 @@ public class SNBTCodec implements Codec {
 
                 while (lastRead == ',') {
 
-                    nextReal();
+                    if(nextReal() == '}') {
+                        break;
+                    }
                     key = decodeKey();
 
                     nextReal();
@@ -537,7 +539,9 @@ public class SNBTCodec implements Codec {
 
             List<T> values = new ArrayList<>();
             do {
-                if(!values.isEmpty()) nextReal();
+                if(!values.isEmpty() && nextReal() == ']') {
+                    break;
+                }
                 try {
                     if(expectArrayIndices) {
                         ByteArrayOutputStream bos = new ByteArrayOutputStream();
