@@ -17,13 +17,11 @@ public class SNBTCodec implements Codec {
 
     private static final Pattern UNQUOTED_KEY_INVALID = Pattern.compile("[\\[\\]\\{\\}\\(\\),\"':]");
 
-    /**
-     * The standard SNBT codec instance. Does not expect a root name.
-     */
-    public static final SNBTCodec INSTANCE = new SNBTCodec(false);
+    private boolean expectRootName;
+    private boolean expectArrayIndices;
+    private boolean useDoubleQuotes;
 
-    private final boolean expectRootName;
-    private final boolean expectArrayIndices;
+    public SNBTCodec() { }
 
     /**
      * Creates an SNBT Codec.
@@ -42,10 +40,25 @@ public class SNBTCodec implements Codec {
         this.expectArrayIndices = expectArrayIndices;
     }
 
+    public SNBTCodec expectRootName() {
+        this.expectRootName = true;
+        return this;
+    }
+
+    public SNBTCodec expectArrayIndices() {
+        this.expectArrayIndices = true;
+        return this;
+    }
+
+    public SNBTCodec useDoubleQuotes() {
+        this.useDoubleQuotes = true;
+        return this;
+    }
+
 
     @Override
     public <T> void encode(@NotNull SerializeContext<T> context, T input, @NotNull OutputStream stream, Charset charset) throws EncodeException, IOException {
-        try(Encoder<T> enc = new Encoder<>(context, new BufferedWriter(new OutputStreamWriter(stream, charset)), expectRootName, expectArrayIndices)) {
+        try(Encoder<T> enc = new Encoder<>(context, new BufferedWriter(new OutputStreamWriter(stream, charset)))) {
             enc.encode(input);
         } catch (EncodeException | IOException ex) {
             throw ex;
@@ -57,7 +70,7 @@ public class SNBTCodec implements Codec {
     @Override
     public <T> T decode(@NotNull SerializeContext<T> context, @NotNull InputStream stream, Charset charset) throws DecodeException, IOException {
 
-        try(Decoder<T> dec = new Decoder<>(context, new BufferedReader(new InputStreamReader(stream, charset)), expectRootName, expectArrayIndices)) {
+        try(Decoder<T> dec = new Decoder<>(context, new BufferedReader(new InputStreamReader(stream, charset)))) {
             return dec.decode();
         } catch (DecodeException | IOException ex) {
             throw ex;
@@ -66,18 +79,14 @@ public class SNBTCodec implements Codec {
         }
     }
 
-    private static class Encoder<T> implements AutoCloseable {
+    private class Encoder<T> implements AutoCloseable {
 
         final SerializeContext<T> context;
         final Writer stream;
-        final boolean expectRootName;
-        final boolean expectArrayIndices;
 
-        public Encoder(SerializeContext<T> context, Writer stream, boolean expectRootName, boolean expectArrayIndices) {
+        public Encoder(SerializeContext<T> context, Writer stream) {
             this.context = context;
             this.stream = stream;
-            this.expectRootName = expectRootName;
-            this.expectArrayIndices = expectArrayIndices;
         }
 
         private void encode(T input) throws EncodeException, IOException {
@@ -219,10 +228,10 @@ public class SNBTCodec implements Codec {
         }
 
         private void encodeString(String string) throws IOException {
-            if(string.contains("\"")) {
+            if(!useDoubleQuotes && string.contains("\"")) {
                 stream.write("'" + string.replace("'", "\\'") + "'");
             } else {
-                stream.write("\"" + string + "\"");
+                stream.write("\"" + string.replace("\"", "\\\"") + "\"");
             }
         }
 
@@ -245,24 +254,20 @@ public class SNBTCodec implements Codec {
     }
 
 
-    private static class Decoder<T> implements AutoCloseable {
+    private class Decoder<T> implements AutoCloseable {
 
         final SerializeContext<T> context;
         final Reader stream;
-        final boolean expectRootName;
-        final boolean expectArrayIndices;
         int lastRead;
 
-        Decoder(@NotNull SerializeContext<T> context, @NotNull Reader stream, boolean expectRootName, boolean expectArrayIndices) {
+        Decoder(@NotNull SerializeContext<T> context, @NotNull Reader stream) {
             this.context = context;
             this.stream = stream;
-            this.expectRootName = expectRootName;
-            this.expectArrayIndices = expectArrayIndices;
         }
 
         void readUntil(int chara, ByteArrayOutputStream bos) throws IOException {
             boolean escaped = false;
-            while((lastRead = stream.read()) != chara) {
+            while((lastRead = stream.read()) != chara || escaped) {
                 if(lastRead == -1) {
                     throw new DecodeException("Found EOF while decoding NBT!");
                 }
@@ -374,7 +379,8 @@ public class SNBTCodec implements Codec {
 
                 char next = unescaped.charAt(++index);
                 if(next == quoteChar) {
-                    output.append(quoteChar);
+                    output.appendCodePoint(quoteChar);
+                    index++;
                 } else {
                     switch (next) {
                         case '\\':
@@ -427,6 +433,8 @@ public class SNBTCodec implements Codec {
                             throw new DecodeException("Invalid escape character " + next + "!");
                     }
                 }
+
+                prevIndex = index;
             }
             output.append(unescaped.substring(prevIndex));
             nextReal();
@@ -434,7 +442,7 @@ public class SNBTCodec implements Codec {
             return context.toString(output.toString());
         }
 
-        private T decodePrimitive() throws IOException {
+        private T decodeNumber() throws IOException {
 
             StringBuilder output = new StringBuilder();
 
@@ -447,17 +455,6 @@ public class SNBTCodec implements Codec {
                     && lastRead != ']');
 
             String value = output.toString();
-
-            if(value.equalsIgnoreCase("true")) {
-                T out = context.toBoolean(true);
-                NBTUtil.setTagType(context, out, TagType.BYTE);
-                return out;
-            }
-            if(value.equalsIgnoreCase("false")) {
-                T out = context.toBoolean(false);
-                NBTUtil.setTagType(context, out, TagType.BYTE);
-                return out;
-            }
 
             char suffix = value.charAt(value.length() - 1);
             TagType type;
@@ -590,7 +587,7 @@ public class SNBTCodec implements Codec {
                 case '{':
                     return decodeCompound();
                 default:
-                    return decodePrimitive();
+                    return decodeNumber();
             }
         }
 
