@@ -265,14 +265,14 @@ public class SNBTCodec implements Codec {
             this.stream = stream;
         }
 
-        void readUntil(int chara, ByteArrayOutputStream bos) throws IOException {
+        void readUntil(int chara, Writer writer) throws IOException {
             boolean escaped = false;
             while((lastRead = stream.read()) != chara || escaped) {
                 if(lastRead == -1) {
                     throw new DecodeException("Found EOF while decoding NBT!");
                 }
                 escaped = !escaped && lastRead == '\\';
-                bos.write(lastRead);
+                writer.write(lastRead);
             }
         }
 
@@ -305,18 +305,18 @@ public class SNBTCodec implements Codec {
 
         String decodeKey() throws IOException{
 
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            CharArrayWriter writer = new CharArrayWriter();
             if(lastRead == '\'' || lastRead == '"') {
-                readUntil(lastRead, bos);
+                readUntil(lastRead, writer);
                 if(nextReal() != ':') {
                     throw new DecodeException("Found invalid character " + lastRead + " after reading a key!");
                 }
-                return bos.toString();
+                return writer.toString();
             } else {
 
-                bos.write(lastRead);
-                readUntil(':', bos);
-                String key = bos.toString();
+                writer.write(lastRead);
+                readUntil(':', writer);
+                String key = writer.toString();
 
                 Matcher matcher = UNQUOTED_KEY_INVALID.matcher(key);
                 if(matcher.find()) {
@@ -363,10 +363,10 @@ public class SNBTCodec implements Codec {
         T decodeString() throws IOException {
 
             int quoteChar = lastRead;
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            readUntil(quoteChar, bos);
+            CharArrayWriter writer = new CharArrayWriter();
+            readUntil(quoteChar, writer);
 
-            String unescaped = bos.toString();
+            String unescaped = writer.toString();
 
             StringBuilder output = new StringBuilder();
             int prevIndex = 0;
@@ -541,10 +541,10 @@ public class SNBTCodec implements Codec {
                 }
                 try {
                     if(expectArrayIndices) {
-                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                        bos.write(lastRead);
-                        readUntil(':', bos);
-                        String num = bos.toString();
+                        CharArrayWriter writer = new CharArrayWriter();
+                        writer.write(lastRead);
+                        readUntil(':', writer);
+                        String num = writer.toString();
                         int index = Integer.parseInt(num);
                         if(index != values.size()) {
                             throw new DecodeException("Found out-of-order element with index " + index + "!");

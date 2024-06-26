@@ -157,7 +157,7 @@ public class TestJSON {
 
             String value = sec.asSection().getString("Test");
             Assertions.assertEquals(1, value.length());
-            Assertions.assertEquals("\u00BB", value);
+            Assertions.assertEquals("\u30BF", value);
 
         } catch (IOException ex) {
             Assertions.fail();

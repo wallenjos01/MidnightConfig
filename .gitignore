@@ -49,7 +49,6 @@ bin/
 /api-sql/run
 
 /codec-binary/run
-/codec-json/run
 /codec-gson/run
 
 /codec-nbt/run/test/*.out

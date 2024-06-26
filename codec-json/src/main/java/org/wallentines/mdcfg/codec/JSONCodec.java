@@ -8,6 +8,7 @@ import org.wallentines.mdcfg.serializer.SerializeContext;
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -449,8 +450,7 @@ public class JSONCodec implements Codec {
 
         private String readString(Reader reader) throws IOException {
 
-            ByteArrayOutputStream str = new ByteArrayOutputStream();
-            copyBuffer.rewind();
+            CharArrayWriter writer = new CharArrayWriter();
 
             boolean escaped = false;
             while(true) {
@@ -464,19 +464,10 @@ public class JSONCodec implements Codec {
                 }
 
                 escaped = !escaped && lastReadChar == '\\';
-                copyBuffer.put((byte) lastReadChar);
-
-                if(!copyBuffer.hasRemaining()) {
-                    str.write(copyBuffer.array(), 0, copyBuffer.position());
-                    copyBuffer.rewind();
-                }
+                writer.write(lastReadChar);
             }
 
-            if(copyBuffer.position() > 0) {
-                str.write(copyBuffer.array(), 0, copyBuffer.position());
-            }
-
-            String unescaped = str.toString();
+            String unescaped = writer.toString();
 
             StringBuilder output = new StringBuilder();
             int prevIndex = 0;
