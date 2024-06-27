@@ -8,7 +8,6 @@ import org.wallentines.mdcfg.serializer.SerializeContext;
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
 

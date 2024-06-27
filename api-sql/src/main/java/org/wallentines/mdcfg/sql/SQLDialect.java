@@ -2,8 +2,6 @@ package org.wallentines.mdcfg.sql;
 
 import org.wallentines.mdcfg.sql.stmt.StatementBuilder;
 
-import java.sql.Types;
-
 public interface SQLDialect {
 
     StatementBuilder writeTableSchema(SQLConnection connection, TableSchema schema);

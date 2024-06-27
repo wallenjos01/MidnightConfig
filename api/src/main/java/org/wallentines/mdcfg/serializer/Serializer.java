@@ -1,6 +1,9 @@
 package org.wallentines.mdcfg.serializer;
 
-import org.wallentines.mdcfg.*;
+import org.wallentines.mdcfg.ByteBufferInputStream;
+import org.wallentines.mdcfg.ConfigPrimitive;
+import org.wallentines.mdcfg.Functions;
+import org.wallentines.mdcfg.Tuples;
 import org.wallentines.mdcfg.codec.Codec;
 import org.wallentines.mdcfg.codec.DecodeException;
 import org.wallentines.mdcfg.codec.EncodeException;

@@ -3,7 +3,8 @@ import org.junit.jupiter.api.Test;
 import org.wallentines.mdcfg.ConfigList;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
-import org.wallentines.mdcfg.codec.*;
+import org.wallentines.mdcfg.codec.NBTCodec;
+import org.wallentines.mdcfg.codec.SNBTCodec;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 
 import java.io.*;
