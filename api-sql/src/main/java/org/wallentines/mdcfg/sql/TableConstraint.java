@@ -8,33 +8,30 @@ import java.util.List;
 public class TableConstraint<T> {
 
     public final Type type;
-    public final String name;
     public final T param;
 
-    public TableConstraint(Type type, String name, T param) {
-        SQLUtil.validate(name);
+    public TableConstraint(Type type, T param) {
         this.type = type;
-        this.name = name;
         this.param = param;
     }
 
-    public static TableConstraint<List<String>> UNIQUE(String name, Collection<String> columns) {
+    public static TableConstraint<List<String>> UNIQUE(Collection<String> columns) {
         assert !columns.isEmpty();
-        return new TableConstraint<>(Type.UNIQUE, name, List.copyOf(columns));
+        return new TableConstraint<>(Type.UNIQUE, List.copyOf(columns));
     }
 
-    public static TableConstraint<List<String>> PRIMARY_KEY(String name, Collection<String> columns) {
+    public static TableConstraint<List<String>> PRIMARY_KEY(Collection<String> columns) {
         assert !columns.isEmpty();
-        return new TableConstraint<>(Type.PRIMARY_KEY, name, List.copyOf(columns));
+        return new TableConstraint<>(Type.PRIMARY_KEY, List.copyOf(columns));
     }
 
-    public static TableConstraint<Tuples.T2<String, ColumnRef>> FOREIGN_KEY(String name, String column, ColumnRef ref) {
+    public static TableConstraint<Tuples.T2<String, ColumnRef>> FOREIGN_KEY(String column, ColumnRef ref) {
         SQLUtil.validate(column);
-        return new TableConstraint<>(Type.FOREIGN_KEY, name, new Tuples.T2<>(column, ref));
+        return new TableConstraint<>(Type.FOREIGN_KEY, new Tuples.T2<>(column, ref));
     }
 
-    public static TableConstraint<Condition> CHECK(String name, Condition condition) {
-        return new TableConstraint<>(Type.CHECK, name, condition);
+    public static TableConstraint<Condition> CHECK(Condition condition) {
+        return new TableConstraint<>(Type.CHECK, condition);
     }
 
     public enum Type {

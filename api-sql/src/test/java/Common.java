@@ -50,7 +50,7 @@ public class Common {
         TableSchema schema = TableSchema.builder()
                 .withColumn("id", DataType.INTEGER)
                 .withColumn("name", DataType.VARCHAR(255))
-                .withTableConstraint(TableConstraint.UNIQUE(null, Arrays.asList("id", "name")))
+                .withTableConstraint(TableConstraint.UNIQUE(Arrays.asList("id", "name")))
                 .build();
 
         if(conn.hasTable("test_unique")) {

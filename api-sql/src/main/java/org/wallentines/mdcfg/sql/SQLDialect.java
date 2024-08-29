@@ -49,9 +49,6 @@ public interface SQLDialect {
         @SuppressWarnings("unchecked")
         protected void writeTableConstraint(SQLConnection conn, String tableName, TableConstraint<?> constraint, StatementBuilder table) {
 
-            if(constraint.name != null) {
-                table.append("CONSTRAINT " + table + "_" + constraint.name);
-            }
             switch (constraint.type) {
                 case UNIQUE: {
                     table.append(" UNIQUE(").appendList((List<String>) constraint.param).append(")");
