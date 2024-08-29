@@ -11,11 +11,12 @@ public class TableSchema {
 
     private final List<Column> columns;
     private final HashMap<String, Integer> indicesByName = new HashMap<>();
+    private final List<TableConstraint<?>> constraints;
 
-
-    private TableSchema(List<Column> columns) {
+    private TableSchema(List<Column> columns, List<TableConstraint<?>> constraints) {
 
         this.columns = List.copyOf(columns);
+        this.constraints = List.copyOf(constraints);
 
         int index = 0;
         for(Column c : columns) {
@@ -64,6 +65,14 @@ public class TableSchema {
      */
     public Column getColumn(String name) {
         return columns.get(indicesByName.get(name));
+    }
+
+    /**
+     * Gets the table constraints on this table
+     * @return The table constraints
+     */
+    public Collection<TableConstraint<?>> getConstraints() {
+        return constraints;
     }
 
     /**
@@ -134,6 +143,7 @@ public class TableSchema {
      */
     public static class Builder {
         private final List<Column> values = new ArrayList<>();
+        private final List<TableConstraint<?>> constraints = new ArrayList<>();
 
         /**
          * Adds a column to the table schema
@@ -180,50 +190,21 @@ public class TableSchema {
         }
 
         /**
+         * Adds a table constraint to the table schema
+         * @param constraint The table constraint
+         * @return A reference to self
+         */
+        public Builder withTableConstraint(TableConstraint<?> constraint) {
+            constraints.add(constraint);
+            return this;
+        }
+
+        /**
          * Constructs a table schema from this builder
          * @return A new table schema
          */
         public TableSchema build() {
-            return new TableSchema(values);
+            return new TableSchema(values, constraints);
         }
     }
-
-
-/*    public enum Constraint {
-        PRIMARY_KEY("PRIMARY KEY"),
-        NOT_NULL("NOT NULL"),
-        AUTO_INCREMENT("AUTO_INCREMENT"),
-        UNIQUE("UNIQUE");
-
-        final String name;
-
-        Constraint(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-    }*/
-
-
-/*    public static class Column {
-
-        private final ColumnType<?> type;
-        private final Set<Constraint<?>> flags;
-
-        public Column(ColumnType<?> type, Collection<Constraint<?>> flags) {
-            this.type = type;
-            this.flags = Set.copyOf(flags);
-        }
-
-        public Column(ColumnType<?> type) {
-            this.type = type;
-            this.flags = Set.of();
-        }
-
-        public String encode() {
-            return type.getEncoded() + " " + flags.stream().map(Constraint::getName).collect(Collectors.joining(" "));
-        }
-    }*/
 }

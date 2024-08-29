@@ -5,6 +5,7 @@ import org.wallentines.mdcfg.sql.*;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.util.Arrays;
 
 public class Common {
 
@@ -13,6 +14,15 @@ public class Common {
     public static DatabaseType getDBType(String name) {
 
         return REPOSITORY.getDriver(name);
+    }
+
+    public static void testAll(SQLConnection conn) {
+        testBasics(conn);
+        testUnique(conn);
+        testNumberTypes(conn);
+        testStringTypes(conn);
+        testBlob(conn);
+        testWhere(conn);
     }
 
     public static void testBasics(SQLConnection conn) {
@@ -35,6 +45,29 @@ public class Common {
         Assertions.assertEquals(1, results.get(0).get("id").getValue());
         Assertions.assertEquals("Test User", results.get(0).get("name").getValue());
     }
+
+    public static void testUnique(SQLConnection conn) {
+        TableSchema schema = TableSchema.builder()
+                .withColumn("id", DataType.INTEGER)
+                .withColumn("name", DataType.VARCHAR(255))
+                .withTableConstraint(TableConstraint.UNIQUE(null, Arrays.asList("id", "name")))
+                .build();
+
+        if(conn.hasTable("test_unique")) {
+            conn.dropTable("test_unique").execute();
+        }
+
+        conn.createTable("test_unique", schema).execute();
+        conn.insert("test_unique", new ConfigSection().with("id", 1).with("name", "Test User")).execute();
+
+        QueryResult results = conn.select("test").execute();
+
+        Assertions.assertEquals(1, results.rows());
+        Assertions.assertEquals(2, results.get(0).columns());
+        Assertions.assertEquals(1, results.get(0).get("id").getValue());
+        Assertions.assertEquals("Test User", results.get(0).get("name").getValue());
+    }
+
 
     public static void testNumberTypes(SQLConnection conn) {
         TableSchema schema = TableSchema.builder()

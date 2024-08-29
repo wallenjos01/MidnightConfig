@@ -4,16 +4,21 @@ import org.wallentines.mdcfg.sql.SQLConnection;
 
 public class TestSQLite {
 
-    @Test
-    public void testSQLite() {
-
-        SQLConnection conn = Common.getDBType("sqlite").create("sqlite/test");
+    private void testAll(SQLConnection conn) {
 
         Common.testBasics(conn);
+        Common.testUnique(conn);
         Common.testNumberTypes(conn);
         Common.testStringTypes(conn);
         Common.testWhere(conn);
 
+    }
+
+    @Test
+    public void testSQLite() {
+
+        SQLConnection conn = Common.getDBType("sqlite").create("sqlite/test");
+        testAll(conn);
         conn.close();
     }
 
@@ -22,12 +27,7 @@ public class TestSQLite {
     public void testSQLitePrefixed() {
 
         SQLConnection conn = Common.getDBType("sqlite").create("sqlite/test", null, null, "pre_", new ConfigSection());
-
-        Common.testBasics(conn);
-        Common.testNumberTypes(conn);
-        Common.testStringTypes(conn);
-        Common.testWhere(conn);
-
+        testAll(conn);
         conn.close();
     }
 
