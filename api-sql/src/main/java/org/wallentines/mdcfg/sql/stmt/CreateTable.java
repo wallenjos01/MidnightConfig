@@ -35,7 +35,7 @@ public class CreateTable extends DDLStatement {
         }
 
         stmt.append(table + "(")
-                .append(connection.getType().getDialect().writeTableSchema(connection, schema))
+                .append(connection.getType().getDialect().writeTableSchema(connection, schema, table))
                 .append(");");
 
         try(PreparedStatement prep = stmt.prepare(connection)) {

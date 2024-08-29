@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface SQLDialect {
 
-    StatementBuilder writeTableSchema(SQLConnection connection, TableSchema schema);
+    StatementBuilder writeTableSchema(SQLConnection connection, TableSchema schema, String table);
 
     String writeColumnType(ColumnType<?> type);
 
@@ -47,10 +47,10 @@ public interface SQLDialect {
         }
 
         @SuppressWarnings("unchecked")
-        protected void writeTableConstraint(SQLConnection conn, TableConstraint<?> constraint, StatementBuilder table) {
+        protected void writeTableConstraint(SQLConnection conn, String tableName, TableConstraint<?> constraint, StatementBuilder table) {
 
             if(constraint.name != null) {
-                table.append("CONSTRAINT " + constraint.name);
+                table.append("CONSTRAINT " + table + "_" + constraint.name);
             }
             switch (constraint.type) {
                 case UNIQUE: {
@@ -90,7 +90,7 @@ public interface SQLDialect {
         }
 
         @Override
-        public StatementBuilder writeTableSchema(SQLConnection connection, TableSchema schema) {
+        public StatementBuilder writeTableSchema(SQLConnection connection, TableSchema schema, String table) {
 
             StatementBuilder out = new StatementBuilder();
             StatementBuilder postTable = new StatementBuilder();
@@ -104,7 +104,7 @@ public interface SQLDialect {
 
             for(TableConstraint<?> constraint : schema.getConstraints()) {
                 postTable.append(", ");
-                writeTableConstraint(connection, constraint, postTable);
+                writeTableConstraint(connection, table, constraint, postTable);
             }
 
             out.append(postTable);

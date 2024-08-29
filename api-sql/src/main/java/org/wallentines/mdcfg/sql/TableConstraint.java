@@ -12,6 +12,7 @@ public class TableConstraint<T> {
     public final T param;
 
     public TableConstraint(Type type, String name, T param) {
+        SQLUtil.validate(name);
         this.type = type;
         this.name = name;
         this.param = param;
@@ -28,6 +29,7 @@ public class TableConstraint<T> {
     }
 
     public static TableConstraint<Tuples.T2<String, ColumnRef>> FOREIGN_KEY(String name, String column, ColumnRef ref) {
+        SQLUtil.validate(column);
         return new TableConstraint<>(Type.FOREIGN_KEY, name, new Tuples.T2<>(column, ref));
     }
 

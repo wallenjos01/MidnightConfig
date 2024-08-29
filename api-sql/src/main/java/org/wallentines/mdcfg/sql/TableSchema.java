@@ -204,6 +204,7 @@ public class TableSchema {
          * @return A new table schema
          */
         public TableSchema build() {
+            assert !values.isEmpty();
             return new TableSchema(values, constraints);
         }
     }
