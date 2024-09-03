@@ -50,7 +50,7 @@ public class CreateIndex extends DDLStatement {
         try(PreparedStatement stmt = new StatementBuilder()
                     .append(start.toString())
                     .appendList(columns)
-                    .append(");")
+                    .append(")")
                     .prepare(connection)) {
 
             return stmt.execute();

@@ -20,7 +20,7 @@ public class DropIndex extends DDLStatement {
     @Override
     public boolean execute() {
 
-        StatementBuilder stmt = new StatementBuilder().append("ALTER TABLE " + tableName + " DROP INDEX " + indexName + ";");
+        StatementBuilder stmt = new StatementBuilder().append("ALTER TABLE " + tableName + " DROP INDEX " + indexName);
         try(PreparedStatement prepared = stmt.prepare(connection)) {
             return prepared.execute();
         } catch (SQLException ex) {
