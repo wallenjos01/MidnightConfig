@@ -156,6 +156,7 @@ public class Condition {
             }
             case IS_NULL:
                 builder.append(" IS NULL");
+                break;
             case IS_NOT_NULL:
                 builder.append(" IS NOT NULL");
         }
