@@ -1,10 +1,13 @@
 package org.wallentines.mdcfg.sql;
 
+import org.wallentines.mdcfg.Tuples;
 import org.wallentines.mdcfg.sql.stmt.StatementBuilder;
+
+import java.util.List;
 
 public interface SQLDialect {
 
-    StatementBuilder writeTableSchema(SQLConnection connection, TableSchema schema);
+    StatementBuilder writeTableSchema(SQLConnection connection, TableSchema schema, String table);
 
     String writeColumnType(ColumnType<?> type);
 
@@ -23,7 +26,7 @@ public interface SQLDialect {
                     if(ref.applyTablePrefix) {
                         ref = ref.withPrefix(conn.tablePrefix);
                     }
-                    table.append(", FOREIGN_KEY(").append(def.getName()).append(") REFERENCES").append(ref.encode());
+                    table.append(", FOREIGN_KEY(").append(def.getName()).append(") REFERENCES ").append(ref.encode());
                     break;
                 }
                 case CHECK: {
@@ -43,6 +46,39 @@ public interface SQLDialect {
 
         }
 
+        @SuppressWarnings("unchecked")
+        protected void writeTableConstraint(SQLConnection conn, String tableName, TableConstraint<?> constraint, StatementBuilder table) {
+
+            switch (constraint.type) {
+                case UNIQUE: {
+                    table.append(" UNIQUE(").appendList((List<String>) constraint.param).append(")");
+                    break;
+                }
+                case PRIMARY_KEY: {
+                    table.append(" PRIMARY KEY(").appendList((List<String>) constraint.param).append(")");
+                    break;
+                }
+                case FOREIGN_KEY: {
+                    Tuples.T2<String, ColumnRef> values = (Tuples.T2<String, ColumnRef>) constraint.param;
+                    ColumnRef ref = values.p2;
+                    if(ref.applyTablePrefix) {
+                        ref = ref.withPrefix(conn.tablePrefix);
+                    }
+
+                    table.append(" FOREIGN_KEY(").append(values.p1).append(") REFERENCES ").append(ref.encode());
+                    break;
+                }
+                case CHECK: {
+                    Condition check = (Condition) constraint.param;
+                    table.append(" CHECK(");
+                    check.encode(table);
+                    table.append(")");
+                    break;
+                }
+            }
+
+        }
+
         protected void writeColumn(SQLConnection conn, Column def, StatementBuilder column, StatementBuilder table) {
             column.append(def.getName()).append(" ").append(writeColumnType(def.getType()));
             for(Constraint<?> con : def.getConstraints()) {
@@ -51,16 +87,21 @@ public interface SQLDialect {
         }
 
         @Override
-        public StatementBuilder writeTableSchema(SQLConnection connection, TableSchema schema) {
+        public StatementBuilder writeTableSchema(SQLConnection connection, TableSchema schema, String table) {
 
             StatementBuilder out = new StatementBuilder();
             StatementBuilder postTable = new StatementBuilder();
             int index = 0;
             for(Column col : schema.getColumns()) {
                 if(index++ > 0) {
-                    out.append(",");
+                    out.append(", ");
                 }
                 writeColumn(connection, col, out, postTable);
+            }
+
+            for(TableConstraint<?> constraint : schema.getConstraints()) {
+                postTable.append(", ");
+                writeTableConstraint(connection, table, constraint, postTable);
             }
 
             out.append(postTable);

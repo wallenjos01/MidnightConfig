@@ -103,6 +103,16 @@ public class Condition {
         return out;
     }
 
+    public static Condition isNull(String key) {
+        if(!SQLUtil.VALID_NAME.matcher(key).matches()) throw new IllegalArgumentException("Invalid column name: " + key);
+        return new Condition(key, Operand.IS_NULL);
+    }
+
+    public static Condition isNotNull(String key) {
+        if(!SQLUtil.VALID_NAME.matcher(key).matches()) throw new IllegalArgumentException("Invalid column name: " + key);
+        return new Condition(key, Operand.IS_NOT_NULL);
+    }
+
     public enum Conjunction {
         AND,
         OR
@@ -115,7 +125,9 @@ public class Condition {
         AT_LEAST,
         AT_MOST,
         BETWEEN,
-        IN
+        IN,
+        IS_NULL,
+        IS_NOT_NULL
     }
 
     public void encode(StatementBuilder builder) {
@@ -142,6 +154,11 @@ public class Condition {
                 builder.append(")");
                 break;
             }
+            case IS_NULL:
+                builder.append(" IS NULL");
+                break;
+            case IS_NOT_NULL:
+                builder.append(" IS NOT NULL");
         }
 
         for(Tuples.T2<Condition.Conjunction, Condition> child : children) {

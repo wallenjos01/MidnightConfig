@@ -34,9 +34,9 @@ public class CreateTable extends DDLStatement {
             stmt.append("IF NOT EXISTS ");
         }
 
-        stmt.append(table + "(")
-                .append(connection.getType().getDialect().writeTableSchema(connection, schema))
-                .append(");");
+        stmt.append(table + " (")
+                .append(connection.getType().getDialect().writeTableSchema(connection, schema, table))
+                .append(")");
 
         try(PreparedStatement prep = stmt.prepare(connection)) {
             return prep.execute();

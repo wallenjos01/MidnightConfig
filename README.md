@@ -13,8 +13,8 @@ repositories {
     maven("https://maven.wallentines.org/releases")
 }
 dependencies {
-    implementation("org.wallentines:midnightcfg-api:2.3.0")
-    implementation("org.wallentines:midnightcfg-codec-json:2.3.0")
+    implementation("org.wallentines:midnightcfg-api:2.4.0")
+    implementation("org.wallentines:midnightcfg-codec-json:2.4.0")
 }
 ```
 

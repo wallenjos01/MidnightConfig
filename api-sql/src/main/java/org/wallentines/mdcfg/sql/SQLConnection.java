@@ -230,6 +230,25 @@ public class SQLConnection implements AutoCloseable {
         return new DropTable(this, tablePrefix + table);
     }
 
+    /**
+     * Starts a CREATE INDEX statement
+     * @param name The name of the index to create
+     * @param table The name of the table to create the index on
+     * @return A new CREATE INDEX statement
+     */
+    public CreateIndex createIndex(String name, String table) {
+        return new CreateIndex(this, name, tablePrefix + table);
+    }
+
+    /**
+     * Starts a DROP INDEX statement
+     * @param name The name of the index to drop
+     * @param table The name of the table to drop the index from
+     * @return A new DROP INDEX statement
+     */
+    public DropIndex dropIndex(String name, String table) {
+        return new DropIndex(this, name, tablePrefix + table);
+    }
 
     @Override
     public void close() {

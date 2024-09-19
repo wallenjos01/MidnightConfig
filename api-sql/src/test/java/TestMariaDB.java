@@ -15,13 +15,7 @@ public class TestMariaDB {
 
             DatabaseType type = Common.getDBType("mariadb");
             try(SQLConnection conn = type.create(url, user, pass)) {
-
-                Common.testBasics(conn);
-                Common.testNumberTypes(conn);
-                Common.testStringTypes(conn);
-                Common.testBlob(conn);
-                Common.testWhere(conn);
-
+                Common.testAll(conn);
             }
 
         }
