@@ -17,7 +17,7 @@ public class Select extends DQLStatement {
     public final List<String> columns;
     public Condition where;
 
-    private String joinClause;
+    private final List<String> joinClauses = new ArrayList<>();
 
     public Select(SQLConnection connection, String table) {
         super(connection);
@@ -48,7 +48,7 @@ public class Select extends DQLStatement {
     }
 
     public Select join(JoinType type, String otherTable, String column, String otherColumn) {
-        this.joinClause = type.keyword + " JOIN " + table + " ON " + table + "." + column + "=" + otherTable + "." + otherColumn;
+        this.joinClauses.add(type.keyword + " JOIN " + table + " ON " + table + "." + column + "=" + otherTable + "." + otherColumn);
         return this;
     }
 
@@ -66,8 +66,8 @@ public class Select extends DQLStatement {
         if (where != null) {
             query.append(" WHERE ").appendCondition(where);
         }
-        if(joinClause != null) {
-            query.append(" ").append(joinClause);
+        for(String s : joinClauses) {
+            query.append(" ").append(s);
         }
 
         try(PreparedStatement stmt = query.prepare(connection)) {
