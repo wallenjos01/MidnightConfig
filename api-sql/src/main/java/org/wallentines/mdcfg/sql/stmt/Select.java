@@ -48,7 +48,10 @@ public class Select extends DQLStatement {
     }
 
     public Select join(JoinType type, String otherTable, String column, String otherColumn) {
-        this.joinClauses.add(type.keyword + " JOIN " + table + " ON " + table + "." + column + "=" + otherTable + "." + otherColumn);
+        this.joinClauses.add(type.keyword + " JOIN " +
+                connection.applyPrefix(otherTable) + " ON " +
+                connection.applyPrefix(table) + "." + column + "=" +
+                connection.applyPrefix(otherTable) + "." + otherColumn);
         return this;
     }
 

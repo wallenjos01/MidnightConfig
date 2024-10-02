@@ -165,6 +165,10 @@ public class SQLConnection implements AutoCloseable {
         return new CreateTable(this, tablePrefix + name, schema);
     }
 
+    public String applyPrefix(String name) {
+        return fixIdentifier(tablePrefix + name);
+    }
+
     /**
      * Starts a SELECT statement
      * @param table The name of the table to select from
