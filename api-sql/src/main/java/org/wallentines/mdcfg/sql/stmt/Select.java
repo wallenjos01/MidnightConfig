@@ -17,6 +17,8 @@ public class Select extends DQLStatement {
     public final List<String> columns;
     public Condition where;
 
+    private String joinClause;
+
     public Select(SQLConnection connection, String table) {
         super(connection);
 
@@ -41,6 +43,15 @@ public class Select extends DQLStatement {
         return this;
     }
 
+    public Select join(JoinType type, String otherTable, String column) {
+        return join(type, otherTable, column, column);
+    }
+
+    public Select join(JoinType type, String otherTable, String column, String otherColumn) {
+        this.joinClause = type.keyword + " JOIN " + table + " ON " + table + "." + column + "=" + otherTable + "." + otherColumn;
+        return this;
+    }
+
     @Override
     public QueryResult execute() {
 
@@ -54,6 +65,9 @@ public class Select extends DQLStatement {
 
         if (where != null) {
             query.append(" WHERE ").appendCondition(where);
+        }
+        if(joinClause != null) {
+            query.append(" ").append(joinClause);
         }
 
         try(PreparedStatement stmt = query.prepare(connection)) {
@@ -87,4 +101,17 @@ public class Select extends DQLStatement {
             throw new IllegalStateException("Unable to execute SELECT statement!", ex);
         }
     }
+
+    public enum JoinType {
+        INNER("INNER"),
+        LEFT("LEFT"),
+        RIGHT("RIGHT"),
+        FULL("FULL OUTER");
+
+        final String keyword;
+        JoinType(String keyword) {
+            this.keyword = keyword;
+        }
+    }
+
 }
