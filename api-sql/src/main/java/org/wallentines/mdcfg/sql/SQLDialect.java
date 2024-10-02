@@ -19,14 +19,14 @@ public interface SQLDialect {
                 case NOT_NULL: column.append(" NOT NULL"); break;
                 case AUTO_INCREMENT: column.append(" AUTO_INCREMENT");
                 case UNIQUE: column.append(" UNIQUE"); break;
-                case PRIMARY_KEY: table.append(", PRIMARY KEY(").append(def.getName()).append(")"); break;
+                case PRIMARY_KEY: table.append(", PRIMARY KEY (").append(def.getName()).append(")"); break;
                 case FOREIGN_KEY: {
 
                     ColumnRef ref = (ColumnRef) constraint.param;
                     if(ref.applyTablePrefix) {
                         ref = ref.withPrefix(conn.tablePrefix);
                     }
-                    table.append(", FOREIGN_KEY(").append(def.getName()).append(") REFERENCES ").append(ref.encode());
+                    table.append(", FOREIGN KEY (").append(def.getName()).append(") REFERENCES ").append(ref.encode());
                     break;
                 }
                 case CHECK: {

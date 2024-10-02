@@ -2,6 +2,7 @@ import org.junit.jupiter.api.Assertions;
 import org.wallentines.mdcfg.ConfigBlob;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.sql.*;
+import org.wallentines.mdcfg.sql.stmt.Select;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -23,6 +24,7 @@ public class Common {
         testStringTypes(conn);
         testBlob(conn);
         testWhere(conn);
+        testJoins(conn);
     }
 
     public static void testBasics(SQLConnection conn) {
@@ -237,7 +239,7 @@ public class Common {
         Assertions.assertEquals((byte) 1, results.get(0).getValue("id"));
         Assertions.assertEquals("Test User 1", results.get(0).getValue("name"));
         Assertions.assertEquals((byte) 2, results.get(1).getValue("id"));
-        Assertions.assertEquals("Test User 2", results.get(1).getValue("name"));;
+        Assertions.assertEquals("Test User 2", results.get(1).getValue("name"));
         Assertions.assertEquals((byte) 3, results.get(2).getValue("id"));
         Assertions.assertEquals("Test User 3", results.get(2).getValue("name"));
 
@@ -271,5 +273,42 @@ public class Common {
         Assertions.assertEquals("Test User 3", results.get(1).getValue("name"));
 
     }
+
+    public static void testJoins(SQLConnection conn) {
+
+        TableSchema aSchema = TableSchema.builder()
+                .withColumn(Column.builder("aId", DataType.TINYINT).withConstraint(Constraint.PRIMARY_KEY))
+                .withColumn("aName", DataType.VARCHAR(255))
+                .build();
+
+        TableSchema bSchema = TableSchema.builder()
+                .withColumn("bId", DataType.TINYINT)
+                .withColumn("bName", DataType.VARCHAR(255))
+                .withColumn(Column.builder("aId", DataType.TINYINT).withConstraint(Constraint.FOREIGN_KEY(new ColumnRef("aTable", "aId"))))
+                .build();
+
+        if(conn.hasTable("bTable")) {
+            conn.dropTable("bTable").execute();
+        }
+        if(conn.hasTable("aTable")) {
+            conn.dropTable("aTable").execute();
+        }
+
+        conn.createTable("aTable", aSchema).execute();
+        conn.createTable("bTable", bSchema).execute();
+
+        conn.insert("aTable", aSchema).addRow(new ConfigSection().with("aId", 1).with("aName", "A1")).execute();
+        conn.insert("bTable", bSchema).addRow(new ConfigSection().with("bId", 1).with("bName", "B1").with("aId", 1)).execute();
+
+        QueryResult res = conn.select("bTable")
+                .join(Select.JoinType.INNER, "aTable", "aId")
+                .execute();
+
+        Assertions.assertEquals(1, res.rows());
+        Assertions.assertEquals((byte) 1, res.get(0).getValue("bId"));
+        Assertions.assertEquals("B1", res.get(0).getValue("bName"));
+        Assertions.assertEquals("A1", res.get(0).getValue("aName"));
+    }
+
 
 }
