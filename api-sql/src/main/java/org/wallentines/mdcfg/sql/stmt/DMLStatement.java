@@ -1,6 +1,7 @@
 package org.wallentines.mdcfg.sql.stmt;
 
 import org.wallentines.mdcfg.sql.SQLConnection;
+import org.wallentines.mdcfg.sql.UpdateResult;
 
 public abstract class DMLStatement extends Statement {
 
@@ -9,6 +10,6 @@ public abstract class DMLStatement extends Statement {
         super(connection);
     }
 
-    public abstract int[] execute();
+    public abstract UpdateResult execute();
 
 }

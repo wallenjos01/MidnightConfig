@@ -4,10 +4,7 @@ import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.Tuples;
 import org.wallentines.mdcfg.serializer.ConfigContext;
-import org.wallentines.mdcfg.sql.Condition;
-import org.wallentines.mdcfg.sql.DataValue;
-import org.wallentines.mdcfg.sql.SQLConnection;
-import org.wallentines.mdcfg.sql.SQLUtil;
+import org.wallentines.mdcfg.sql.*;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -50,7 +47,7 @@ public class Update extends DMLStatement {
     }
 
     @Override
-    public int[] execute() {
+    public UpdateResult execute() {
 
         StatementBuilder query = new StatementBuilder("UPDATE ")
                 .append(table).append(" SET ");
@@ -80,7 +77,7 @@ public class Update extends DMLStatement {
                 DataValue.writeSerialized(ConfigContext.INSTANCE, s.p2, pst, index++);
             }
 
-            return new int[] { pst.executeUpdate() };
+            return new UpdateResult(new int[] { pst.executeUpdate() }, null);
 
         } catch (SQLException ex) {
             throw new IllegalArgumentException("Unable to add row to UPDATE statement!", ex);

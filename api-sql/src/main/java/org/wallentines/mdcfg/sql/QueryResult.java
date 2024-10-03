@@ -3,6 +3,9 @@ package org.wallentines.mdcfg.sql;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.Tuples;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -193,6 +196,32 @@ public class QueryResult {
             return out;
         }
 
+    }
+
+    public static QueryResult fromResultSet(ResultSet resultSet, SQLConnection connection) throws SQLException {
+
+        int cols = resultSet.getMetaData().getColumnCount();
+        QueryResult res = new QueryResult(connection);
+        while(resultSet.next()) {
+            List<Tuples.T2<String, DataValue<?>>> values = new ArrayList<>();
+            for(int i = 1 ; i <= cols ; i++) {
+
+                int type = resultSet.getMetaData().getColumnType(i);
+                if(type == Types.NULL) {
+                    continue;
+                }
+
+                DataType<?> dt = DataType.get(type);
+                if(dt == null) {
+                    throw new IllegalStateException("Unknown column type " + type + "!");
+                }
+
+                values.add(new Tuples.T2<>(resultSet.getMetaData().getColumnName(i), dt.read(resultSet, i)));
+            }
+            res.addRow(values);
+        }
+
+        return res;
     }
 
 }

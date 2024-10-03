@@ -1,12 +1,12 @@
 package org.wallentines.mdcfg.sql.stmt;
 
 import org.wallentines.mdcfg.sql.Condition;
-import org.wallentines.mdcfg.sql.DataType;
 import org.wallentines.mdcfg.sql.DataValue;
 import org.wallentines.mdcfg.sql.SQLConnection;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,13 +23,23 @@ public class StatementBuilder {
 
     public PreparedStatement prepare(SQLConnection conn) throws SQLException {
 
+        return prepare(conn, false);
+    }
+
+    public PreparedStatement prepare(SQLConnection conn, boolean returnKeys) throws SQLException {
+
         StringBuilder out = new StringBuilder();
         for(Entry ent : entries) {
             out.append(ent.write());
         }
         out.append(";");
 
-        PreparedStatement stmt = conn.getInternal().prepareStatement(out.toString());
+        PreparedStatement stmt;
+        if(returnKeys) {
+            stmt = conn.getInternal().prepareStatement(out.toString(), Statement.RETURN_GENERATED_KEYS);
+        } else {
+            stmt = conn.getInternal().prepareStatement(out.toString());
+        }
 
         int index = 0;
         for(Entry ent : entries) {

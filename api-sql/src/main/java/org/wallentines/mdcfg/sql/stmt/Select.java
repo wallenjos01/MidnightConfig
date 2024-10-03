@@ -1,12 +1,10 @@
 package org.wallentines.mdcfg.sql.stmt;
 
-import org.wallentines.mdcfg.Tuples;
 import org.wallentines.mdcfg.sql.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -25,7 +23,6 @@ public class Select extends DQLStatement {
         SQLUtil.validate(table);
         this.table = table;
         this.columns = new ArrayList<>();
-
     }
 
     public Select withColumn(String column) {
@@ -76,27 +73,8 @@ public class Select extends DQLStatement {
         try(PreparedStatement stmt = query.prepare(connection)) {
 
             ResultSet set = stmt.executeQuery();
-            int cols = set.getMetaData().getColumnCount();
+            QueryResult res = QueryResult.fromResultSet(set, connection);
 
-            QueryResult res = new QueryResult(connection);
-            while(set.next()) {
-                List<Tuples.T2<String, DataValue<?>>> values = new ArrayList<>();
-                for(int i = 1 ; i <= cols ; i++) {
-
-                    int type = set.getMetaData().getColumnType(i);
-                    if(type == Types.NULL) {
-                        continue;
-                    }
-
-                    DataType<?> dt = DataType.get(type);
-                    if(dt == null) {
-                        throw new IllegalStateException("Unknown column type " + type + "!");
-                    }
-
-                    values.add(new Tuples.T2<>(set.getMetaData().getColumnName(i), dt.read(set, i)));
-                }
-                res.addRow(values);
-            }
             stmt.close();
 
             return res;

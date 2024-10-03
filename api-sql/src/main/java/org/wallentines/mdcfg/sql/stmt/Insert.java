@@ -5,6 +5,7 @@ import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.sql.*;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,7 +55,7 @@ public class Insert extends DMLStatement {
             }
             builder.append(")");
 
-            return builder.prepare(connection);
+            return builder.prepare(connection, true);
         } catch (SQLException ex) {
             throw new IllegalArgumentException("Unable to prepare INSERT statement!", ex);
         }
@@ -90,11 +91,17 @@ public class Insert extends DMLStatement {
     }
 
     @Override
-    public int[] execute() {
+    public UpdateResult execute() {
         try {
             int[] out = statement.executeBatch();
+            ResultSet keys = statement.getGeneratedKeys();
+            QueryResult generatedKeys = null;
+            if(keys != null) {
+                generatedKeys = QueryResult.fromResultSet(keys, connection);
+            }
+
             statement.close();
-            return out;
+            return new UpdateResult(out, generatedKeys);
         } catch (SQLException ex) {
             throw new IllegalStateException("Unable to execute INSERT statement!", ex);
         }

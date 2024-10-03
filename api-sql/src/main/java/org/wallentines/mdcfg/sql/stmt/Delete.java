@@ -3,6 +3,7 @@ package org.wallentines.mdcfg.sql.stmt;
 import org.wallentines.mdcfg.sql.Condition;
 import org.wallentines.mdcfg.sql.SQLConnection;
 import org.wallentines.mdcfg.sql.SQLUtil;
+import org.wallentines.mdcfg.sql.UpdateResult;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -24,7 +25,7 @@ public class Delete extends DMLStatement {
     }
 
     @Override
-    public int[] execute() {
+    public UpdateResult execute() {
 
         StatementBuilder out = new StatementBuilder().append("DELETE FROM " + table);
         if(where != null) {
@@ -32,7 +33,7 @@ public class Delete extends DMLStatement {
         }
 
         try(PreparedStatement stmt = out.prepare(connection)) {
-            return new int[] { stmt.executeUpdate() };
+            return new UpdateResult(new int[] { stmt.executeUpdate() }, null);
         } catch (SQLException ex) {
             throw new IllegalStateException("Unable to execute DELETE statement!");
         }
