@@ -33,4 +33,9 @@ public class UpdateResult {
         return Arrays.stream(affectedRows);
     }
 
+    @Nullable
+    public QueryResult getGeneratedKeys() {
+        return generatedKeys;
+    }
+
 }
