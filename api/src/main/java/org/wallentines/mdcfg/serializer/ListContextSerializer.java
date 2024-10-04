@@ -3,6 +3,7 @@ package org.wallentines.mdcfg.serializer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 public class ListContextSerializer<T,C> implements ContextSerializer<Collection<T>,C> {
@@ -64,6 +65,32 @@ public class ListContextSerializer<T,C> implements ContextSerializer<Collection<
 
         }
         return SerializeResult.success(out);
+    }
+
+    public ContextSerializer<Set<T>, C> mapToSet() {
+        return new ContextSerializer<Set<T>, C>() {
+            @Override
+            public <O> SerializeResult<O> serialize(SerializeContext<O> context, Set<T> value, C ctx) {
+                return ListContextSerializer.this.serialize(context, value, ctx);
+            }
+            @Override
+            public <O> SerializeResult<Set<T>> deserialize(SerializeContext<O> context, O value, C ctx) {
+                return ListContextSerializer.this.deserialize(context, value, ctx).flatMap(Set::copyOf);
+            }
+        };
+    }
+
+    public ContextSerializer<List<T>, C> mapToList() {
+        return new ContextSerializer<List<T>, C>() {
+            @Override
+            public <O> SerializeResult<O> serialize(SerializeContext<O> context, List<T> value, C ctx) {
+                return ListContextSerializer.this.serialize(context, value, ctx);
+            }
+            @Override
+            public <O> SerializeResult<List<T>> deserialize(SerializeContext<O> context, O value, C ctx) {
+                return ListContextSerializer.this.deserialize(context, value, ctx).flatMap(List::copyOf);
+            }
+        };
     }
 
 

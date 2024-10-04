@@ -1,0 +1,14 @@
+[
+  {
+    "lines": [ "all" ],
+    "type": "replace",
+    "find": "Set::copyOf",
+    "replace": "java.util.HashSet::new"
+  },
+  {
+    "lines": [ "all" ],
+    "type": "replace",
+    "find": "List::copyOf",
+    "replace": "java.util.ArrayList::new"
+  }
+]

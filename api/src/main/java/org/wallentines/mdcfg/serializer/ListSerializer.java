@@ -1,8 +1,6 @@
 package org.wallentines.mdcfg.serializer;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -68,4 +66,31 @@ public class ListSerializer<T> implements Serializer<Collection<T>> {
         }
         return SerializeResult.success(out);
     }
+
+    public Serializer<Set<T>> mapToSet() {
+        return new Serializer<Set<T>>() {
+            @Override
+            public <O> SerializeResult<O> serialize(SerializeContext<O> context, Set<T> value) {
+                return ListSerializer.this.serialize(context, value);
+            }
+            @Override
+            public <O> SerializeResult<Set<T>> deserialize(SerializeContext<O> context, O value) {
+                return ListSerializer.this.deserialize(context, value).flatMap(Set::copyOf);
+            }
+        };
+    }
+
+    public Serializer<List<T>> mapToList() {
+        return new Serializer<List<T>>() {
+            @Override
+            public <O> SerializeResult<O> serialize(SerializeContext<O> context, List<T> value) {
+                return ListSerializer.this.serialize(context, value);
+            }
+            @Override
+            public <O> SerializeResult<List<T>> deserialize(SerializeContext<O> context, O value) {
+                return ListSerializer.this.deserialize(context, value).flatMap(List::copyOf);
+            }
+        };
+    }
+
 }
