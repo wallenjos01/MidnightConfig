@@ -1,6 +1,7 @@
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.wallentines.mdcfg.ConfigObject;
+import org.wallentines.mdcfg.ConfigPrimitive;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.codec.FileCodec;
 import org.wallentines.mdcfg.codec.FileCodecRegistry;
@@ -71,7 +72,7 @@ public class TestFileCodec {
         Assertions.assertTrue(!f.exists() || f.delete());
 
         wrapper = registry.findOrCreate(ConfigContext.INSTANCE, "test_created", cwd);
-        Assertions.assertNull(wrapper.getRoot());
+        Assertions.assertEquals(ConfigPrimitive.NULL, wrapper.getRoot());
 
         wrapper.setRoot(new ConfigSection().with("Key", "Value"));
         wrapper.save();

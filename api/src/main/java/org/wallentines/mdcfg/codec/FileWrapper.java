@@ -63,7 +63,13 @@ public class FileWrapper<T> {
         this.file = file;
         this.codec = codec;
         this.charset = charset;
+
+        if(defaults == null) {
+            defaults = context.nullValue();
+        }
+
         this.defaults = defaults;
+        this.root = defaults;
     }
 
     /**
@@ -73,14 +79,14 @@ public class FileWrapper<T> {
     public void load() {
         try {
             root = codec.loadFromFile(context, file, charset);
-            if(defaults != null) {
+            if(defaults != context.nullValue()) {
                 root = context.merge(root, defaults);
             }
             return;
         } catch (IOException ex) {
-            LOGGER.error("An exception occurred while attempting to read data from file " + file.getAbsolutePath() + "!", ex);
+            LOGGER.error("An exception occurred while attempting to read data from file {}!", file.getAbsolutePath(), ex);
         } catch (DecodeException ex) {
-            LOGGER.error("An exception occurred while attempting to decode data from file " + file.getAbsolutePath() + "!", ex);
+            LOGGER.error("An exception occurred while attempting to decode data from file {}!", file.getAbsolutePath(), ex);
         }
         root = context.copy(defaults);
     }
@@ -90,12 +96,12 @@ public class FileWrapper<T> {
      */
     public void save() {
         try {
-            if(defaults != null) {
+            if(defaults != context.nullValue()) {
                 root = context.merge(root, defaults);
             }
             codec.saveToFile(context, root, file, charset);
         } catch (IOException ex) {
-            LOGGER.error("An exception occurred while attempting to write data to file " + file.getAbsolutePath() + "!", ex);
+            LOGGER.error("An exception occurred while attempting to write data to file {}!", file.getAbsolutePath(), ex);
         }
     }
 

@@ -240,7 +240,7 @@ public class FileCodecRegistry {
             File newFile = new File(folder, newFileName);
 
             out = new FileWrapper<>(context, codec, newFile, charset, defaults);
-            out.load();
+            out.save();
         }
         return out;
     }
