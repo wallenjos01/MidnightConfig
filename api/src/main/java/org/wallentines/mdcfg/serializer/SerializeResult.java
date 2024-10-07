@@ -141,6 +141,12 @@ public class SerializeResult<T> {
         return this;
     }
 
+    public <O> SerializeResult<O> cast(Class<O> type) {
+        if(!success) return SerializeResult.failure(error);
+        if(!type.isAssignableFrom(value.getClass())) return SerializeResult.failure("Cannot cast " + value + " to " + type);
+        return SerializeResult.success(type.cast(value));
+    }
+
     /**
      * Creates a new SerializeResult containing a tuple of all the parameter types. It will only be successful if all other results are successful
      * @return A new SerializeResult

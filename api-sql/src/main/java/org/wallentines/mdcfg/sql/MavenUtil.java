@@ -11,12 +11,14 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Stack;
 
 /**
@@ -57,7 +59,7 @@ public class MavenUtil {
      * @throws IOException If an error occurs while downloading.
      * @throws IllegalArgumentException if the artifact does not have a valid version.
      */
-    public static void downloadArtifact(String repo, ArtifactSpec spec, File output) throws IOException {
+    public static void downloadArtifact(String repo, ArtifactSpec spec, Path output) throws IOException {
         String path = spec.getArtifactPath();
         if(path == null) {
             throw new IllegalArgumentException("Unable to download artifact with missing version!");
@@ -66,11 +68,17 @@ public class MavenUtil {
         downloadBytes(actualUrl, output);
     }
 
-    private static void downloadBytes(String url, File output) throws IOException{
+    private static void downloadBytes(String url, Path output) throws IOException {
 
-        URL actualUrl = new URL(url);
+        URL actualUrl;
+        try {
+            actualUrl = new URI(url).toURL();
+        } catch (URISyntaxException ex) {
+            throw new IllegalArgumentException("Unable to parse URL: " + url, ex);
+        }
+
         URLConnection conn = actualUrl.openConnection();
-        FileOutputStream outputStream = new FileOutputStream(output);
+        OutputStream outputStream = Files.newOutputStream(output);
 
         int bytesRead;
         byte[] buffer = new byte[1024];
@@ -79,7 +87,6 @@ public class MavenUtil {
         }
 
         outputStream.close();
-        output.setExecutable(true);
     }
 
     /**

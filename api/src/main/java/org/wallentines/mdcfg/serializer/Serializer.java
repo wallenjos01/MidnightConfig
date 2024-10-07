@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -298,6 +300,37 @@ public interface Serializer<T> {
         };
     }
 
+    default <O> Serializer<O> dispatch(Function<T, Serializer<O>> dispatcher, Function<O, T> reverse) {
+        return new Serializer<O>() {
+            @Override
+            public <O1> SerializeResult<O> deserialize(SerializeContext<O1> context, O1 value) {
+                SerializeResult<T> t = Serializer.this.deserialize(context, value);
+                if(!t.isComplete()) return SerializeResult.failure(t.getError());
+                return dispatcher.apply(t.getOrThrow()).deserialize(context, value);
+            }
+
+            @Override
+            public <O1> SerializeResult<O1> serialize(SerializeContext<O1> context, O value) {
+                return dispatcher.apply(reverse.apply(value)).serialize(context, value);
+            }
+        };
+    }
+
+    default <O> Serializer<O> cast(Class<T> source, Class<O> dest) {
+        return new Serializer<O>() {
+            @Override
+            public <O1> SerializeResult<O1> serialize(SerializeContext<O1> context, O value) {
+                if(!source.isAssignableFrom(value.getClass())) return SerializeResult.failure("Expected value of type " + source);
+                return Serializer.this.serialize(context, source.cast(value));
+            }
+
+            @Override
+            public <O1> SerializeResult<O> deserialize(SerializeContext<O1> context, O1 value) {
+                return Serializer.this.deserialize(context, value).cast(dest);
+            }
+        };
+    }
+
     /**
      * Creates a combined serializer with this serializer and another
      * @param other The second serializer to use
@@ -437,6 +470,9 @@ public interface Serializer<T> {
             });
         }
     };
+
+
+    InlineSerializer<Path> PATH = InlineSerializer.of(Path::toString, Paths::get);
 
     Serializer<Object> NULL = new Serializer<Object>() {
         @Override

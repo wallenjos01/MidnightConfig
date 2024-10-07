@@ -1,16 +1,17 @@
 package org.wallentines.mdcfg.sql;
 
-import org.wallentines.mdcfg.serializer.ObjectSerializer;
-import org.wallentines.mdcfg.serializer.SerializeResult;
-import org.wallentines.mdcfg.serializer.Serializer;
+import org.wallentines.mdcfg.serializer.*;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -19,10 +20,12 @@ import java.util.logging.Logger;
  */
 public abstract class DriverRepository {
 
-    private final Map<String, DriverSpec> registry;
+    protected final Type type;
+    protected final Map<String, DriverSpec> registry;
     private final Map<String, DatabaseType> loaded;
 
-    protected DriverRepository(Map<String, DriverSpec> registry) {
+    protected DriverRepository(Type type, Map<String, DriverSpec> registry) {
+        this.type = type;
         this.registry = Map.copyOf(registry);
         this.loaded = new HashMap<>();
     }
@@ -45,299 +48,14 @@ public abstract class DriverRepository {
         });
     }
 
+    protected Type getType() {
+        return type;
+    }
+
     /**
      * Loads a driver with the given name and spec
      */
     protected abstract DatabaseType loadDriver(String name, DriverSpec spec);
-
-
-    /**
-     * Loads drivers from the classpath or downloads them from the internet and stores them in a folder
-     */
-    protected static abstract class Disk extends DriverRepository {
-
-        protected final File folder;
-        private final DriverLoader loader;
-        /**
-         * Sets up a folder driver repository in the given folder, using default driver registry
-         * @param folder The folder to store drivers in
-         */
-        protected Disk(File folder) {
-            this(folder, DEFAULT_DRIVERS);
-        }
-
-        /**
-         * Sets up a folder driver repository in the given folder, using the given driver registry
-         * @param folder The folder to store drivers in
-         * @param registry The driver specifications, and their names
-         */
-        protected Disk(File folder, Map<String, DriverSpec> registry) {
-            super(registry);
-            this.folder = folder;
-            this.loader = new DriverLoader(new URL[] {}, getClass().getClassLoader());
-        }
-
-        /**
-         * Gets the folder drivers are stored in
-         * @return The folder drivers are stored in.
-         */
-        public File getFolder() {
-            return folder;
-        }
-
-        protected DatabaseType loadDriver(String name, DriverSpec spec) {
-
-            String prefix = spec.prefix;
-            if(prefix == null) {
-                prefix = name + ":";
-            }
-
-            if(spec.className != null) {
-                try {
-                    Class.forName(spec.className);
-                    return spec.factory.create(prefix);
-                } catch (ClassNotFoundException ex) {
-                    // Ignore
-                }
-            }
-
-            File file = locateFile(name, prefix, spec);
-            if(file == null) {
-                throw new DriverLoadException("Unable to find driver file for " + name + "!");
-            }
-            return loadDriver(file, prefix, spec);
-        }
-
-        protected DatabaseType loadDriver(File file, String prefix, DriverSpec spec) {
-
-            try {
-
-                loader.addURL(file.toURI().toURL());
-
-                String className = spec.className;
-                if(className == null) {
-                    InputStream is = loader.getResourceAsStream("/META-INF/services/java.sql.Driver");
-                    if (is == null) {
-                        throw new DriverLoadException("Downloaded jar does not contain a JDBC driver!");
-                    }
-
-                    BufferedReader br = new BufferedReader(new InputStreamReader(is));
-                    className = br.readLine();
-                }
-
-                try {
-                    Class<?> clazz = loader.loadClass(className);
-                    Driver driver = (Driver) clazz.getConstructor().newInstance();
-                    WrappedDriver wd = new WrappedDriver(driver);
-                    DriverManager.registerDriver(wd);
-
-                } catch (ClassNotFoundException ex) {
-                    throw new DriverLoadException("Unable to load SQL driver class!", ex);
-                } catch(InvocationTargetException | InstantiationException | IllegalAccessException |
-                        NoSuchMethodException ex) {
-                    throw new DriverLoadException("Unable to instantiate SQL driver!", ex);
-                } catch (SQLException ex) {
-                    throw new DriverLoadException("Unable to register SQL driver!", ex);
-                }
-                return spec.factory.create(prefix);
-
-            } catch (IOException ex) {
-
-                throw new DriverLoadException("An error occurred while loading an SQL driver!", ex);
-            }
-        }
-
-
-        protected abstract File locateFile(String name, String prefix, DriverSpec spec);
-    }
-
-    /**
-     * Loads drivers from the classpath or downloads them from the internet and stores them in a folder
-     */
-    public static class Maven extends Disk {
-
-
-        /**
-         * Sets up a folder driver repository in the given folder, using default driver registry
-         * @param folder The folder to store drivers in
-         */
-        public Maven(File folder) {
-            this(folder, DEFAULT_DRIVERS);
-        }
-
-        /**
-         * Sets up a folder driver repository in the given folder, using the given driver registry
-         * @param folder The folder to store drivers in
-         * @param registry The driver specifications, and their names
-         */
-        public Maven(File folder, Map<String, DriverSpec> registry) {
-            super(folder, registry);
-        }
-
-        @Override
-        protected File locateFile(String name, String prefix, DriverSpec spec) {
-            if(spec.artifact.getVersion() == null) {
-                spec = spec.forLatestVersion();
-                if(spec == null) {
-                    throw new DriverLoadException("Unable to find latest version for driver " + name + "!");
-                }
-            }
-
-            String fileName = spec.artifact.getNamespace() + "." + spec.artifact.getId() + "." + spec.artifact.getVersion() + ".jar";
-            File file = new File(folder, fileName);
-
-            if(!file.exists()) {
-                try {
-                    MavenUtil.downloadArtifact(spec.repository, spec.artifact, file);
-                } catch (IOException ex) {
-                    throw new DriverLoadException("Unable to download driver " + name + "!", ex);
-                }
-            }
-            return file;
-        }
-    }
-
-
-    /**
-     * Loads drivers from the classpath or downloads them from the internet and stores them in a folder
-     */
-    public static class Folder extends Disk {
-
-        private final File folder;
-
-        /**
-         * Sets up a folder driver repository in the given folder, using default driver registry
-         * @param folder The folder to store drivers in
-         */
-        public Folder(File folder) {
-            this(folder, DEFAULT_DRIVERS);
-        }
-
-        /**
-         * Sets up a folder driver repository in the given folder, using the given driver registry
-         * @param folder The folder to store drivers in
-         * @param registry The driver specifications, and their names
-         */
-        public Folder(File folder, Map<String, DriverSpec> registry) {
-            super(folder, registry);
-            this.folder = folder;
-        }
-
-        @Override
-        protected File locateFile(String name, String prefix, DriverSpec spec) {
-
-            String filePrefix = spec.artifact.getNamespace() + "." + spec.artifact.getId();
-            File[] files = folder.listFiles();
-            if(files != null) for(File f : files) {
-                String fileName = f.getName();
-                if(fileName.startsWith(filePrefix) && fileName.endsWith(".jar")) {
-                    return f;
-                }
-            }
-
-            return null;
-        }
-    }
-
-    /**
-     * Loads drivers from the classpath only
-     */
-    public static class Classpath extends DriverRepository {
-
-        /**
-         * Creates a classpath driver repository using the default driver registry
-         */
-        public Classpath() {
-            super(DEFAULT_DRIVERS);
-        }
-
-        /**
-         * Creates a classpath driver repository using the given driver registry.
-         * @param registry The drivers specifications to use to load drivers.
-         */
-        public Classpath(Map<String, DriverSpec> registry) {
-            super(registry);
-        }
-
-        @Override
-        protected DatabaseType loadDriver(String name, DriverSpec spec) {
-
-            String prefix = spec.prefix;
-            if(prefix == null) {
-                prefix = name + ":";
-            }
-
-            if(spec.className == null) {
-                throw new DriverLoadException("No driver class found for " + name + "!");
-            }
-            try {
-                Class.forName(spec.className);
-                return spec.factory.create(prefix);
-            } catch (ClassNotFoundException ex) {
-                throw new DriverLoadException("Unable to load driver class for " + name + "!", ex);
-            }
-        }
-    }
-
-
-    /**
-     * Represents a driver which can be loaded
-     */
-    public static class DriverSpec {
-
-        private final DatabaseType.Factory factory;
-        private final String prefix;
-        private final String className;
-        private final String repository;
-        private final MavenUtil.ArtifactSpec artifact;
-
-        public DriverSpec(DatabaseType.Factory factory, String prefix, String className, MavenUtil.ArtifactSpec artifact) {
-            this(factory, prefix, className, "https://repo1.maven.org/maven2", artifact);
-        }
-
-        public DriverSpec(DatabaseType.Factory factory, String prefix, String className, String repository, MavenUtil.ArtifactSpec artifact) {
-            this.factory = factory;
-            this.prefix = prefix;
-            this.className = className;
-            this.repository = repository;
-            this.artifact = artifact;
-        }
-
-        public DriverSpec forVersion(String version) {
-
-            return new DriverSpec(factory, prefix, className, repository, artifact.withVersion(version));
-        }
-
-        public DriverSpec forLatestVersion() {
-
-            String ver = MavenUtil.getLatestVersion(repository, artifact);
-            if(ver == null) {
-                return null;
-            }
-            return forVersion(ver);
-        }
-
-    }
-
-    public static final Serializer<DriverSpec> DRIVER_SERIALIZER = ObjectSerializer.<DriverSpec>builder()
-            .withEntry(Serializer.STRING.entry("prefix", ds -> ds.prefix))
-            .withEntry(Serializer.STRING.entry("class_name", ds -> ds.className))
-            .withEntry(Serializer.STRING.<DriverSpec>entry("repository", ds -> ds.repository).orElse("https://repo1.maven.org/maven2"))
-            .withEntry(MavenUtil.ArtifactSpec.SERIALIZER.<DriverSpec>entry("artifact", ds -> ds.artifact).optional())
-            .build(es -> SerializeResult.success(new DriverSpec(DatabaseType.Factory.DEFAULT, es.get(0), es.get(1), es.get(2), es.get(3))));
-
-    /**
-     * Contains the default supported driver specifications
-     */
-    public static final Map<String, DriverSpec> DEFAULT_DRIVERS = new HashMap<>();
-
-
-    static {
-        DEFAULT_DRIVERS.put("mysql",   new DriverSpec(DatabaseType.Factory.MYSQL, "mysql://",   "com.mysql.cj.jdbc.Driver", new MavenUtil.ArtifactSpec("com.mysql", "mysql-connector-j", null)));
-        DEFAULT_DRIVERS.put("mariadb", new DriverSpec(DatabaseType.Factory.MYSQL, "mariadb://", "org.mariadb.jdbc.Driver",  new MavenUtil.ArtifactSpec("org.mariadb.jdbc", "mariadb-java-client", null)));
-        DEFAULT_DRIVERS.put("sqlite",  new DriverSpec(DatabaseType.Factory.SQLITE,  "sqlite:",    "org.sqlite.JDBC",          new MavenUtil.ArtifactSpec("org.xerial", "sqlite-jdbc", null)));
-        DEFAULT_DRIVERS.put("h2",      new DriverSpec(DatabaseType.Factory.H2,      "h2:",        "org.h2.Driver",            new MavenUtil.ArtifactSpec("com.h2database", "h2", null)));
-    }
 
 
     private static class DriverLoader extends URLClassLoader {
@@ -395,5 +113,329 @@ public abstract class DriverRepository {
             return driver.getParentLogger();
         }
     }
+
+    /**
+     * Loads drivers from the classpath or downloads them from the internet and stores them in a folder
+     */
+    protected static abstract class Disk extends DriverRepository {
+
+        protected final Path folder;
+        private final DriverLoader loader;
+        /**
+         * Sets up a folder driver repository in the given folder, using default driver registry
+         * @param folder The folder to store drivers in
+         */
+        protected Disk(Type type, Path folder) {
+            this(type, folder, DEFAULT_DRIVERS);
+        }
+
+        /**
+         * Sets up a folder driver repository in the given folder, using the given driver registry
+         * @param folder The folder to store drivers in
+         * @param registry The driver specifications, and their names
+         */
+        protected Disk(Type type, Path folder, Map<String, DriverSpec> registry) {
+            super(type, registry);
+            this.folder = folder;
+            this.loader = new DriverLoader(new URL[] {}, getClass().getClassLoader());
+        }
+
+        /**
+         * Gets the folder drivers are stored in
+         * @return The folder drivers are stored in.
+         */
+        public Path getFolder() {
+            return folder;
+        }
+
+        protected DatabaseType loadDriver(String name, DriverSpec spec) {
+
+            String prefix = spec.prefix;
+            if(prefix == null) {
+                prefix = name + ":";
+            }
+
+            if(spec.className != null) {
+                try {
+                    Class.forName(spec.className);
+                    return spec.factory.create(prefix);
+                } catch (ClassNotFoundException ex) {
+                    // Ignore
+                }
+            }
+
+            Optional<Path> file = locateFile(name, prefix, spec);
+            if(file.isPresent()) {
+                return loadDriver(file.get(), prefix, spec);
+            }
+            throw new DriverLoadException("Unable to find driver file for " + name + "!");
+        }
+
+        protected DatabaseType loadDriver(Path file, String prefix, DriverSpec spec) {
+
+            try {
+
+                loader.addURL(file.toUri().toURL());
+
+                String className = spec.className;
+                if(className == null) {
+                    InputStream is = loader.getResourceAsStream("/META-INF/services/java.sql.Driver");
+                    if (is == null) {
+                        throw new DriverLoadException("Downloaded jar does not contain a JDBC driver!");
+                    }
+
+                    BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                    className = br.readLine();
+                }
+
+                try {
+                    Class<?> clazz = loader.loadClass(className);
+                    Driver driver = (Driver) clazz.getConstructor().newInstance();
+                    WrappedDriver wd = new WrappedDriver(driver);
+                    DriverManager.registerDriver(wd);
+
+                } catch (ClassNotFoundException ex) {
+                    throw new DriverLoadException("Unable to load SQL driver class!", ex);
+                } catch(InvocationTargetException | InstantiationException | IllegalAccessException |
+                        NoSuchMethodException ex) {
+                    throw new DriverLoadException("Unable to instantiate SQL driver!", ex);
+                } catch (SQLException ex) {
+                    throw new DriverLoadException("Unable to register SQL driver!", ex);
+                }
+                return spec.factory.create(prefix);
+
+            } catch (IOException ex) {
+
+                throw new DriverLoadException("An error occurred while loading an SQL driver!", ex);
+            }
+        }
+
+
+        protected abstract Optional<Path> locateFile(String name, String prefix, DriverSpec spec);
+    }
+
+    /**
+     * Loads drivers from the classpath or downloads them from the internet and stores them in a folder
+     */
+    public static class Maven extends Disk {
+
+        /**
+         * Sets up a folder driver repository in the given folder, using default driver registry
+         * @param folder The folder to store drivers in
+         */
+        public Maven(Path folder) {
+            this(folder, DEFAULT_DRIVERS);
+        }
+
+        /**
+         * Sets up a folder driver repository in the given folder, using the given driver registry
+         * @param folder The folder to store drivers in
+         * @param registry The driver specifications, and their names
+         */
+        public Maven(Path folder, Map<String, DriverSpec> registry) {
+            super(Type.MAVEN, folder, registry);
+        }
+
+        @Override
+        protected Optional<Path> locateFile(String name, String prefix, DriverSpec spec) {
+            if(spec.artifact.getVersion() == null) {
+                spec = spec.forLatestVersion();
+                if(spec == null) {
+                    throw new DriverLoadException("Unable to find latest version for driver " + name + "!");
+                }
+            }
+
+            String fileName = spec.artifact.getNamespace() + "." + spec.artifact.getId() + "." + spec.artifact.getVersion() + ".jar";
+            Path file = folder.resolve(fileName);
+
+            if(Files.notExists(file)) {
+                try {
+                    MavenUtil.downloadArtifact(spec.repository, spec.artifact, file);
+                } catch (IOException ex) {
+                    throw new DriverLoadException("Unable to download driver " + name + "!", ex);
+                }
+            }
+            return Optional.of(file);
+        }
+    }
+
+
+    /**
+     * Loads drivers from the classpath or downloads them from the internet and stores them in a folder
+     */
+    public static class Folder extends Disk {
+
+        /**
+         * Sets up a folder driver repository in the given folder, using default driver registry
+         * @param folder The folder to store drivers in
+         */
+        public Folder(Path folder) {
+            this(folder, DEFAULT_DRIVERS);
+        }
+
+        /**
+         * Sets up a folder driver repository in the given folder, using the given driver registry
+         * @param folder The folder to store drivers in
+         * @param registry The driver specifications, and their names
+         */
+        public Folder(Path folder, Map<String, DriverSpec> registry) {
+            super(Type.FOLDER, folder, registry);
+        }
+
+        @Override
+        protected Optional<Path> locateFile(String name, String prefix, DriverSpec spec) {
+
+            String filePrefix = spec.artifact.getNamespace() + "." + spec.artifact.getId();
+            try {
+                return Files.list(folder).filter(path -> path.getFileName().startsWith(filePrefix) && path.getFileName().endsWith(".jar")).findFirst();
+            } catch (IOException ex) {
+                return Optional.empty();
+            }
+        }
+    }
+
+    /**
+     * Loads drivers from the classpath only
+     */
+    public static class Classpath extends DriverRepository {
+
+        /**
+         * Creates a classpath driver repository using the default driver registry
+         */
+        public Classpath() {
+            super(Type.CLASSPATH, DEFAULT_DRIVERS);
+        }
+
+        /**
+         * Creates a classpath driver repository using the given driver registry.
+         * @param registry The drivers specifications to use to load drivers.
+         */
+        public Classpath(Map<String, DriverSpec> registry) {
+            super(Type.CLASSPATH, registry);
+        }
+
+        @Override
+        protected DatabaseType loadDriver(String name, DriverSpec spec) {
+
+            String prefix = spec.prefix;
+            if(prefix == null) {
+                prefix = name + ":";
+            }
+
+            if(spec.className == null) {
+                throw new DriverLoadException("No driver class found for " + name + "!");
+            }
+            try {
+                Class.forName(spec.className);
+                return spec.factory.create(prefix);
+            } catch (ClassNotFoundException ex) {
+                throw new DriverLoadException("Unable to load driver class for " + name + "!", ex);
+            }
+        }
+    }
+
+    /**
+     * Represents a driver which can be loaded
+     */
+    public static class DriverSpec {
+
+        private final DatabaseType.Factory factory;
+        private final String prefix;
+        private final String className;
+        private final String repository;
+        private final MavenUtil.ArtifactSpec artifact;
+
+        public DriverSpec(DatabaseType.Factory factory, String prefix, String className, MavenUtil.ArtifactSpec artifact) {
+            this(factory, prefix, className, "https://repo1.maven.org/maven2", artifact);
+        }
+
+        public DriverSpec(DatabaseType.Factory factory, String prefix, String className, String repository, MavenUtil.ArtifactSpec artifact) {
+            this.factory = factory;
+            this.prefix = prefix;
+            this.className = className;
+            this.repository = repository;
+            this.artifact = artifact;
+        }
+
+        public DriverSpec forVersion(String version) {
+
+            return new DriverSpec(factory, prefix, className, repository, artifact.withVersion(version));
+        }
+
+        public DriverSpec forLatestVersion() {
+
+            String ver = MavenUtil.getLatestVersion(repository, artifact);
+            if(ver == null) {
+                return null;
+            }
+            return forVersion(ver);
+        }
+    }
+
+    public static final Serializer<DriverSpec> DRIVER_SERIALIZER = ObjectSerializer.<DriverSpec>builder()
+            .withEntry(Serializer.STRING.entry("prefix", ds -> ds.prefix))
+            .withEntry(Serializer.STRING.entry("class_name", ds -> ds.className))
+            .withEntry(Serializer.STRING.<DriverSpec>entry("repository", ds -> ds.repository).orElse("https://repo1.maven.org/maven2"))
+            .withEntry(MavenUtil.ArtifactSpec.SERIALIZER.<DriverSpec>entry("artifact", ds -> ds.artifact).optional())
+            .build(es -> SerializeResult.success(new DriverSpec(DatabaseType.Factory.DEFAULT, es.get(0), es.get(1), es.get(2), es.get(3))));
+
+    /**
+     * Contains the default supported driver specifications
+     */
+    public static final Map<String, DriverSpec> DEFAULT_DRIVERS = new HashMap<>();
+
+
+    static {
+        DEFAULT_DRIVERS.put("mysql",   new DriverSpec(DatabaseType.Factory.MYSQL, "mysql://",   "com.mysql.cj.jdbc.Driver", new MavenUtil.ArtifactSpec("com.mysql", "mysql-connector-j", null)));
+        DEFAULT_DRIVERS.put("mariadb", new DriverSpec(DatabaseType.Factory.MYSQL, "mariadb://", "org.mariadb.jdbc.Driver",  new MavenUtil.ArtifactSpec("org.mariadb.jdbc", "mariadb-java-client", null)));
+        DEFAULT_DRIVERS.put("sqlite",  new DriverSpec(DatabaseType.Factory.SQLITE,  "sqlite:",    "org.sqlite.JDBC",          new MavenUtil.ArtifactSpec("org.xerial", "sqlite-jdbc", null)));
+        DEFAULT_DRIVERS.put("h2",      new DriverSpec(DatabaseType.Factory.H2,      "h2:",        "org.h2.Driver",            new MavenUtil.ArtifactSpec("com.h2database", "h2", null)));
+    }
+
+
+
+    protected enum Type {
+
+        MAVEN("maven", Maven.class, ObjectSerializer.<Maven>builder()
+                .withEntry(Serializer.PATH.entry("folder", m -> m.folder))
+                .withEntry(DRIVER_SERIALIZER.mapOf().<Maven>entry("drivers", f -> f.registry).orElse(DEFAULT_DRIVERS))
+                .build(es -> SerializeResult.success(new Maven(es.get(0), es.get(1))))),
+
+        FOLDER("folder", Folder.class, ObjectSerializer.<Folder>builder()
+                .withEntry(Serializer.PATH.entry("folder", f -> f.folder))
+                .withEntry(DRIVER_SERIALIZER.mapOf().<Folder>entry("drivers", f -> f.registry).orElse(DEFAULT_DRIVERS))
+                .build(es -> SerializeResult.success(new Folder(es.get(0), es.get(1))))),
+
+        CLASSPATH("classpath", Classpath.class, ObjectSerializer.<Classpath>builder()
+                .withEntry(DRIVER_SERIALIZER.mapOf().<Classpath>entry("drivers", cp -> cp.registry).orElse(DEFAULT_DRIVERS))
+                .build(es -> SerializeResult.success(new Classpath(es.get(0)))));
+
+        private final String id;
+        private final Serializer<DriverRepository> serializer;
+
+        <T> Type(String id, Class<T> clazz, Serializer<T> serializer) {
+            this.id = id;
+            this.serializer = serializer.cast(clazz, DriverRepository.class);
+        }
+
+        String getId() {
+            return id;
+        }
+
+        static Type byId(String id) {
+            for(Type t : values()) {
+                if(t.id.equals(id)) {
+                    return t;
+                }
+            }
+            return null;
+        }
+
+        static final InlineSerializer<Type> SERIALIZER = InlineSerializer.of(Type::getId, Type::byId);
+    }
+
+    public static final Serializer<DriverRepository> SERIALIZER = Type.SERIALIZER
+            .fieldOf("type")
+            .dispatch(t -> t.serializer, DriverRepository::getType);
 
 }
