@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * Maps file extensions to file codecs so different types of files can be loaded according to their perceived type.
@@ -248,8 +249,8 @@ public class FileCodecRegistry {
 
         if(!Files.isDirectory(folder)) return null;
 
-        try {
-            return Files.list(folder).map(file -> {
+        try(Stream<Path> str = Files.list(folder)){
+            return str.map(file -> {
                 String name = file.getFileName().toString();
                 int index = name.lastIndexOf('.');
                 if(index == -1) return null;
@@ -288,6 +289,20 @@ public class FileCodecRegistry {
 
     /**
      * Finds a file with the given prefix in the given folder, or creates one with the default extension, and creates a
+     * wrapper for it with the given context and UTF-8 encoding
+     * @param context The context by which to decode/encode data
+     * @param prefix The file's name without the extension (i.e. "data.json" becomes "data")
+     * @param folder The folder to search in
+     * @return A wrapper for the found file
+     * @param <T> The type of values to read/write
+     * @throws IllegalArgumentException If the specified directory does not exist
+     */
+    public <T> FileWrapper<T> findOrCreate(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull Path folder) {
+        return findOrCreate(context, prefix, folder, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Finds a file with the given prefix in the given folder, or creates one with the default extension, and creates a
      * wrapper for it with the given charset and context
      * @param context The context by which to decode/encode data
      * @param prefix The file's name without the extension (i.e. "data.json" becomes "data")
@@ -298,6 +313,21 @@ public class FileCodecRegistry {
      * @throws IllegalArgumentException If the specified directory does not exist
      */
     public <T> FileWrapper<T> findOrCreate(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull File folder, Charset charset) {
+        return findOrCreate(context, prefix, folder.toPath(), charset, null);
+    }
+
+    /**
+     * Finds a file with the given prefix in the given folder, or creates one with the default extension, and creates a
+     * wrapper for it with the given charset and context
+     * @param context The context by which to decode/encode data
+     * @param prefix The file's name without the extension (i.e. "data.json" becomes "data")
+     * @param folder The folder to search in
+     * @param charset The charset to interpret/write data as
+     * @return A wrapper for the found file
+     * @param <T> The type of values to read/write
+     * @throws IllegalArgumentException If the specified directory does not exist
+     */
+    public <T> FileWrapper<T> findOrCreate(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull Path folder, Charset charset) {
         return findOrCreate(context, prefix, folder, charset, null);
     }
 
@@ -312,6 +342,20 @@ public class FileCodecRegistry {
      * @throws IllegalArgumentException If the specified directory does not exist
      */
     public <T> FileWrapper<T> findOrCreate(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull File folder, T defaults) {
+        return findOrCreate(context, prefix, folder.toPath(), StandardCharsets.UTF_8, defaults);
+    }
+
+    /**
+     * Finds a file with the given prefix in the given folder, or creates one with the default extension, and creates a
+     * wrapper for it with the given context and UTF-8 encoding, then merges the found data with the given defaults
+     * @param context The context by which to decode/encode data
+     * @param prefix The file's name without the extension (i.e. "data.json" becomes "data")
+     * @param folder The folder to search in
+     * @return A wrapper for the found file
+     * @param <T> The type of values to read/write
+     * @throws IllegalArgumentException If the specified directory does not exist
+     */
+    public <T> FileWrapper<T> findOrCreate(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull Path folder, T defaults) {
         return findOrCreate(context, prefix, folder, StandardCharsets.UTF_8, defaults);
     }
 
@@ -326,16 +370,23 @@ public class FileCodecRegistry {
      * @param <T> The type of values to read/write
      * @throws IllegalArgumentException If the specified directory does not exist
      */
-    public <T> FileWrapper<T> findOrCreate(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull File folder, Charset charset, T defaults) {
+    public <T> FileWrapper<T> findOrCreate(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull Path folder, Charset charset, T defaults) {
 
-        if(!folder.isDirectory()) throw new IllegalArgumentException("Attempt to find or create a file in non-directory " + folder + "!");
+        if(!Files.isDirectory(folder)) {
+            try {
+                Files.createDirectories(folder);
+            } catch (IOException ex) {
+                throw new RuntimeException("Unable to create directory for file wrapper!", ex);
+            }
+        }
+
         FileWrapper<T> out = find(context, prefix, folder, charset, defaults);
         if(out == null) {
 
             FileCodec codec = defaultCodec;
 
             String newFileName = prefix + "." + codec.getDefaultExtension();
-            File newFile = new File(folder, newFileName);
+            Path newFile = folder.resolve(newFileName);
 
             out = new FileWrapper<>(context, codec, newFile, charset, defaults);
             out.save();
