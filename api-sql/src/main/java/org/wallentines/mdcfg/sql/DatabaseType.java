@@ -4,7 +4,10 @@ import org.jetbrains.annotations.Nullable;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
@@ -116,13 +119,19 @@ public class DatabaseType {
         @Override
         protected String getConnectionString(String url) {
 
-            File file = new File(url);
-            File parent = file.getParentFile();
-            if(!parent.isDirectory() && !parent.mkdirs()) {
-                throw new IllegalArgumentException("Unable to create sqlite database in " + parent + "!");
+            Path p = Paths.get(url);
+            Path parent = p.getParent();
+
+
+            if(!Files.isDirectory(parent)) {
+                try {
+                    Files.createDirectories(parent);
+                } catch (IOException ex) {
+                    throw new RuntimeException("Unable to create SQLite database in " + parent + "!", ex);
+                }
             }
 
-            String path = file.getAbsolutePath();
+            String path = p.toAbsolutePath().toString();
             if(!path.endsWith(".db")) path += ".db";
 
             return super.getConnectionString(path);
@@ -146,7 +155,7 @@ public class DatabaseType {
             String file = url;
             if(file.startsWith("file:")) file = file.substring(5);
 
-            return super.getConnectionString("file:" + new File(file).getAbsolutePath());
+            return super.getConnectionString("file:" + Paths.get(file).toAbsolutePath());
         }
     }
 

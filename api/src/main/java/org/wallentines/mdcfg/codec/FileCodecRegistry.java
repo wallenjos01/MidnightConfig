@@ -4,9 +4,13 @@ import org.jetbrains.annotations.NotNull;
 import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Objects;
 
 /**
  * Maps file extensions to file codecs so different types of files can be loaded according to their perceived type.
@@ -48,8 +52,17 @@ public class FileCodecRegistry {
      * @return A codec which supports the file's extension, or null if none of them do
      */
     public FileCodec forFile(@NotNull File file) {
+        return forFile(file.toPath());
+    }
 
-        String name = file.getName();
+    /**
+     * Determines which codec should be used for the given file based on its extension
+     * @param path The file to inspect
+     * @return A codec which supports the file's extension, or null if none of them do
+     */
+    public FileCodec forFile(@NotNull Path path) {
+
+        String name = path.getFileName().toString();
         int index = name.lastIndexOf('.');
         if(index == -1) return null;
 
@@ -74,7 +87,18 @@ public class FileCodecRegistry {
      * @param <T> The type of values to read
      */
     public <T> FileWrapper<T> fromFile(@NotNull SerializeContext<T> context, @NotNull File file) {
-        return fromFile(context, file, StandardCharsets.UTF_8);
+        return fromFile(context, file.toPath());
+    }
+
+    /**
+     * Creates a file wrapper for the given file using the given context and UTF-8 encoding
+     * @param context The context by which to decode/encode data
+     * @param path The file to read or read/write
+     * @return A new file wrapper
+     * @param <T> The type of values to read
+     */
+    public <T> FileWrapper<T> fromFile(@NotNull SerializeContext<T> context, @NotNull Path path) {
+        return fromFile(context, path, StandardCharsets.UTF_8);
     }
 
     /**
@@ -87,10 +111,24 @@ public class FileCodecRegistry {
      */
     public <T> FileWrapper<T> fromFile(@NotNull SerializeContext<T> context, @NotNull File file, Charset charset) {
 
-        FileCodec codec = forFile(file);
+        return fromFile(context, file.toPath(), charset);
+    }
+
+
+    /**
+     * Creates a file wrapper for the given file using the given charset and context
+     * @param context The context by which to decode/encode data
+     * @param path The file to read or read/write
+     * @param charset The charset to interpret/write data as
+     * @return A new file wrapper
+     * @param <T> The type of values to read/write
+     */
+    public <T> FileWrapper<T> fromFile(@NotNull SerializeContext<T> context, @NotNull Path path, Charset charset) {
+
+        FileCodec codec = forFile(path);
         if(codec == null) return null;
 
-        FileWrapper<T> wrapper = new FileWrapper<>(context, codec, file, charset);
+        FileWrapper<T> wrapper = new FileWrapper<>(context, codec, path, charset);
         wrapper.load();
 
         return wrapper;
@@ -106,6 +144,19 @@ public class FileCodecRegistry {
      * @param <T> The type of values to read/write
      */
     public <T> FileWrapper<T> find(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull File folder) {
+        return find(context, prefix, folder.toPath());
+    }
+
+    /**
+     * Finds a file with the given prefix in the given folder, and creates a wrapper for it with the given context and
+     * UTF-8 encoding
+     * @param context The context by which to decode/encode data
+     * @param prefix The file's name without the extension (i.e. "data.json" becomes "data")
+     * @param folder The folder to search in
+     * @return A wrapper for the found file, or null if none is found
+     * @param <T> The type of values to read/write
+     */
+    public <T> FileWrapper<T> find(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull Path folder) {
         return find(context, prefix, folder, StandardCharsets.UTF_8, null);
     }
 
@@ -126,6 +177,20 @@ public class FileCodecRegistry {
 
     /**
      * Finds a file with the given prefix in the given folder, and creates a wrapper for it with the given charset and
+     * context
+     * @param context The context by which to decode/encode data
+     * @param prefix The file's name without the extension (i.e. "data.json" becomes "data")
+     * @param folder The folder to search in
+     * @param charset The charset to interpret/write data as
+     * @return A wrapper for the found file, or null if none is found
+     * @param <T> The type of values to read/write
+     */
+    public <T> FileWrapper<T> find(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull Path folder, Charset charset) {
+        return find(context, prefix, folder, charset, null);
+    }
+
+    /**
+     * Finds a file with the given prefix in the given folder, and creates a wrapper for it with the given charset and
      * default root
      * @param context The context by which to decode/encode data
      * @param prefix The file's name without the extension (i.e. "data.json" becomes "data")
@@ -139,6 +204,21 @@ public class FileCodecRegistry {
     }
 
     /**
+     * Finds a file with the given prefix in the given folder, and creates a wrapper for it with the given charset and
+     * default root
+     * @param context The context by which to decode/encode data
+     * @param prefix The file's name without the extension (i.e. "data.json" becomes "data")
+     * @param folder The folder to search in
+     * @param defaults The default root to use when (re)loading the file
+     * @return A wrapper for the found file, or null if none is found
+     * @param <T> The type of values to read/write
+     */
+    public <T> FileWrapper<T> find(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull Path folder, T defaults) {
+        return find(context, prefix, folder, StandardCharsets.UTF_8, defaults);
+    }
+
+
+    /**
      * Finds a file with the given prefix in the given folder, and creates a wrapper for it with the given charset,
      * context, and default root
      * @param context The context by which to decode/encode data
@@ -150,28 +230,46 @@ public class FileCodecRegistry {
      * @param <T> The type of values to read/write
      */
     public <T> FileWrapper<T> find(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull File folder, Charset charset, T defaults) {
+        return find(context, prefix, folder.toPath(), charset, defaults);
+    }
 
-        File[] fs = folder.listFiles();
-        if(fs != null) for(File file : fs) {
+    /**
+     * Finds a file with the given prefix in the given folder, and creates a wrapper for it with the given charset,
+     * context, and default root
+     * @param context The context by which to decode/encode data
+     * @param prefix The file's name without the extension (i.e. "data.json" becomes "data")
+     * @param folder The folder to search in
+     * @param charset The charset to interpret/write data as
+     * @param defaults The default root to use when (re)loading the file
+     * @return A wrapper for the found file, or null if none is found
+     * @param <T> The type of values to read/write
+     */
+    public <T> FileWrapper<T> find(@NotNull SerializeContext<T> context, @NotNull String prefix, @NotNull Path folder, Charset charset, T defaults) {
 
-            String name = file.getName();
-            int index = name.lastIndexOf('.');
-            if(index == -1) continue;
+        if(!Files.isDirectory(folder)) return null;
 
-            String fileName = name.substring(0, index);
-            String extension = name.substring(index + 1);
+        try {
+            return Files.list(folder).map(file -> {
+                String name = file.getFileName().toString();
+                int index = name.lastIndexOf('.');
+                if(index == -1) return null;
 
-            FileCodec codec = forFileExtension(extension);
+                String fileName = name.substring(0, index);
+                String extension = name.substring(index + 1);
 
-            if(fileName.equals(prefix) && codec != null) {
-                FileWrapper<T> out = new FileWrapper<>(context, codec, file, charset, defaults);
-                out.load();
+                FileCodec codec = forFileExtension(extension);
 
-                return out;
-            }
+                if(fileName.equals(prefix) && codec != null) {
+                    FileWrapper<T> out = new FileWrapper<>(context, codec, file, charset, defaults);
+                    out.load();
+                    return out;
+                }
+                return null;
+
+            }).filter(Objects::nonNull).findFirst().orElse(null);
+        } catch (IOException ex) {
+            return null;
         }
-
-        return null;
     }
 
     /**

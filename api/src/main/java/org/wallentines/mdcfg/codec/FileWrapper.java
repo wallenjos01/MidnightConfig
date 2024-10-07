@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 /**
  * A class which associates a file with a codec and serialization context, so data can easily be read from or written to it
@@ -21,7 +22,7 @@ public class FileWrapper<T> {
 
     private final SerializeContext<T> context;
     private final FileCodec codec;
-    private final File file;
+    private final Path path;
     private final Charset charset;
     private final T defaults;
     private T root;
@@ -34,7 +35,18 @@ public class FileWrapper<T> {
      * @param file The file to read from or write to
      */
     public FileWrapper(@NotNull SerializeContext<T> context, @NotNull FileCodec codec, @NotNull File file) {
-        this(context, codec, file, StandardCharsets.UTF_8, null);
+        this(context, codec, file.toPath());
+    }
+
+    /**
+     * Creates a new file wrapper from the given file with the given serialization context and file codec, using UTF-8
+     * encoding
+     * @param context The context by which to encode/decode data
+     * @param codec The codec to use to encode/decode data
+     * @param path The file to read from or write to
+     */
+    public FileWrapper(@NotNull SerializeContext<T> context, @NotNull FileCodec codec, @NotNull Path path) {
+        this(context, codec, path, StandardCharsets.UTF_8, null);
     }
 
     /**
@@ -46,8 +58,21 @@ public class FileWrapper<T> {
      * @param charset The charset to interpret/write data as
      */
     public FileWrapper(SerializeContext<T> context, FileCodec codec, File file, Charset charset) {
-        this(context, codec, file, charset, null);
+        this(context, codec, file.toPath(), charset);
     }
+
+    /**
+     * Creates a new file wrapper from the given file with the given serialization context and file codec, using the
+     * given charset
+     * @param context The context by which to encode/decode data
+     * @param codec The codec to use to encode/decode data
+     * @param path The file to read from or write to
+     * @param charset The charset to interpret/write data as
+     */
+    public FileWrapper(SerializeContext<T> context, FileCodec codec, Path path, Charset charset) {
+        this(context, codec, path, charset, null);
+    }
+
 
     /**
      * Creates a new file wrapper from the given file with the given serialization context and file codec, using the
@@ -59,8 +84,21 @@ public class FileWrapper<T> {
      * @param defaults The default value for the root. Will be used to fill the actual root each time the file is loaded
      */
     public FileWrapper(SerializeContext<T> context, FileCodec codec, File file, Charset charset, T defaults) {
+        this(context, codec, file.toPath(), charset, defaults);
+    }
+
+    /**
+     * Creates a new file wrapper from the given file with the given serialization context and file codec, using the
+     * given charset and default root
+     * @param context The context by which to encode/decode data
+     * @param codec The codec to use to encode/decode data
+     * @param path The file to read from or write to
+     * @param charset The charset to interpret/write data as
+     * @param defaults The default value for the root. Will be used to fill the actual root each time the file is loaded
+     */
+    public FileWrapper(SerializeContext<T> context, FileCodec codec, Path path, Charset charset, T defaults) {
         this.context = context;
-        this.file = file;
+        this.path = path;
         this.codec = codec;
         this.charset = charset;
 
@@ -78,15 +116,15 @@ public class FileWrapper<T> {
      */
     public void load() {
         try {
-            root = codec.loadFromFile(context, file, charset);
+            root = codec.loadFromFile(context, path, charset);
             if(defaults != context.nullValue()) {
                 root = context.merge(root, defaults);
             }
             return;
         } catch (IOException ex) {
-            LOGGER.error("An exception occurred while attempting to read data from file {}!", file.getAbsolutePath(), ex);
+            LOGGER.error("An exception occurred while attempting to read data from file {}!", path.toAbsolutePath(), ex);
         } catch (DecodeException ex) {
-            LOGGER.error("An exception occurred while attempting to decode data from file {}!", file.getAbsolutePath(), ex);
+            LOGGER.error("An exception occurred while attempting to decode data from file {}!", path.toAbsolutePath(), ex);
         }
         root = context.copy(defaults);
     }
@@ -99,9 +137,9 @@ public class FileWrapper<T> {
             if(defaults != context.nullValue()) {
                 root = context.merge(root, defaults);
             }
-            codec.saveToFile(context, root, file, charset);
+            codec.saveToFile(context, root, path, charset);
         } catch (IOException ex) {
-            LOGGER.error("An exception occurred while attempting to write data to file {}!", file.getAbsolutePath(), ex);
+            LOGGER.error("An exception occurred while attempting to write data to file {}!", path.toAbsolutePath(), ex);
         }
     }
 
@@ -126,8 +164,13 @@ public class FileWrapper<T> {
      * Gets the file which this wrapper reads from and writes to
      * @return The wrapped file
      */
+    @Deprecated
     public File getFile() {
-        return file;
+        return path.toFile();
+    }
+
+    public Path getPath() {
+        return path;
     }
 
     /**

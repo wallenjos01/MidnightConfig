@@ -3,10 +3,12 @@ package org.wallentines.mdcfg.codec;
 import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -67,10 +69,21 @@ public class FileCodec {
      * @param <T> The type of values to decode
      */
     public <T> T loadFromFile(SerializeContext<T> context, File file, Charset charset) throws IOException, DecodeException {
+        return loadFromFile(context, file.toPath(), charset);
+    }
 
-        if(!file.exists()) return null;
+    /**
+     * Decodes data read from a file according to the given context
+     * @param context The context by which to decode
+     * @param file The file to read
+     * @param charset The charset to interpret the file data as
+     * @return A decoded value
+     * @param <T> The type of values to decode
+     */
+    public <T> T loadFromFile(SerializeContext<T> context, Path file, Charset charset) throws IOException, DecodeException {
 
-        try(FileInputStream fis = new FileInputStream(file)) {
+        if(!Files.exists(file)) return null;
+        try(InputStream fis = Files.newInputStream(file)) {
             return base.decode(context, fis, charset);
         }
     }
@@ -84,8 +97,20 @@ public class FileCodec {
      * @param <T> The type of values to encode
      */
     public <T> void saveToFile(SerializeContext<T> context, T data, File file, Charset charset) throws IOException {
+        saveToFile(context, data, file.toPath(), charset);
+    }
 
-        try(FileOutputStream fos = new FileOutputStream(file)) {
+    /**
+     * Encodes the given data according to the given context and writes it to the given file
+     * @param context The context by which to encode
+     * @param data The data to encode
+     * @param file The file to write to
+     * @param charset The charset to save the data as
+     * @param <T> The type of values to encode
+     */
+    public <T> void saveToFile(SerializeContext<T> context, T data, Path file, Charset charset) throws IOException {
+
+        try(OutputStream fos = Files.newOutputStream(file)) {
             base.encode(context, data, fos, charset);
         }
     }
