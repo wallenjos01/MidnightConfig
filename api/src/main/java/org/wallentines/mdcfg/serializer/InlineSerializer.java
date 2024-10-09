@@ -9,28 +9,17 @@ public interface InlineSerializer<T> extends Serializer<T> {
 
     @Override
     default <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-        String out = writeString(value);
-        return SerializeResult.ofNullable(context.toString(out));
+        return writeString(value).flatMap(context::toString);
     }
 
     @Override
     default <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
-        return Serializer.STRING.deserialize(context, value).map(str -> SerializeResult.ofNullable(readString(str)));
+        return Serializer.STRING.deserialize(context, value).map(this::readString);
     }
 
-    /**
-     * Parses a value from a String
-     * @param str The string to parse
-     * @return A parsed value, or null if parsing fails
-     */
-    T readString(String str);
+    SerializeResult<T> readString(String str);
 
-    /**
-     * Writes a value to a String
-     * @param value The string to write
-     * @return A serialized value, or null if serialization fails
-     */
-    String writeString(T value);
+    SerializeResult<String> writeString(T value);
 
     /**
      * Creates a new inline serializer using the given functions
@@ -42,12 +31,12 @@ public interface InlineSerializer<T> extends Serializer<T> {
     static <T> InlineSerializer<T> of(Function<T, String> serialize, Function<String, T> deserialize) {
         return new InlineSerializer<>() {
             @Override
-            public String writeString(T value) {
-                return serialize.apply(value);
+            public SerializeResult<T> readString(String str) {
+                return SerializeResult.ofNullable(deserialize.apply(str), "Unable to read string");
             }
             @Override
-            public T readString(String str) {
-                return deserialize.apply(str);
+            public SerializeResult<String> writeString(T value) {
+                return SerializeResult.ofNullable(serialize.apply(value), "Unable to write string");
             }
         };
     }

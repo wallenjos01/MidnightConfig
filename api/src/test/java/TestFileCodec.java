@@ -65,7 +65,7 @@ public class TestFileCodec {
         FileWrapper<ConfigObject> wrapper = registry.findOrCreate(ConfigContext.INSTANCE, "test", cwd);
         wrapper.load();
         TestFiles.testLoadedFile(wrapper.getRoot());
-        Assertions.assertEquals("test.json", wrapper.getFile().getName());
+        Assertions.assertEquals("test.json", wrapper.getPath().getFileName().toString());
 
         // Non-existing File
         File f = new File("test_created.json");

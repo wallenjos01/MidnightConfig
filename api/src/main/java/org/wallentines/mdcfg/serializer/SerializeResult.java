@@ -91,6 +91,14 @@ public class SerializeResult<T> {
     }
 
     /**
+     * Gets the value if successful, or null if not
+     * @return The output value
+     */
+    public T getOrNull() {
+        return value;
+    }
+
+    /**
      * Retrieves the output value, or throws an error
      * @return The output value
      */

@@ -56,8 +56,8 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
 
         Map<String, O> out = new HashMap<>();
         for(Map.Entry<K, V> ent : object.entrySet()) {
-            String key = keySerializer.writeString(ent.getKey());
-            if(key == null) return SerializeResult.failure("Unable to serialize key " + ent.getKey() + " as a String!");
+            SerializeResult<String> key = keySerializer.writeString(ent.getKey());
+            if(!key.isComplete()) return SerializeResult.failure("Unable to serialize key " + ent.getKey() + " as a String!");
 
             SerializeResult<O> valueResult = valueSerializer.serialize(context, ent.getValue());
             if(!valueResult.isComplete() && onError.apply(ent.getKey(), valueResult.getError())) {
@@ -65,7 +65,7 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
             }
 
             if(valueResult.isComplete()) {
-                out.put(key, valueResult.getOrThrow());
+                out.put(key.getOrThrow(), valueResult.getOrThrow());
             }
         }
 
@@ -81,16 +81,16 @@ public class MapSerializer<K, V> implements Serializer<Map<K, V>> {
 
         for(Map.Entry<String, O> entry : in.entrySet()) {
 
-            K key = keySerializer.readString(entry.getKey());
-            if(key == null) return SerializeResult.failure("Unable to deserialize map key " + entry.getKey() + "!");
+            SerializeResult<K> key = keySerializer.readString(entry.getKey());
+            if(!key.isComplete()) return SerializeResult.failure("Unable to deserialize map key " + entry.getKey() + "!");
 
             SerializeResult<V> valueResult = valueSerializer.deserialize(context, entry.getValue());
-            if(!valueResult.isComplete() && onError.apply(key, valueResult.getError())) {
+            if(!valueResult.isComplete() && onError.apply(key.getOrNull(), valueResult.getError())) {
                 return SerializeResult.failure("Unable to deserialize map value " + entry.getValue() + " with key " + key + "! " + valueResult.getError());
             }
 
             if(valueResult.isComplete()) {
-                out.put(key, valueResult.getOrThrow());
+                out.put(key.getOrNull(), valueResult.getOrThrow());
             }
         }
 
