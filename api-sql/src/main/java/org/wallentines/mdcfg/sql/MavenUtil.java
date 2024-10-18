@@ -64,6 +64,11 @@ public class MavenUtil {
         if(path == null) {
             throw new IllegalArgumentException("Unable to download artifact with missing version!");
         }
+        try {
+            Files.createDirectories(output.getParent());
+        } catch (IOException ex) {
+            throw new RuntimeException("Unable to create output directory!", ex);
+        }
         String actualUrl = repo + "/" + path;
         downloadBytes(actualUrl, output);
     }
