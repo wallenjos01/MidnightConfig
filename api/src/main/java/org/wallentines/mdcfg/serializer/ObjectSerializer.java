@@ -32,7 +32,7 @@ public class ObjectSerializer<T> implements Serializer<T> {
             }
 
             Tuples.T2<String, O> t = res.getOrThrow();
-            out.put(t.p1, t.p2);
+            if(t.p2 != null) out.put(t.p1, t.p2);
         }
         return SerializeResult.success(context.toMap(out));
     }

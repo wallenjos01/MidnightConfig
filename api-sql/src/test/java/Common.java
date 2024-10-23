@@ -23,6 +23,7 @@ public class Common {
         testNumberTypes(conn);
         testStringTypes(conn);
         testBlob(conn);
+        testNull(conn);
         testWhere(conn);
         testJoins(conn);
     }
@@ -172,6 +173,27 @@ public class Common {
         Assertions.assertEquals(1, results.get(0).columns());
         Assertions.assertEquals(data.get("_blob").asBlob().getData(), results.get(0).getValue("_blob"));
 
+    }
+
+    public static void testNull(SQLConnection conn) {
+        TableSchema schema = TableSchema.builder()
+                .withColumn("_nullable", DataType.VARCHAR(255))
+                .build();
+
+        if(conn.hasTable("test_null")) {
+            conn.dropTable("test_null").execute();
+        }
+
+        conn.createTable("test_null", schema).execute();
+
+        ConfigSection data = new ConfigSection();
+        conn.insert("test_null", schema).addRow(data).execute();
+
+        QueryResult results = conn.select("test_null").execute();
+
+        Assertions.assertEquals(1, results.rows());
+        Assertions.assertEquals(1, results.get(0).columns());
+        Assertions.assertEquals(null, results.get(0).getValue("_nullable"));
     }
 
 

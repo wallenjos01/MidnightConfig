@@ -84,6 +84,10 @@ public class DataValue<T> {
      */
     public static <T> void writeSerialized(SerializeContext<T> ctx, T value, PreparedStatement statement, int index) {
         try {
+            if(value == null) {
+                statement.setNull(index, statement.getParameterMetaData().getParameterType(index));
+                return;
+            }
             switch (ctx.getType(value)) {
                 case STRING:
                     statement.setString(index, ctx.asString(value));
@@ -126,6 +130,11 @@ public class DataValue<T> {
 
                 case BLOB:
                     statement.setBlob(index, new ByteBufferInputStream(ctx.asBlob(value)));
+                    break;
+
+                case NULL:
+                    statement.setNull(index, statement.getParameterMetaData().getParameterType(index));
+                    break;
             }
         } catch (SQLException ex) {
             throw new IllegalArgumentException("An error occurred while writing a serialized object!", ex);
