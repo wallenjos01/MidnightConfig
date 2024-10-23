@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
@@ -27,7 +28,7 @@ public abstract class DriverRepository {
     protected DriverRepository(Type type, Map<String, DriverSpec> registry) {
         this.type = type;
         this.registry = Map.copyOf(registry);
-        this.loaded = new HashMap<>();
+        this.loaded = new ConcurrentHashMap<>();
     }
 
     /**
