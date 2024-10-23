@@ -74,6 +74,26 @@ public class SQLConnection implements AutoCloseable {
         switch (idCase) {
             default:
             case MIXED:
+            case MIXED_QUOTED:
+                return id;
+            case LOWER:
+            case LOWER_QUOTED:
+                return id.toLowerCase();
+            case UPPER:
+            case UPPER_QUOTED:
+                return id.toUpperCase();
+        }
+    }
+
+    /**
+     * Updates the given identifier to match how it is stored in the database
+     * @param id The identifier to fix
+     * @return The identifier matching how the database would write it
+     */
+    public String quoteIdentifier(String id) {
+        switch (idCase) {
+            default:
+            case MIXED:
                 return id;
             case LOWER:
                 return id.toLowerCase();
@@ -87,6 +107,7 @@ public class SQLConnection implements AutoCloseable {
                 return idQuote + id.toUpperCase() + idQuote;
         }
     }
+
 
     private IDCase getIDCase() {
         try {

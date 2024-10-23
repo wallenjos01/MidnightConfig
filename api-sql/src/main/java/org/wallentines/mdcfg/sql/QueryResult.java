@@ -1,7 +1,12 @@
 package org.wallentines.mdcfg.sql;
 
+import org.jetbrains.annotations.Nullable;
+import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.Tuples;
+import org.wallentines.mdcfg.serializer.ConfigContext;
+import org.wallentines.mdcfg.serializer.SerializeResult;
+import org.wallentines.mdcfg.serializer.Serializer;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -189,11 +194,15 @@ public class QueryResult {
          * @return A ConfigSection representing the result
          */
         public ConfigSection toConfigSection() {
-            ConfigSection out = new ConfigSection();
+            ConfigSection out = new SQLSection(connection);
             for(Tuples.T2<String, DataValue<?>> t : values) {
                 t.p2.setConfig(out, t.p1);
             }
             return out;
+        }
+
+        public <T> SerializeResult<T> deserialize(Serializer<T> serializer) {
+            return serializer.deserialize(ConfigContext.INSTANCE, toConfigSection());
         }
 
     }
@@ -222,6 +231,30 @@ public class QueryResult {
         }
 
         return res;
+    }
+
+    private static class SQLSection extends ConfigSection {
+
+        private final SQLConnection connection;
+
+        SQLSection(SQLConnection connection) {
+            this.connection = connection;
+        }
+
+        @Override
+        public @Nullable ConfigObject get(String key) {
+            return super.get(connection.fixIdentifier(key));
+        }
+
+        @Override
+        public ConfigObject set(String key, @Nullable ConfigObject value) {
+            return super.set(connection.fixIdentifier(key), value);
+        }
+
+        @Override
+        public ConfigObject remove(String key) {
+            return super.remove(connection.fixIdentifier(key));
+        }
     }
 
 }
