@@ -39,7 +39,7 @@ public class Common {
         }
 
         conn.createTable("test", schema).execute();
-        conn.insert("test", new ConfigSection().with("name", "Test User")).execute();
+        conn.insert("test", schema).addRow(new ConfigSection().with("name", "Test User")).execute();
 
         QueryResult results = conn.select("test").execute();
 
@@ -193,7 +193,7 @@ public class Common {
 
         Assertions.assertEquals(1, results.rows());
         Assertions.assertEquals(1, results.get(0).columns());
-        Assertions.assertEquals(null, results.get(0).getValue("_nullable"));
+        Assertions.assertNull(results.get(0).getValue("_nullable"));
     }
 
 

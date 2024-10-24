@@ -130,6 +130,11 @@ public class TableSchema {
         return out.build();
     }
 
+    /**
+     * Creates a new table schema using the keys and types the given ConfigSection
+     * @param section The ConfigSection to read
+     * @return A new TableSchema
+     */
     public static TableSchema fromSection(ConfigSection section) {
         Builder builder = builder();
         for(String key : section.getKeys()) {

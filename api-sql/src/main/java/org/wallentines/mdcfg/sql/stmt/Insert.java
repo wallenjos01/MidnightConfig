@@ -15,40 +15,39 @@ public class Insert extends DMLStatement {
 
     private final PreparedStatement statement;
     private final TableSchema schema;
+    private final List<String> returnColumns;
 
     public Insert(SQLConnection connection, String table, TableSchema schema, List<String> columns) {
         super(connection);
 
         this.schema = schema;
         this.statement = prepare(table, schema, columns);
+        this.returnColumns = columns;
     }
 
-    protected PreparedStatement prepare(String table, TableSchema schema, List<String> columns) {
+    protected PreparedStatement prepare(String table, TableSchema schema, List<String> returnColumns) {
         try {
             StatementBuilder builder = new StatementBuilder("INSERT INTO ").append(table);
+            int columns = 0;
             if(schema.getColumnCount() > 0) {
                 builder.append("(");
-                boolean first = true;
                 for(Column c : schema.getColumns()) {
-                    if(!first) {
-                        builder.append(", ");
-                    }
-                    if(!c.hasConstraint(Constraint.Type.AUTO_INCREMENT)) {
-                        builder.append(connection.quoteIdentifier(c.getName()));
-                    }
-                    first = false;
+                    if(c.hasConstraint(Constraint.Type.AUTO_INCREMENT)) continue;
+                    if(columns > 0) builder.append(", ");
+                    builder.append(connection.quoteIdentifier(c.getName()));
+                    columns++;
                 }
                 builder.append(")");
             }
 
             builder.append(" VALUES (");
-            for(int i = 0; i < schema.getColumnCount() ; i++) {
+            for(int i = 0; i < columns ; i++) {
                 if(i > 0) builder.append(",");
                 builder.appendUnknown();
             }
             builder.append(")");
 
-            return builder.prepare(connection, columns);
+            return builder.prepare(connection, returnColumns);
         } catch (SQLException ex) {
             throw new IllegalArgumentException("Unable to prepare INSERT statement!", ex);
         }
@@ -74,7 +73,7 @@ public class Insert extends DMLStatement {
         try {
             int index = 1;
             for(Column c : schema.getColumns()) {
-
+                if(c.hasConstraint(Constraint.Type.AUTO_INCREMENT)) continue;
                 ConfigObject obj = values.get(c.getName());
                 DataValue.writeSerialized(ConfigContext.INSTANCE, obj, statement, index++, c.getType().getDataType());
             }
@@ -89,10 +88,12 @@ public class Insert extends DMLStatement {
     public UpdateResult execute() {
         try {
             int[] out = statement.executeBatch();
-            ResultSet keys = statement.getGeneratedKeys();
             QueryResult generatedKeys = null;
-            if(keys != null) {
-                generatedKeys = QueryResult.fromResultSet(keys, connection);
+            if(returnColumns != null) {
+                ResultSet keys = statement.getGeneratedKeys();
+                if(keys != null) {
+                    generatedKeys = QueryResult.fromResultSet(keys, connection);
+                }
             }
 
             statement.close();
