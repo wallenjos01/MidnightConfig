@@ -230,7 +230,7 @@ public interface Serializer<T> {
 
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
-                if(!context.isString(value)) {
+                if(!context.isBlob(value)) {
                     return SerializeResult.failure("Expected a blob!");
                 }
                 try(ByteBufferInputStream bis = new ByteBufferInputStream(context.asBlob(value))) {
