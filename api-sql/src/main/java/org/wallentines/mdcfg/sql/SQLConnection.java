@@ -9,6 +9,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -205,7 +206,7 @@ public class SQLConnection implements AutoCloseable {
      * @return A new INSERT statement
      */
     public Insert insert(String table, TableSchema schema) {
-        return new Insert(this, tablePrefix + table, schema);
+        return new Insert(this, tablePrefix + table, schema, null);
     }
 
     /**
@@ -215,7 +216,28 @@ public class SQLConnection implements AutoCloseable {
      * @return A new INSERT statement
      */
     public Insert insert(String table, ConfigSection row) {
-        return new Insert(this, tablePrefix + table, TableSchema.fromSection(row)).addRow(row);
+        return new Insert(this, tablePrefix + table, TableSchema.fromSection(row), null).addRow(row);
+    }
+    /**
+     * Starts a INSERT statement
+     * @param table The name of the table to insert into
+     * @param schema The schema containing column names to insert values into
+     * @param returnColumns A list of columns to be put into the UpdateResult generated keys
+     * @return A new INSERT statement
+     */
+    public Insert insert(String table, TableSchema schema, List<String> returnColumns) {
+        return new Insert(this, tablePrefix + table, schema, returnColumns);
+    }
+
+    /**
+     * Starts a INSERT statement with columns and a row defined by the given config section
+     * @param table The name of the table to insert into
+     * @param row The row to insert
+     * @param returnColumns A list of columns to be put into the UpdateResult generated keys
+     * @return A new INSERT statement
+     */
+    public Insert insert(String table, ConfigSection row, List<String> returnColumns) {
+        return new Insert(this, tablePrefix + table, TableSchema.fromSection(row), returnColumns).addRow(row);
     }
 
     /**

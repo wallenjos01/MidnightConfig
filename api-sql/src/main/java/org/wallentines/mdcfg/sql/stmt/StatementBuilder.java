@@ -6,7 +6,6 @@ import org.wallentines.mdcfg.sql.SQLConnection;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,10 +22,10 @@ public class StatementBuilder {
 
     public PreparedStatement prepare(SQLConnection conn) throws SQLException {
 
-        return prepare(conn, false);
+        return prepare(conn, null);
     }
 
-    public PreparedStatement prepare(SQLConnection conn, boolean returnKeys) throws SQLException {
+    public PreparedStatement prepare(SQLConnection conn, List<String> returnColumns) throws SQLException {
 
         StringBuilder out = new StringBuilder();
         for(Entry ent : entries) {
@@ -35,8 +34,8 @@ public class StatementBuilder {
         out.append(";");
 
         PreparedStatement stmt;
-        if(returnKeys) {
-            stmt = conn.getInternal().prepareStatement(out.toString(), Statement.RETURN_GENERATED_KEYS);
+        if(returnColumns != null) {
+            stmt = conn.getInternal().prepareStatement(out.toString(), returnColumns.toArray(new String[0]));
         } else {
             stmt = conn.getInternal().prepareStatement(out.toString());
         }

@@ -9,20 +9,21 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.List;
 
 public class Insert extends DMLStatement {
 
     private final PreparedStatement statement;
     private final TableSchema schema;
 
-    public Insert(SQLConnection connection, String table, TableSchema schema) {
+    public Insert(SQLConnection connection, String table, TableSchema schema, List<String> columns) {
         super(connection);
 
         this.schema = schema;
-        this.statement = prepare(table, schema);
+        this.statement = prepare(table, schema, columns);
     }
 
-    protected PreparedStatement prepare(String table, TableSchema schema) {
+    protected PreparedStatement prepare(String table, TableSchema schema, List<String> columns) {
         try {
             StatementBuilder builder = new StatementBuilder("INSERT INTO ").append(table);
             if(schema.getColumnCount() > 0) {
@@ -47,7 +48,7 @@ public class Insert extends DMLStatement {
             }
             builder.append(")");
 
-            return builder.prepare(connection, true);
+            return builder.prepare(connection, columns);
         } catch (SQLException ex) {
             throw new IllegalArgumentException("Unable to prepare INSERT statement!", ex);
         }
