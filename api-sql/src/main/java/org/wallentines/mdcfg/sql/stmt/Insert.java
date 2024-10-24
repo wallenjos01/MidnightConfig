@@ -1,5 +1,6 @@
 package org.wallentines.mdcfg.sql.stmt;
 
+import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.sql.*;
@@ -7,49 +8,40 @@ import org.wallentines.mdcfg.sql.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 public class Insert extends DMLStatement {
 
     private final PreparedStatement statement;
-    private final List<String> columns;
+    private final TableSchema schema;
 
-    public Insert(SQLConnection connection, String table, TableSchema columns) {
+    public Insert(SQLConnection connection, String table, TableSchema schema) {
         super(connection);
-        List<String> names = new ArrayList<>();
-        for(Column col : columns.getColumns()) {
-            if(col.hasConstraint(Constraint.Type.AUTO_INCREMENT)) continue;
-            names.add(col.getName());
-        }
 
-        this.columns = List.copyOf(names);
-        this.statement = prepare(table, names);
+        this.schema = schema;
+        this.statement = prepare(table, schema);
     }
 
-
-    public Insert(SQLConnection connection, String table, Collection<String> columns) {
-        super(connection);
-        this.columns = List.copyOf(columns);
-        this.statement = prepare(table, columns);
-    }
-
-    public Insert(SQLConnection connection, String table, ConfigSection values) {
-        super(connection);
-        this.columns = List.copyOf(values.getKeys());
-        this.statement = prepare(table, columns);
-        addRow(values);
-    }
-
-
-    protected PreparedStatement prepare(String table, Collection<String> columns) {
+    protected PreparedStatement prepare(String table, TableSchema schema) {
         try {
             StatementBuilder builder = new StatementBuilder("INSERT INTO ").append(table);
-            if(!columns.isEmpty()) builder.append("(").append(String.join(",", columns)).append(")");
+            if(schema.getColumnCount() > 0) {
+                builder.append("(");
+                boolean first = true;
+                for(Column c : schema.getColumns()) {
+                    if(!first) {
+                        builder.append(", ");
+                    }
+                    if(!c.hasConstraint(Constraint.Type.AUTO_INCREMENT)) {
+                        builder.append(connection.quoteIdentifier(c.getName()));
+                    }
+                    first = false;
+                }
+                builder.append(")");
+            }
 
             builder.append(" VALUES (");
-            for(int i = 0 ; i < columns.size() ; i++) {
+            for(int i = 0; i < schema.getColumnCount() ; i++) {
                 if(i > 0) builder.append(",");
                 builder.appendUnknown();
             }
@@ -80,8 +72,10 @@ public class Insert extends DMLStatement {
 
         try {
             int index = 1;
-            for(String s : columns) {
-                DataValue.writeSerialized(ConfigContext.INSTANCE, values.get(s), statement, index++);
+            for(Column c : schema.getColumns()) {
+
+                ConfigObject obj = values.get(c.getName());
+                DataValue.writeSerialized(ConfigContext.INSTANCE, obj, statement, index++, c.getType().getDataType());
             }
             statement.addBatch();
         } catch (SQLException ex) {

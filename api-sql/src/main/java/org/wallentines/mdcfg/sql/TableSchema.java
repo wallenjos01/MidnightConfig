@@ -130,6 +130,15 @@ public class TableSchema {
         return out.build();
     }
 
+    public static TableSchema fromSection(ConfigSection section) {
+        Builder builder = builder();
+        for(String key : section.getKeys()) {
+            DataType<?> type = DataType.fromSerialized(section.get(key));
+            if(type != null) builder.withColumn(key, type);
+        }
+        return builder.build();
+    }
+
     /**
      * Creates a new column builder
      * @return An empty builder

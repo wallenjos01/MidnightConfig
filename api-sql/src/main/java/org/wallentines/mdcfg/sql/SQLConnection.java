@@ -8,7 +8,6 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -202,22 +201,13 @@ public class SQLConnection implements AutoCloseable {
     /**
      * Starts a INSERT statement
      * @param table The name of the table to insert into
-     * @param columns The columns to insert values into
-     * @return A new INSERT statement
-     */
-    public Insert insert(String table, Collection<String> columns) {
-        return new Insert(this, tablePrefix + table, columns);
-    }
-
-    /**
-     * Starts a INSERT statement
-     * @param table The name of the table to insert into
      * @param schema The schema containing column names to insert values into
      * @return A new INSERT statement
      */
     public Insert insert(String table, TableSchema schema) {
         return new Insert(this, tablePrefix + table, schema);
     }
+
     /**
      * Starts a INSERT statement with columns and a row defined by the given config section
      * @param table The name of the table to insert into
@@ -225,16 +215,27 @@ public class SQLConnection implements AutoCloseable {
      * @return A new INSERT statement
      */
     public Insert insert(String table, ConfigSection row) {
-        return new Insert(this, tablePrefix + table, row);
+        return new Insert(this, tablePrefix + table, TableSchema.fromSection(row)).addRow(row);
     }
 
     /**
      * Starts a UPDATE statement
      * @param table The name of the table to update
+     * @param schema The schema of the table to update
      * @return A new UPDATE statement
      */
-    public Update update(String table) {
-        return new Update(this, tablePrefix + table);
+    public Update update(String table, TableSchema schema) {
+        return new Update(this, tablePrefix + table, schema);
+    }
+
+    /**
+     * Starts a UPDATE statement
+     * @param table The name of the table to update
+     * @param row The new row values
+     * @return A new UPDATE statement
+     */
+    public Update update(String table, ConfigSection row) {
+        return new Update(this, tablePrefix + table, TableSchema.fromSection(row)).withRow(row);
     }
 
     /**

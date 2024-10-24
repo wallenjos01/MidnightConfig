@@ -2,6 +2,7 @@ package org.wallentines.mdcfg.sql;
 
 import org.wallentines.mdcfg.ByteBufferInputStream;
 import org.wallentines.mdcfg.ConfigBlob;
+import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.serializer.SerializeContext;
 import org.wallentines.mdcfg.serializer.SerializeResult;
 import org.wallentines.mdcfg.serializer.Serializer;
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.sql.*;
 import java.util.HashMap;
@@ -107,7 +109,46 @@ public class DataType<T> {
         REGISTRY.put(type.getSQLType().getVendorTypeNumber(), type);
         return type;
     }
-    
+
+    public static DataType<?> fromSerialized(ConfigObject obj) {
+        switch (obj.getSerializedType()) {
+            case BLOB: {
+                return BLOB;
+            }
+            case STRING: {
+                return VARCHAR;
+            }
+            case NUMBER: {
+                Number num = obj.asNumber();
+                if(num instanceof Byte) {
+                    return TINYINT;
+                } else if(num instanceof Short) {
+                    return SMALLINT;
+                } else if(num instanceof Integer) {
+                    return INTEGER;
+                } else if(num instanceof Long) {
+                    return BIGINT;
+                } else if(num instanceof Float) {
+                    return REAL;
+                } else if(num instanceof Double) {
+                    return DOUBLE;
+                } else if(num instanceof BigDecimal) {
+                    return DECIMAL;
+                } else if(num instanceof BigInteger) {
+                    return DECIMAL;
+                } else {
+                    throw new IllegalArgumentException("Unknown number type " + num + "!");
+                }
+            }
+            case BOOLEAN: {
+                return BOOLEAN;
+            }
+            case NULL:
+            default:
+                return GENERIC;
+        }
+    }
+
     public static final DataType<Boolean> BIT = register(new DataType<>(JDBCType.BIT, Reader.BOOLEAN, Writer.BOOLEAN, Serializer.BOOLEAN));
     public static final DataType<Byte> TINYINT = register(new DataType<>(JDBCType.TINYINT, Reader.BYTE, Writer.BYTE, Serializer.BYTE));
     public static final DataType<Short> SMALLINT = register(new DataType<>(JDBCType.SMALLINT, Reader.SHORT, Writer.SHORT, Serializer.SHORT));
@@ -124,6 +165,7 @@ public class DataType<T> {
     public static final DataType<ByteBuffer> VARBINARY = register(new DataType<>(JDBCType.VARBINARY, Reader.BLOB, Writer.BLOB, Serializer.BLOB));
     public static final DataType<ByteBuffer> LONGVARBINARY = register(new DataType<>(JDBCType.LONGVARBINARY, Reader.BLOB, Writer.BLOB, Serializer.BLOB));
     public static final DataType<Boolean> BOOLEAN = register(new DataType<>(JDBCType.BOOLEAN, Reader.BOOLEAN, Writer.BOOLEAN, Serializer.BOOLEAN));
+    public static final DataType<Object> GENERIC = register(new DataType<>(JDBCType.OTHER, Reader.GENERIC, Writer.GENERIC, Serializer.NULL));
 
 
     public static ColumnType<BigDecimal> DECIMAL(int precision, int scale) {
@@ -239,6 +281,18 @@ public class DataType<T> {
                 return convertBlob(set.getBlob(column));
             }
         };
+
+        Reader<Object> GENERIC = new Reader<Object>() {
+            @Override
+            public Object read(ResultSet set, int index) throws SQLException {
+                return set.getObject(index);
+            }
+
+            @Override
+            public Object read(ResultSet set, String column) throws SQLException {
+                return set.getObject(column);
+            }
+        };
     }
 
 
@@ -268,6 +322,8 @@ public class DataType<T> {
                 throw new IllegalStateException("Unable to write blob!");
             }
         };
+
+        Writer<Object> GENERIC = PreparedStatement::setObject;
     }
 
 }

@@ -82,10 +82,10 @@ public class DataValue<T> {
      * @param index The index of the argument of the prepared statement
      * @param <T> The type of serialized object
      */
-    public static <T> void writeSerialized(SerializeContext<T> ctx, T value, PreparedStatement statement, int index) {
+    public static <T> void writeSerialized(SerializeContext<T> ctx, T value, PreparedStatement statement, int index, DataType<?> type) {
         try {
             if(value == null) {
-                statement.setNull(index, statement.getParameterMetaData().getParameterType(index));
+                statement.setNull(index, type.getSQLType().getVendorTypeNumber());
                 return;
             }
             switch (ctx.getType(value)) {
@@ -133,7 +133,7 @@ public class DataValue<T> {
                     break;
 
                 case NULL:
-                    statement.setNull(index, statement.getParameterMetaData().getParameterType(index));
+                    statement.setNull(index, type.getSQLType().getVendorTypeNumber());
                     break;
             }
         } catch (SQLException ex) {

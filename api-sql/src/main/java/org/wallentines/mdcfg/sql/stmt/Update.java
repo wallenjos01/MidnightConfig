@@ -14,16 +14,18 @@ import java.util.List;
 public class Update extends DMLStatement {
 
     private final String table;
+    private final TableSchema schema;
     private final List<Tuples.T2<String, DataValue<?>>> values;
     private final List<Tuples.T2<String, ConfigObject>> serialized;
     private Condition where;
 
-    public Update(SQLConnection connection, String table) {
+    public Update(SQLConnection connection, String table, TableSchema schema) {
         super(connection);
 
         SQLUtil.validate(table);
 
         this.table = table;
+        this.schema = schema;
         this.values = new ArrayList<>();
         this.serialized = new ArrayList<>();
 
@@ -74,7 +76,7 @@ public class Update extends DMLStatement {
 
             index = values.size() + 1;
             for(Tuples.T2<String, ConfigObject> s : serialized) {
-                DataValue.writeSerialized(ConfigContext.INSTANCE, s.p2, pst, index++);
+                DataValue.writeSerialized(ConfigContext.INSTANCE, s.p2, pst, index++, schema.getColumn(s.p1).getType().getDataType());
             }
 
             return new UpdateResult(new int[] { pst.executeUpdate() }, null);
