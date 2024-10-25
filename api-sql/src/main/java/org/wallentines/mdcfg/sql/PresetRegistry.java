@@ -33,7 +33,14 @@ public class PresetRegistry {
     }
 
     public CompletableFuture<SQLConnection> connect(DatabasePreset preset) {
-        return CompletableFuture.supplyAsync(() -> repository.getDriver(preset.driver()).create(preset.url(), preset.username(), preset.password(), preset.tablePrefix(), preset.parameters()));
+        CompletableFuture<SQLConnection> out = CompletableFuture
+                .supplyAsync(() -> repository.getDriver(preset.driver()).create(preset.url(), preset.username(), preset.password(), preset.tablePrefix(), preset.parameters()));
+        out.whenComplete((conn, ex) -> {
+            if (conn != null) {
+                conn.close();
+            }
+        });
+        return out;
     }
 
     public CompletableFuture<SQLConnection> connect(ConfigSection config) {
@@ -46,7 +53,13 @@ public class PresetRegistry {
     }
 
     public CompletableFuture<SQLConnection> connect(DatabasePreset preset, Executor executor) {
-        return CompletableFuture.supplyAsync(() -> repository.getDriver(preset.driver()).create(preset.url(), preset.username(), preset.password(), preset.tablePrefix(), preset.parameters()), executor);
+        CompletableFuture<SQLConnection> out = CompletableFuture.supplyAsync(() -> repository.getDriver(preset.driver()).create(preset.url(), preset.username(), preset.password(), preset.tablePrefix(), preset.parameters()), executor);
+        out.whenComplete((conn, ex) -> {
+            if (conn != null) {
+                conn.close();
+            }
+        });
+        return out;
     }
 
     public CompletableFuture<SQLConnection> connect(ConfigSection config, Executor executor) {
@@ -56,6 +69,20 @@ public class PresetRegistry {
             return CompletableFuture.completedFuture(null);
         }
         return connect(preset.finalize(config), executor);
+    }
+
+
+    public SQLConnection connectSync(DatabasePreset preset) {
+        return repository.getDriver(preset.driver()).create(preset.url(), preset.username(), preset.password(), preset.tablePrefix(), preset.parameters());
+    }
+
+    public SQLConnection connectSync(ConfigSection config) {
+        String presetName = config.getOrDefault("preset", "default");
+        DatabasePreset preset = getPreset(presetName);
+        if(preset == null) {
+            return null;
+        }
+        return connectSync(preset.finalize(config));
     }
 
     public static final Serializer<PresetRegistry> SERIALIZER = ObjectSerializer.create(
