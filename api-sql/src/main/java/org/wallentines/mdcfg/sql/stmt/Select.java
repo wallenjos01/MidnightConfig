@@ -63,11 +63,11 @@ public class Select extends DQLStatement {
         }
         query.append(" FROM ").append(table);
 
-        if (where != null) {
-            query.append(" WHERE ").appendCondition(where);
-        }
         for(String s : joinClauses) {
             query.append(" ").append(s);
+        }
+        if (where != null) {
+            query.append(" WHERE ").appendCondition(where);
         }
 
         try(PreparedStatement stmt = query.prepare(connection)) {
