@@ -311,16 +311,32 @@ public class DataType<T> {
 
         Writer<ByteBuffer> BLOB = (stmt, index, value) -> {
             Blob b = stmt.getConnection().createBlob();
-            byte[] copyBuffer = new byte[1024];
-            try (OutputStream os = b.setBinaryStream(1L);
-                 InputStream is = new ByteBufferInputStream(value)) {
-                int read;
-                while ((read = is.read(copyBuffer)) != -1) {
-                    os.write(copyBuffer, 0, read);
+            if(value.remaining() > 1024) {
+                byte[] copyBuffer = new byte[1024];
+                try (OutputStream os = b.setBinaryStream(1L);
+                     InputStream is = new ByteBufferInputStream(value)) {
+                    int read;
+                    while ((read = is.read(copyBuffer)) != -1) {
+                        os.write(copyBuffer, 0, read);
+                    }
+                } catch (IOException ex) {
+                    throw new IllegalStateException("Unable to write blob!", ex);
                 }
-            } catch (IOException ex) {
-                throw new IllegalStateException("Unable to write blob!");
+            } else {
+                byte[] buffer = new byte[value.remaining()];
+                try (OutputStream os = b.setBinaryStream(1L);
+                     InputStream is = new ByteBufferInputStream(value)) {
+
+                    if(is.read(buffer) != buffer.length) {
+                        throw new RuntimeException("Encountered a short buffer while writing a blob!");
+                    }
+                    os.write(buffer, 0, buffer.length);
+
+                } catch (IOException ex) {
+                    throw new IllegalStateException("Unable to write blob!", ex);
+                }
             }
+            stmt.setBlob(index, b);
         };
 
         Writer<Object> GENERIC = PreparedStatement::setObject;
