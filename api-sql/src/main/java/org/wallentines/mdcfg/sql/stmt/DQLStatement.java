@@ -9,6 +9,8 @@ public abstract class DQLStatement extends Statement {
         super(connection);
     }
 
+    public abstract StatementBuilder toBuilder();
+
     public abstract QueryResult execute();
 
 }

@@ -1,6 +1,9 @@
 package org.wallentines.mdcfg.sql;
 
-public class ColumnRef {
+import org.wallentines.mdcfg.sql.stmt.StatementBuilder;
+import org.wallentines.mdcfg.sql.stmt.Term;
+
+public class ColumnRef implements Term {
 
     public final String table;
     public final String column;
@@ -25,6 +28,10 @@ public class ColumnRef {
         return table + "(" + column + ")";
     }
 
+    @Override
+    public void write(StatementBuilder builder) {
+        builder.append(table).append(".").append(column);
+    }
 
     @Override
     public String toString() {

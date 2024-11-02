@@ -17,7 +17,7 @@ public class Update extends DMLStatement {
     private final TableSchema schema;
     private final List<Tuples.T2<String, DataValue<?>>> values;
     private final List<Tuples.T2<String, ConfigObject>> serialized;
-    private Condition where;
+    private Expression where;
 
     public Update(SQLConnection connection, String table, TableSchema schema) {
         super(connection);
@@ -43,7 +43,7 @@ public class Update extends DMLStatement {
         return this;
     }
 
-    public Update where(Condition where) {
+    public Update where(Expression where) {
         this.where = where;
         return this;
     }
@@ -69,7 +69,7 @@ public class Update extends DMLStatement {
         }
 
         if (where != null) {
-            query.append(" WHERE ").appendCondition(where);
+            query.append(" WHERE ").appendExpression(where);
         }
 
         try(PreparedStatement pst = query.prepare(connection)) {

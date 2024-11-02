@@ -186,8 +186,23 @@ public class SQLConnection implements AutoCloseable {
         return new CreateTable(this, tablePrefix + name, schema);
     }
 
+    /**
+     * Applies the table prefix to the given string
+     * @param name The string to apply
+     * @return A table identifier with the applied prefix.
+     */
     public String applyPrefix(String name) {
         return fixIdentifier(tablePrefix + name);
+    }
+
+    /**
+     * Creates a column ref with a prefixed table name
+     * @param table The name of the table
+     * @param column The name of the column
+     * @return A new prefixed column ref.
+     */
+    public ColumnRef column(String table, String column) {
+        return new ColumnRef(tablePrefix + table, column);
     }
 
     /**
@@ -266,7 +281,7 @@ public class SQLConnection implements AutoCloseable {
      * @return A new DELETE statement
      */
     public Delete delete(String table) {
-        return new Delete(this,tablePrefix +  table);
+        return new Delete(this, tablePrefix + table);
     }
 
     /**

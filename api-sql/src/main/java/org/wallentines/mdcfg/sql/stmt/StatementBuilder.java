@@ -1,6 +1,5 @@
 package org.wallentines.mdcfg.sql.stmt;
 
-import org.wallentines.mdcfg.sql.Condition;
 import org.wallentines.mdcfg.sql.DataValue;
 import org.wallentines.mdcfg.sql.SQLConnection;
 
@@ -81,8 +80,21 @@ public class StatementBuilder {
         return this;
     }
 
-    public StatementBuilder appendCondition(Condition condition) {
-        condition.encode(this);
+    public StatementBuilder appendTerm(Term term) {
+
+        if(term instanceof Expression) {
+            append("(");
+            appendExpression((Expression) term);
+            append(")");
+            return this;
+        }
+
+        term.write(this);
+        return this;
+    }
+
+    public StatementBuilder appendExpression(Expression expression) {
+        expression.write(this);
         return this;
     }
 

@@ -2,6 +2,7 @@ import org.junit.jupiter.api.Assertions;
 import org.wallentines.mdcfg.ConfigBlob;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.sql.*;
+import org.wallentines.mdcfg.sql.stmt.Expression;
 import org.wallentines.mdcfg.sql.stmt.Select;
 
 import java.math.BigDecimal;
@@ -47,6 +48,9 @@ public class Common {
         Assertions.assertEquals(2, results.get(0).columns());
         Assertions.assertEquals(1, results.get(0).get("id").getValue());
         Assertions.assertEquals("Test User", results.get(0).get("name").getValue());
+
+        conn.delete("test").execute();
+        conn.dropTable("test").execute();
     }
 
     public static void testUnique(SQLConnection conn) {
@@ -63,12 +67,15 @@ public class Common {
         conn.createTable("test_unique", schema).execute();
         conn.insert("test_unique", new ConfigSection().with("id", 1).with("name", "Test User")).execute();
 
-        QueryResult results = conn.select("test").execute();
+        QueryResult results = conn.select("test_unique").execute();
 
         Assertions.assertEquals(1, results.rows());
         Assertions.assertEquals(2, results.get(0).columns());
         Assertions.assertEquals(1, results.get(0).get("id").getValue());
         Assertions.assertEquals("Test User", results.get(0).get("name").getValue());
+
+        conn.delete("test_unique").execute();
+        conn.dropTable("test_unique").execute();
     }
 
 
@@ -117,6 +124,8 @@ public class Common {
         Assertions.assertEquals(300000.0, results.get(0).get("_double").getValue());
         Assertions.assertEquals(10.12575, ((BigDecimal) results.get(0).get("_decimal").getValue()).doubleValue());
 
+        conn.delete("test_nums").execute();
+        conn.dropTable("test_nums").execute();
     }
 
     public static void testStringTypes(SQLConnection conn) {
@@ -149,6 +158,9 @@ public class Common {
         Assertions.assertEquals("VARCHAR TYPE", row.getString(conn.fixIdentifier("_varchar")));
         Assertions.assertEquals("LONGVARCHAR TYPE", row.getString(conn.fixIdentifier("_longvarchar")));
 
+        conn.delete("test_strings").execute();
+        conn.dropTable("test_strings").execute();
+
     }
 
     public static void testBlob(SQLConnection conn) {
@@ -173,6 +185,8 @@ public class Common {
         Assertions.assertEquals(1, results.get(0).columns());
         Assertions.assertEquals(data.get("_blob").asBlob().getData(), results.get(0).getValue("_blob"));
 
+        conn.delete("test_blobs").execute();
+        conn.dropTable("test_blobs").execute();
     }
 
     public static void testNull(SQLConnection conn) {
@@ -194,6 +208,9 @@ public class Common {
         Assertions.assertEquals(1, results.rows());
         Assertions.assertEquals(1, results.get(0).columns());
         Assertions.assertNull(results.get(0).getValue("_nullable"));
+
+        conn.delete("test_null").execute();
+        conn.dropTable("test_null").execute();
     }
 
 
@@ -267,7 +284,7 @@ public class Common {
 
         // BETWEEN
         results = conn.select("test_where")
-                .where(Condition.between("id", DataType.INTEGER.create(1), DataType.INTEGER.create(2)))
+                .where(Expression.between("id", DataType.INTEGER.create(1), DataType.INTEGER.create(2)))
                 .execute();
         Assertions.assertEquals(2, results.rows());
         Assertions.assertEquals((byte) 1, results.get(0).getValue("id"));
@@ -293,6 +310,17 @@ public class Common {
         Assertions.assertEquals("Test User 1", results.get(0).getValue("name"));
         Assertions.assertEquals((byte) 3, results.get(1).getValue("id"));
         Assertions.assertEquals("Test User 3", results.get(1).getValue("name"));
+
+        conn.delete("test_where").where(Condition.equals("id", DataType.INTEGER.create(2))).execute();
+        results = conn.select("test_where").execute();
+        Assertions.assertEquals(2, results.rows());
+        Assertions.assertEquals((byte) 1, results.get(0).getValue("id"));
+        Assertions.assertEquals("Test User 1", results.get(0).getValue("name"));
+        Assertions.assertEquals((byte) 3, results.get(1).getValue("id"));
+        Assertions.assertEquals("Test User 3", results.get(1).getValue("name"));
+
+        conn.delete("test_where").execute();
+        conn.dropTable("test_where").execute();
 
     }
 
@@ -320,16 +348,44 @@ public class Common {
         conn.createTable("bTable", bSchema).execute();
 
         conn.insert("aTable", aSchema).addRow(new ConfigSection().with("aId", 1).with("aName", "A1")).execute();
+        conn.insert("aTable", aSchema).addRow(new ConfigSection().with("aId", 2).with("aName", "A2")).execute();
         conn.insert("bTable", bSchema).addRow(new ConfigSection().with("bId", 1).with("bName", "B1").with("aId", 1)).execute();
+        conn.insert("bTable", bSchema).addRow(new ConfigSection().with("bId", 2).with("bName", "B2").with("aId", 2)).execute();
 
         QueryResult res = conn.select("bTable")
                 .join(Select.JoinType.INNER, "aTable", "aId")
                 .execute();
 
-        Assertions.assertEquals(1, res.rows());
+        Assertions.assertEquals(2, res.rows());
         Assertions.assertEquals((byte) 1, res.get(0).getValue("bId"));
         Assertions.assertEquals("B1", res.get(0).getValue("bName"));
         Assertions.assertEquals("A1", res.get(0).getValue("aName"));
+        Assertions.assertEquals((byte) 2, res.get(1).getValue("bId"));
+        Assertions.assertEquals("B2", res.get(1).getValue("bName"));
+        Assertions.assertEquals("A2", res.get(1).getValue("aName"));
+
+        res = conn.select("bTable")
+                .where(
+                        Expression.exists(conn.select("aTable")
+                                .where(Condition.equals(
+                                        conn.column("aTable", "aId"),
+                                        conn.column("bTable", "aId")
+                                ))
+                        ))
+                .execute();
+
+        Assertions.assertEquals(2, res.rows());
+        Assertions.assertEquals((byte) 1, res.get(0).getValue("bId"));
+        Assertions.assertEquals("B1", res.get(0).getValue("bName"));
+        Assertions.assertEquals((byte) 2, res.get(1).getValue("bId"));
+        Assertions.assertEquals("B2", res.get(1).getValue("bName"));
+
+
+        conn.delete("bTable").execute();
+        conn.dropTable("bTable").execute();
+
+        conn.delete("aTable").execute();
+        conn.dropTable("aTable").execute();
     }
 
 

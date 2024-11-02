@@ -13,7 +13,7 @@ public class Select extends DQLStatement {
 
     public final String table;
     public final List<String> columns;
-    public Condition where;
+    public Expression where;
 
     private final List<String> joinClauses = new ArrayList<>();
 
@@ -35,7 +35,7 @@ public class Select extends DQLStatement {
         return this;
     }
 
-    public Select where(Condition where) {
+    public Select where(Expression where) {
         this.where = where;
         return this;
     }
@@ -53,8 +53,7 @@ public class Select extends DQLStatement {
     }
 
     @Override
-    public QueryResult execute() {
-
+    public StatementBuilder toBuilder() {
         StatementBuilder query = new StatementBuilder("SELECT ");
         if(columns.isEmpty()) {
             query.append("*");
@@ -67,10 +66,15 @@ public class Select extends DQLStatement {
             query.append(" ").append(s);
         }
         if (where != null) {
-            query.append(" WHERE ").appendCondition(where);
+            query.append(" WHERE ").appendExpression(where);
         }
+        return query;
+    }
 
-        try(PreparedStatement stmt = query.prepare(connection)) {
+    @Override
+    public QueryResult execute() {
+
+        try(PreparedStatement stmt = toBuilder().prepare(connection)) {
 
             ResultSet set = stmt.executeQuery();
             QueryResult res = QueryResult.fromResultSet(set, connection);

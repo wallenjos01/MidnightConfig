@@ -4,6 +4,8 @@ import org.wallentines.mdcfg.ByteBufferInputStream;
 import org.wallentines.mdcfg.ConfigSection;
 import org.wallentines.mdcfg.serializer.SerializeContext;
 import org.wallentines.mdcfg.serializer.SerializeResult;
+import org.wallentines.mdcfg.sql.stmt.Expression;
+import org.wallentines.mdcfg.sql.stmt.StatementBuilder;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -14,7 +16,7 @@ import java.sql.SQLException;
  * Represents a data value for use in SQL statements and query results
  * @param <T> The type of value
  */
-public class DataValue<T> {
+public class DataValue<T> implements Expression {
 
     private final DataType<T> type;
     private final T value;
@@ -141,4 +143,8 @@ public class DataValue<T> {
         }
     }
 
+    @Override
+    public void write(StatementBuilder builder) {
+        builder.appendValue(this);
+    }
 }
