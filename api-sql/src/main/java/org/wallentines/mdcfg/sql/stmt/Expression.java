@@ -31,7 +31,7 @@ public interface Expression extends Term {
 
     // BETWEEN
     static Between between(String lhs, Term lower, Term higher) {
-        return between(Term.literal(lhs), lower, higher);
+        return between(Term.identifier(lhs), lower, higher);
     }
 
     static Between between(Term lhs, Term lower, Term higher) {
@@ -48,16 +48,16 @@ public interface Expression extends Term {
     }
 
     static In in(String lhs, Term rhs) {
-        return new In(Term.literal(lhs), rhs);
+        return new In(Term.identifier(lhs), rhs);
     }
 
     static In in(String lhs, Stream<Term> rhs) {
-        return new In(Term.literal(lhs), Term.array(rhs));
+        return new In(Term.identifier(lhs), Term.array(rhs));
     }
 
     // IS NULL
     static Null isNull(String lhs) {
-        return new Null(Term.literal(lhs));
+        return new Null(Term.identifier(lhs));
     }
 
     static Null isNull(Term lhs) {
@@ -66,7 +66,7 @@ public interface Expression extends Term {
 
     // IS NOT NULL
     static Null isNotNull(String lhs) {
-        return new Null(Term.literal(lhs), true);
+        return new Null(Term.identifier(lhs), true);
     }
 
     static Null isNotNull(Term lhs) {
@@ -75,7 +75,7 @@ public interface Expression extends Term {
 
     // COUNT()
     static Function count(String column) {
-        return new Function("COUNT", Term.literal(column));
+        return new Function("COUNT", Term.identifier(column));
     }
 
     static Function count(Term term) {
@@ -84,7 +84,7 @@ public interface Expression extends Term {
 
     // MAX
     static Function max(String column) {
-        return new Function("MAX", Term.literal(column));
+        return new Function("MAX", Term.identifier(column));
     }
 
     static Function max(Term term) {
@@ -93,7 +93,7 @@ public interface Expression extends Term {
 
     // MAX
     static Function min(String column) {
-        return new Function("MIN", Term.literal(column));
+        return new Function("MIN", Term.identifier(column));
     }
 
     static Function min(Term term) {
@@ -102,7 +102,7 @@ public interface Expression extends Term {
 
     // SUM
     static Function sum(String column) {
-        return new Function("SUM", Term.literal(column));
+        return new Function("SUM", Term.identifier(column));
     }
 
     static Function sum(Term term) {
@@ -111,7 +111,7 @@ public interface Expression extends Term {
 
     // AVG
     static Function average(String column) {
-        return new Function("AVG", Term.literal(column));
+        return new Function("AVG", Term.identifier(column));
     }
 
     static Function average(Term term) {

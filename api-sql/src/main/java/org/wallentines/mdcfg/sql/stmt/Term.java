@@ -1,5 +1,7 @@
 package org.wallentines.mdcfg.sql.stmt;
 
+import org.wallentines.mdcfg.sql.SQLUtil;
+
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -8,8 +10,8 @@ public interface Term {
 
     void write(StatementBuilder builder);
 
-    static StringLiteral literal(String string) {
-        return new StringLiteral(string);
+    static Identifier identifier(String string) {
+        return new Identifier(string);
     }
 
     static Array array(List<Term> terms) {
@@ -20,9 +22,10 @@ public interface Term {
         return new Array(terms.collect(Collectors.toList()));
     }
 
-    class StringLiteral implements Term {
+    class Identifier implements Term {
         private final String value;
-        public StringLiteral(String value) {
+        public Identifier(String value) {
+            SQLUtil.validate(value);
             this.value = value;
         }
 

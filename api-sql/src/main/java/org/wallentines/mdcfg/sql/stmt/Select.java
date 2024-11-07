@@ -26,7 +26,7 @@ public class Select extends DQLStatement {
     }
 
     public Select withColumn(String column) {
-        columns.add(Term.literal(column));
+        columns.add(Term.identifier(column));
         return this;
     }
 
@@ -63,7 +63,7 @@ public class Select extends DQLStatement {
 
     public Select orderBy(SortOrder order, String... columns) {
         for(String s : columns) {
-            orderBy.add(new SortedTerm(Term.literal(s), order));
+            orderBy.add(new SortedTerm(Term.identifier(s), order));
         }
         return this;
     }
@@ -74,7 +74,7 @@ public class Select extends DQLStatement {
     }
 
     public Select groupBy(String column) {
-        this.groupBy = Term.literal(column);
+        this.groupBy = Term.identifier(column);
         return this;
     }
 
