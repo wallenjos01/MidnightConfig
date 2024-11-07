@@ -126,6 +126,90 @@ public class QueryResult {
         }
 
         /**
+         * Gets the object in the column with the given index, cast to a number
+         * @param index The column index
+         * @return The value in the column
+         * @throws NoSuchElementException If there is no element in the column
+         * @throws ClassCastException If the object is not a number
+         */
+        public Number getNumeric(int index) {
+
+            Tuples.T2<String, DataValue<?>> val = values.get(index);
+            if(val == null) throw new NoSuchElementException("Unable to find element for column " + index + "!");
+
+            Object value = val.p2.getValue();
+            if(!(value instanceof Number)) throw new ClassCastException("Element in column " + index + " is not a number!");
+
+            return (Number) value;
+        }
+
+        /**
+         * Gets the object in the column with the given index, cast to an integer
+         * @param index The column index
+         * @return The value in the column
+         * @throws NoSuchElementException If there is no element in the column
+         * @throws ClassCastException If the object is not a number
+         */
+        public long getInt(int index) {
+
+            return getNumeric(index).intValue();
+        }
+
+        /**
+         * Gets the object in the column with the given index, cast to a long
+         * @param index The column index
+         * @return The value in the column
+         * @throws NoSuchElementException If there is no element in the column
+         * @throws ClassCastException If the object is not a number
+         */
+        public long getLong(int index) {
+
+            return getNumeric(index).longValue();
+        }
+
+        /**
+         * Gets the object in the column with the given index, cast to a number
+         * @param column The column name
+         * @return The value in the column
+         * @throws NoSuchElementException If there is no element in the column
+         * @throws ClassCastException If the object is not a number
+         */
+        public Number getNumeric(String column) {
+
+            Tuples.T2<String, DataValue<?>> val = values.get(rowsByName.get(column));
+            if(val == null) throw new NoSuchElementException("Unable to find element for column " + column + "!");
+
+            Object value = val.p2.getValue();
+            if(!(value instanceof Number)) throw new ClassCastException("Element in column " + column + " is not a number!");
+
+            return (Number) value;
+        }
+
+        /**
+         * Gets the object in the column with the given index, cast to an integer
+         * @param column The column name
+         * @return The value in the column
+         * @throws NoSuchElementException If there is no element in the column
+         * @throws ClassCastException If the object is not a number
+         */
+        public long getInt(String column) {
+
+            return getNumeric(column).intValue();
+        }
+
+        /**
+         * Gets the object in the column with the given index, cast to a long
+         * @param column The column name
+         * @return The value in the column
+         * @throws NoSuchElementException If there is no element in the column
+         * @throws ClassCastException If the object is not a number
+         */
+        public long getLong(String column) {
+
+            return getNumeric(column).longValue();
+        }
+
+        /**
          * Gets the object in the column with the given name
          * @param column The column name
          * @param type The type of the object

@@ -459,7 +459,7 @@ public class Common {
 
         Assertions.assertEquals(2, res.rows());
 
-        long total = (long) res.get(0).get(0).getValue() + (long) res.get(1).get(0).getValue();
+        long total = res.get(0).getInt(0) + res.get(1).getInt(0);
         Assertions.assertEquals(3, total);
 
         conn.delete("test_group").execute();
