@@ -4,26 +4,32 @@ import java.util.stream.Stream;
 
 public interface Expression extends Term {
 
+    // NOT
     default Expression invert() {
         return new Inverted(this);
     }
 
+    // AND
     default Expression and(Expression other) {
         return new Composite(this, other, Conjunction.AND);
     }
 
+    // OR
     default Expression or(Expression other) {
         return new Composite(this, other, Conjunction.OR);
     }
 
+    // EXISTS()
     static Exists exists(DQLStatement statement) {
         return new Exists(statement);
     }
 
+    // UNIQUE()
     static Unique unique(DQLStatement statement) {
         return new Unique(statement);
     }
 
+    // BETWEEN
     static Between between(String lhs, Term lower, Term higher) {
         return between(Term.literal(lhs), lower, higher);
     }
@@ -32,6 +38,7 @@ public interface Expression extends Term {
         return new Between(lhs, lower, higher);
     }
 
+    // IN
     static In in(Term lhs, Term rhs) {
         return new In(lhs, rhs);
     }
@@ -48,6 +55,7 @@ public interface Expression extends Term {
         return new In(Term.literal(lhs), Term.array(rhs));
     }
 
+    // IS NULL
     static Null isNull(String lhs) {
         return new Null(Term.literal(lhs));
     }
@@ -56,6 +64,7 @@ public interface Expression extends Term {
         return new Null(lhs);
     }
 
+    // IS NOT NULL
     static Null isNotNull(String lhs) {
         return new Null(Term.literal(lhs), true);
     }
@@ -63,6 +72,52 @@ public interface Expression extends Term {
     static Null isNotNull(Term lhs) {
         return new Null(lhs, true);
     }
+
+    // COUNT()
+    static Function count(String column) {
+        return new Function("COUNT", Term.literal(column));
+    }
+
+    static Function count(Term term) {
+        return new Function("COUNT", term);
+    }
+
+    // MAX
+    static Function max(String column) {
+        return new Function("MAX", Term.literal(column));
+    }
+
+    static Function max(Term term) {
+        return new Function("MAX", term);
+    }
+
+    // MAX
+    static Function min(String column) {
+        return new Function("MIN", Term.literal(column));
+    }
+
+    static Function min(Term term) {
+        return new Function("MIN", term);
+    }
+
+    // SUM
+    static Function sum(String column) {
+        return new Function("SUM", Term.literal(column));
+    }
+
+    static Function sum(Term term) {
+        return new Function("SUM", term);
+    }
+
+    // AVG
+    static Function average(String column) {
+        return new Function("AVG", Term.literal(column));
+    }
+
+    static Function average(Term term) {
+        return new Function("AVG", term);
+    }
+
 
     class Inverted implements Expression {
         private final Expression inner;
@@ -169,6 +224,22 @@ public interface Expression extends Term {
             builder.append("EXISTS (").append(statement.toBuilder()).append(")");
         }
     }
+
+    class Function implements Expression {
+        private final String name;
+        private final Term term;
+
+        public Function(String name, Term term) {
+            this.name = name;
+            this.term = term;
+        }
+
+        @Override
+        public void write(StatementBuilder builder) {
+            builder.append(name + " (").appendTerm(term).append(")");
+        }
+    }
+
 
     class Unique implements Expression {
         private final DQLStatement statement;

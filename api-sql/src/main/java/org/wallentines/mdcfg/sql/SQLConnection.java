@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -210,8 +211,12 @@ public class SQLConnection implements AutoCloseable {
      * @param table The name of the table to select from
      * @return A new SELECT statement
      */
-    public Select select(String table) {
-        return new Select(this, tablePrefix + table);
+    public Select select(String... table) {
+        List<String> tables = new ArrayList<>();
+        for(String s : table) {
+            tables.add(tablePrefix + s);
+        }
+        return new Select(this, tables);
     }
 
     /**

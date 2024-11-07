@@ -27,6 +27,8 @@ public class Common {
         testNull(conn);
         testWhere(conn);
         testJoins(conn);
+        testOrderBy(conn);
+        testGroupBy(conn);
     }
 
     public static void testBasics(SQLConnection conn) {
@@ -388,5 +390,80 @@ public class Common {
         conn.dropTable("aTable").execute();
     }
 
+
+    public static void testOrderBy(SQLConnection conn) {
+        TableSchema schema = TableSchema.builder()
+                .withColumn("id", DataType.TINYINT)
+                .withColumn("name", DataType.VARCHAR(255))
+                .build();
+
+        if(conn.hasTable("test_order")) {
+            conn.dropTable("test_order").execute();
+        }
+
+
+        conn.createTable("test_order", schema).execute();
+
+        conn.insert("test_order", schema)
+                .addRow(new ConfigSection().with("id", 1).with("name", "Banana"))
+                .addRow(new ConfigSection().with("id", 2).with("name", "Apple"))
+                .addRow(new ConfigSection().with("id", 3).with("name", "Strawberry"))
+                .execute();
+
+        QueryResult res = conn.select("test_order")
+                .orderBy("name")
+                .execute();
+
+        Assertions.assertEquals(3, res.rows());
+        Assertions.assertEquals("Apple", res.get(0).get("name", DataType.VARCHAR).getValue());
+        Assertions.assertEquals("Banana", res.get(1).get("name", DataType.VARCHAR).getValue());
+        Assertions.assertEquals("Strawberry", res.get(2).get("name", DataType.VARCHAR).getValue());
+
+        res = conn.select("test_order")
+                .orderBy(Select.SortOrder.DESCENDING, "name")
+                .execute();
+
+        Assertions.assertEquals(3, res.rows());
+        Assertions.assertEquals("Apple", res.get(2).get("name", DataType.VARCHAR).getValue());
+        Assertions.assertEquals("Banana", res.get(1).get("name", DataType.VARCHAR).getValue());
+        Assertions.assertEquals("Strawberry", res.get(0).get("name", DataType.VARCHAR).getValue());
+
+        conn.delete("test_order").execute();
+        conn.dropTable("test_order").execute();
+    }
+
+
+    public static void testGroupBy(SQLConnection conn) {
+        TableSchema schema = TableSchema.builder()
+                .withColumn("id", DataType.TINYINT)
+                .withColumn("category", DataType.VARCHAR(255))
+                .build();
+
+        if(conn.hasTable("test_group")) {
+            conn.dropTable("test_group").execute();
+        }
+
+
+        conn.createTable("test_group", schema).execute();
+
+        conn.insert("test_group", schema)
+                .addRow(new ConfigSection().with("id", 1).with("category", "CAT1"))
+                .addRow(new ConfigSection().with("id", 2).with("category", "CAT2"))
+                .addRow(new ConfigSection().with("id", 3).with("category", "CAT1"))
+                .execute();
+
+        QueryResult res = conn.select("test_group")
+                .withColumn(Expression.count("category"))
+                .groupBy("category")
+                .execute();
+
+        Assertions.assertEquals(2, res.rows());
+
+        long total = (long) res.get(0).get(0).getValue() + (long) res.get(1).get(0).getValue();
+        Assertions.assertEquals(3, total);
+
+        conn.delete("test_group").execute();
+        conn.dropTable("test_group").execute();
+    }
 
 }
