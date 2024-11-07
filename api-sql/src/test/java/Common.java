@@ -28,6 +28,7 @@ public class Common {
         testWhere(conn);
         testJoins(conn);
         testOrderBy(conn);
+        testAggregate(conn);
         testGroupBy(conn);
     }
 
@@ -430,6 +431,46 @@ public class Common {
 
         conn.delete("test_order").execute();
         conn.dropTable("test_order").execute();
+    }
+
+    public static void testAggregate(SQLConnection conn) {
+
+        TableSchema schema = TableSchema.builder()
+                .withColumn("id", DataType.TINYINT)
+                .withColumn("val", DataType.INTEGER)
+                .build();
+
+        if(conn.hasTable("test_aggregate")) {
+            conn.dropTable("test_aggregate").execute();
+        }
+
+
+        conn.createTable("test_aggregate", schema).execute();
+
+        conn.insert("test_aggregate", schema)
+                .addRow(new ConfigSection().with("id", 1).with("val", 5))
+                .addRow(new ConfigSection().with("id", 2).with("val", 10))
+                .addRow(new ConfigSection().with("id", 3).with("val", 15))
+                .addRow(new ConfigSection().with("id", 4).with("val", 20))
+                .addRow(new ConfigSection().with("id", 5).with("val", 25))
+                .execute();
+
+        QueryResult res = conn.select("test_aggregate")
+                .withColumn(Expression.max("val"))
+                .withColumn(Expression.min("val"))
+                .withColumn(Expression.sum("val"))
+                .withColumn(Expression.average("val"))
+                .execute();
+
+
+        Assertions.assertEquals(1, res.rows());
+        Assertions.assertEquals(25, res.get(0).getInt(0));
+        Assertions.assertEquals(5, res.get(0).getInt(1));
+        Assertions.assertEquals(75, res.get(0).getInt(2));
+        Assertions.assertEquals(15, res.get(0).getInt(3));
+
+        conn.delete("test_aggregate").execute();
+        conn.dropTable("test_aggregate").execute();
     }
 
 
