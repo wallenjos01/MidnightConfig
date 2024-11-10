@@ -6,5 +6,13 @@
     "type": "replace",
     "find": "List.copyOf(",
     "replace": "org.wallentines.mdcfg.util.Java8Util.copyList("
+  },
+  {
+    "lines": [
+      "all"
+    ],
+    "type": "replace",
+    "find": "List.of(",
+    "replace": "java.util.Arrays.asList("
   }
 ]

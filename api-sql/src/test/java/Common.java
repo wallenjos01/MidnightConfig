@@ -338,6 +338,14 @@ public class Common {
                 .withColumn("bId", DataType.TINYINT)
                 .withColumn("bName", DataType.VARCHAR(255))
                 .withColumn(Column.builder("aId", DataType.TINYINT).withConstraint(Constraint.FOREIGN_KEY(new ColumnRef("aTable", "aId"))))
+                .withTableConstraint(TableConstraint.PRIMARY_KEY("bId"))
+                .build();
+
+        TableSchema cSchema = TableSchema.builder()
+                .withColumn("cId", DataType.TINYINT)
+                .withColumn("cName", DataType.VARCHAR(255))
+                .withColumn("bId", DataType.TINYINT)
+                .withTableConstraint(TableConstraint.FOREIGN_KEY("bId", new ColumnRef("bTable", "bId")))
                 .build();
 
         if(conn.hasTable("bTable")) {
@@ -346,14 +354,22 @@ public class Common {
         if(conn.hasTable("aTable")) {
             conn.dropTable("aTable").execute();
         }
+        if(conn.hasTable("cTable")) {
+            conn.dropTable("cTable").execute();
+        }
 
         conn.createTable("aTable", aSchema).execute();
         conn.createTable("bTable", bSchema).execute();
+        conn.createTable("cTable", cSchema).execute();
 
         conn.insert("aTable", aSchema).addRow(new ConfigSection().with("aId", 1).with("aName", "A1")).execute();
         conn.insert("aTable", aSchema).addRow(new ConfigSection().with("aId", 2).with("aName", "A2")).execute();
+
         conn.insert("bTable", bSchema).addRow(new ConfigSection().with("bId", 1).with("bName", "B1").with("aId", 1)).execute();
         conn.insert("bTable", bSchema).addRow(new ConfigSection().with("bId", 2).with("bName", "B2").with("aId", 2)).execute();
+
+        conn.insert("cTable", cSchema).addRow(new ConfigSection().with("cId", 1).with("cName", "C1").with("bId", 1)).execute();
+        conn.insert("cTable", cSchema).addRow(new ConfigSection().with("cId", 2).with("cName", "C2").with("bId", 2)).execute();
 
         QueryResult res = conn.select("bTable")
                 .join(Select.JoinType.INNER, "aTable", "aId")
@@ -383,6 +399,8 @@ public class Common {
         Assertions.assertEquals((byte) 2, res.get(1).getValue("bId"));
         Assertions.assertEquals("B2", res.get(1).getValue("bName"));
 
+        conn.delete("cTable").execute();
+        conn.dropTable("cTable").execute();
 
         conn.delete("bTable").execute();
         conn.dropTable("bTable").execute();

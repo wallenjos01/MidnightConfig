@@ -20,9 +20,19 @@ public class TableConstraint<T> {
         return new TableConstraint<>(Type.UNIQUE, List.copyOf(columns));
     }
 
+    public static TableConstraint<List<String>> UNIQUE(String... columns) {
+        assert columns.length > 0;
+        return new TableConstraint<>(Type.UNIQUE, List.of(columns));
+    }
+
     public static TableConstraint<List<String>> PRIMARY_KEY(Collection<String> columns) {
         assert !columns.isEmpty();
         return new TableConstraint<>(Type.PRIMARY_KEY, List.copyOf(columns));
+    }
+
+    public static TableConstraint<List<String>> PRIMARY_KEY(String... columns) {
+        assert columns.length > 0;
+        return new TableConstraint<>(Type.PRIMARY_KEY, List.of(columns));
     }
 
     public static TableConstraint<Tuples.T2<String, ColumnRef>> FOREIGN_KEY(String column, ColumnRef ref) {

@@ -8,6 +8,7 @@ import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.serializer.SerializeResult;
 import org.wallentines.mdcfg.serializer.Serializer;
 
+import java.nio.ByteBuffer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -134,10 +135,7 @@ public class QueryResult {
          */
         public Number getNumeric(int index) {
 
-            Tuples.T2<String, DataValue<?>> val = values.get(index);
-            if(val == null) throw new NoSuchElementException("Unable to find element for column " + index + "!");
-
-            Object value = val.p2.getValue();
+            Object value = getValue(index);
             if(!(value instanceof Number)) throw new ClassCastException("Element in column " + index + " is not a number!");
 
             return (Number) value;
@@ -150,8 +148,7 @@ public class QueryResult {
          * @throws NoSuchElementException If there is no element in the column
          * @throws ClassCastException If the object is not a number
          */
-        public long getInt(int index) {
-
+        public int getInt(int index) {
             return getNumeric(index).intValue();
         }
 
@@ -163,8 +160,45 @@ public class QueryResult {
          * @throws ClassCastException If the object is not a number
          */
         public long getLong(int index) {
-
             return getNumeric(index).longValue();
+        }
+
+        /**
+         * Gets the object in the column with the given index, cast to a float
+         * @param index The column index
+         * @return The value in the column
+         * @throws NoSuchElementException If there is no element in the column
+         * @throws ClassCastException If the object is not a number
+         */
+        public double getDouble(int index) {
+            return getNumeric(index).doubleValue();
+        }
+
+        /**
+         * Gets the object in the column with the given index, cast to a string
+         * @param index The column index
+         * @return The value in the column
+         * @throws NoSuchElementException If there is no element in the column
+         * @throws ClassCastException If the object is not a string
+         */
+        public String getString(int index) {
+            Object value = getValue(index);
+            if(!(value instanceof CharSequence)) throw new ClassCastException("Element in column " + index + " is not a String!");
+
+            return ((CharSequence) value).toString();
+        }
+
+        /**
+         * Gets the object in the column with the given name, cast to a blob
+         * @param index The column name
+         * @return The value in the column
+         * @throws NoSuchElementException If there is no element in the column
+         * @throws ClassCastException If the object is not a blob
+         */
+        public ByteBuffer getBlob(int index) {
+            Object value = getValue(index);
+            if(!(value instanceof ByteBuffer)) throw new ClassCastException("Element in column " + index + " is not a Blob!");
+            return (ByteBuffer) value;
         }
 
         /**
@@ -176,37 +210,71 @@ public class QueryResult {
          */
         public Number getNumeric(String column) {
 
-            Tuples.T2<String, DataValue<?>> val = values.get(rowsByName.get(column));
-            if(val == null) throw new NoSuchElementException("Unable to find element for column " + column + "!");
-
-            Object value = val.p2.getValue();
+            Object value = getValue(column);
             if(!(value instanceof Number)) throw new ClassCastException("Element in column " + column + " is not a number!");
 
             return (Number) value;
         }
 
         /**
-         * Gets the object in the column with the given index, cast to an integer
+         * Gets the object in the column with the given name, cast to an integer
          * @param column The column name
          * @return The value in the column
          * @throws NoSuchElementException If there is no element in the column
          * @throws ClassCastException If the object is not a number
          */
-        public long getInt(String column) {
-
+        public int getInt(String column) {
             return getNumeric(column).intValue();
         }
 
         /**
-         * Gets the object in the column with the given index, cast to a long
+         * Gets the object in the column with the given name, cast to a long
          * @param column The column name
          * @return The value in the column
          * @throws NoSuchElementException If there is no element in the column
          * @throws ClassCastException If the object is not a number
          */
         public long getLong(String column) {
-
             return getNumeric(column).longValue();
+        }
+
+        /**
+         * Gets the object in the column with the given name, cast to a float
+         * @param column The column name
+         * @return The value in the column
+         * @throws NoSuchElementException If there is no element in the column
+         * @throws ClassCastException If the object is not a number
+         */
+        public double getDouble(String column) {
+            return getNumeric(column).doubleValue();
+        }
+
+        /**
+         * Gets the object in the column with the given name, cast to a string
+         * @param column The column name
+         * @return The value in the column
+         * @throws NoSuchElementException If there is no element in the column
+         * @throws ClassCastException If the object is not a string
+         */
+        public String getString(String column) {
+            Object value = getValue(column);
+            if(!(value instanceof CharSequence)) throw new ClassCastException("Element in column " + column + " is not a String!");
+
+            return ((CharSequence) value).toString();
+        }
+
+        /**
+         * Gets the object in the column with the given name, cast to a blob
+         * @param column The column name
+         * @return The value in the column
+         * @throws NoSuchElementException If there is no element in the column
+         * @throws ClassCastException If the object is not a blob
+         */
+        public ByteBuffer getBlob(String column) {
+            Object value = getValue(column);
+            if(!(value instanceof ByteBuffer)) throw new ClassCastException("Element in column " + column + " is not a Blob!");
+
+            return (ByteBuffer) value;
         }
 
         /**
@@ -246,12 +314,20 @@ public class QueryResult {
         }
 
         /**
+         * Gets the object in the column with the given index
+         * @param index The column index
+         * @return The object in the column
+         */
+        public Object getValue(int index) {
+            return get(index).getValue();
+        }
+
+        /**
          * Gets the object in the column with the given name
          * @param column The column name
          * @return The object in the column
          */
         public Object getValue(String column) {
-
             return get(column).getValue();
         }
 

@@ -65,7 +65,7 @@ public interface SQLDialect {
                         ref = ref.withPrefix(conn.tablePrefix);
                     }
 
-                    table.append(" FOREIGN_KEY(").append(values.p1).append(") REFERENCES ").append(ref.encode());
+                    table.append(" FOREIGN KEY(").append(values.p1).append(") REFERENCES ").append(ref.encode());
                     break;
                 }
                 case CHECK: {
