@@ -1,6 +1,7 @@
 package org.wallentines.mdcfg.sql;
 
 import org.wallentines.mdcfg.Tuples;
+import org.wallentines.mdcfg.sql.stmt.Expression;
 
 import java.util.Collection;
 import java.util.List;
@@ -40,7 +41,7 @@ public class TableConstraint<T> {
         return new TableConstraint<>(Type.FOREIGN_KEY, new Tuples.T2<>(column, ref));
     }
 
-    public static TableConstraint<Condition> CHECK(Condition condition) {
+    public static TableConstraint<Expression> CHECK(Expression condition) {
         return new TableConstraint<>(Type.CHECK, condition);
     }
 

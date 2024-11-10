@@ -1,6 +1,7 @@
 package org.wallentines.mdcfg.sql;
 
 import org.wallentines.mdcfg.Tuples;
+import org.wallentines.mdcfg.sql.stmt.Expression;
 import org.wallentines.mdcfg.sql.stmt.StatementBuilder;
 
 import java.util.List;
@@ -17,7 +18,7 @@ public interface SQLDialect {
 
             switch (constraint.type) {
                 case NOT_NULL: column.append(" NOT NULL"); break;
-                case AUTO_INCREMENT: column.append(" AUTO_INCREMENT");
+                case AUTO_INCREMENT: column.append(" AUTO_INCREMENT"); break;
                 case UNIQUE: column.append(" UNIQUE"); break;
                 case PRIMARY_KEY: table.append(", PRIMARY KEY (").append(def.getName()).append(")"); break;
                 case FOREIGN_KEY: {
@@ -51,11 +52,11 @@ public interface SQLDialect {
 
             switch (constraint.type) {
                 case UNIQUE: {
-                    table.append(" UNIQUE(").appendList((List<String>) constraint.param).append(")");
+                    table.append("UNIQUE(").appendList((List<String>) constraint.param).append(")");
                     break;
                 }
                 case PRIMARY_KEY: {
-                    table.append(" PRIMARY KEY(").appendList((List<String>) constraint.param).append(")");
+                    table.append("PRIMARY KEY(").appendList((List<String>) constraint.param).append(")");
                     break;
                 }
                 case FOREIGN_KEY: {
@@ -65,14 +66,12 @@ public interface SQLDialect {
                         ref = ref.withPrefix(conn.tablePrefix);
                     }
 
-                    table.append(" FOREIGN KEY(").append(values.p1).append(") REFERENCES ").append(ref.encode());
+                    table.append("FOREIGN KEY(").append(values.p1).append(") REFERENCES ").append(ref.encode());
                     break;
                 }
                 case CHECK: {
-                    Condition check = (Condition) constraint.param;
-                    table.append(" CHECK(");
-                    check.encode(table);
-                    table.append(")");
+                    Expression check = (Expression) constraint.param;
+                    table.append("CHECK(").appendExpression(check).append(")");
                     break;
                 }
             }
