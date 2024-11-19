@@ -11,6 +11,10 @@ public class TestSQLite {
         Common.testNumberTypes(conn);
         Common.testStringTypes(conn);
         Common.testWhere(conn);
+        Common.testJoins(conn);
+        Common.testOrderBy(conn);
+        Common.testGroupBy(conn);
+        Common.testCascade(conn);
 
     }
 

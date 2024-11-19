@@ -30,6 +30,7 @@ public class Common {
         testOrderBy(conn);
         testAggregate(conn);
         testGroupBy(conn);
+        testCascade(conn);
     }
 
     public static void testBasics(SQLConnection conn) {
@@ -523,6 +524,54 @@ public class Common {
 
         conn.delete("test_group").execute();
         conn.dropTable("test_group").execute();
+    }
+
+    public static void testCascade(SQLConnection conn) {
+
+        TableSchema aSchema = TableSchema.builder()
+                .withColumn(Column.builder("aId", DataType.TINYINT).withConstraint(Constraint.PRIMARY_KEY))
+                .withColumn("aName", DataType.VARCHAR(255))
+                .build();
+
+        TableSchema bSchema = TableSchema.builder()
+                .withColumn("bId", DataType.TINYINT)
+                .withColumn("bName", DataType.VARCHAR(255))
+                .withColumn(Column.builder("aId", DataType.TINYINT))
+                .withTableConstraint(TableConstraint.PRIMARY_KEY("bId"))
+                .withTableConstraint(TableConstraint.FOREIGN_KEY("aId", new ColumnRef("aTable", "aId")).cascade())
+                .build();
+
+        if(conn.hasTable("bTable")) {
+            conn.dropTable("bTable").execute();
+        }
+        if(conn.hasTable("aTable")) {
+            conn.dropTable("aTable").execute();
+        }
+
+        conn.createTable("aTable", aSchema).execute();
+        conn.createTable("bTable", bSchema).execute();
+
+        conn.insert("aTable", aSchema).addRow(new ConfigSection().with("aId", 1).with("aName", "A1")).execute();
+        conn.insert("aTable", aSchema).addRow(new ConfigSection().with("aId", 2).with("aName", "A2")).execute();
+
+        conn.insert("bTable", bSchema).addRow(new ConfigSection().with("bId", 1).with("bName", "B1").with("aId", 1)).execute();
+        conn.insert("bTable", bSchema).addRow(new ConfigSection().with("bId", 2).with("bName", "B2").with("aId", 2)).execute();
+
+        QueryResult res = conn.select("bTable")
+                .join(Select.JoinType.INNER, "aTable", "aId")
+                .execute();
+
+        Assertions.assertEquals(2, res.rows());
+
+        conn.delete("aTable").execute();
+
+        res = conn.select("bTable")
+                .join(Select.JoinType.INNER, "aTable", "aId")
+                .execute();
+        Assertions.assertEquals(0, res.rows());
+
+        conn.dropTable("bTable").execute();
+        conn.dropTable("aTable").execute();
     }
 
 }

@@ -1,6 +1,5 @@
 package org.wallentines.mdcfg.sql;
 
-import org.wallentines.mdcfg.Tuples;
 import org.wallentines.mdcfg.sql.stmt.Expression;
 
 import java.util.Collection;
@@ -36,13 +35,30 @@ public class TableConstraint<T> {
         return new TableConstraint<>(Type.PRIMARY_KEY, List.of(columns));
     }
 
-    public static TableConstraint<Tuples.T2<String, ColumnRef>> FOREIGN_KEY(String column, ColumnRef ref) {
+    public static ReferenceConstraint FOREIGN_KEY(String column, ColumnRef ref) {
         SQLUtil.validate(column);
-        return new TableConstraint<>(Type.FOREIGN_KEY, new Tuples.T2<>(column, ref));
+        return new ReferenceConstraint(column, ref);
     }
 
     public static TableConstraint<Expression> CHECK(Expression condition) {
         return new TableConstraint<>(Type.CHECK, condition);
+    }
+
+
+    public static class ReferenceConstraint extends TableConstraint<ColumnRef> {
+
+        public final String column;
+        public boolean cascade = false;
+
+        public ReferenceConstraint(String column, ColumnRef ref) {
+            super(Type.FOREIGN_KEY, ref);
+            this.column = column;
+        }
+
+        public ReferenceConstraint cascade() {
+            this.cascade = true;
+            return this;
+        }
     }
 
     public enum Type {

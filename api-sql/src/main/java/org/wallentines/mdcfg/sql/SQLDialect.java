@@ -1,6 +1,5 @@
 package org.wallentines.mdcfg.sql;
 
-import org.wallentines.mdcfg.Tuples;
 import org.wallentines.mdcfg.sql.stmt.Expression;
 import org.wallentines.mdcfg.sql.stmt.StatementBuilder;
 
@@ -60,13 +59,19 @@ public interface SQLDialect {
                     break;
                 }
                 case FOREIGN_KEY: {
-                    Tuples.T2<String, ColumnRef> values = (Tuples.T2<String, ColumnRef>) constraint.param;
-                    ColumnRef ref = values.p2;
+
+                    TableConstraint.ReferenceConstraint refConstraint = (TableConstraint.ReferenceConstraint) constraint;
+                    ColumnRef ref = refConstraint.param;
+                    String column = refConstraint.column;
+
                     if(ref.applyTablePrefix) {
                         ref = ref.withPrefix(conn.tablePrefix);
                     }
 
-                    table.append("FOREIGN KEY(").append(values.p1).append(") REFERENCES ").append(ref.encode());
+                    table.append("FOREIGN KEY(").append(column).append(") REFERENCES ").append(ref.encode());
+                    if(refConstraint.cascade) {
+                        table.append(" ON DELETE CASCADE");
+                    }
                     break;
                 }
                 case CHECK: {
