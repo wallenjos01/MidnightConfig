@@ -15,6 +15,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -448,7 +449,20 @@ public interface Serializer<T> {
 
         @Override
         public <O> SerializeResult<ByteBuffer> deserialize(SerializeContext<O> context, O value) {
-            return SerializeResult.success(context.asBlob(value));
+
+            if(context.isBlob(value)) {
+                return SerializeResult.success(context.asBlob(value));
+            } else if(context.isString(value)) {
+                String val = context.asString(value);
+                Base64.Decoder dec = Base64.getDecoder();
+                try {
+                    return SerializeResult.success(ByteBuffer.wrap(dec.decode(val)));
+                } catch (IllegalArgumentException e) {
+                    return SerializeResult.failure("String was not in base64! " + e.getMessage());
+                }
+            }
+
+            return SerializeResult.failure("Unable to read " + value + " as a blob!");
         }
     };
 

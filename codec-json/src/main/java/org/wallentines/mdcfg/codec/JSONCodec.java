@@ -7,7 +7,6 @@ import org.wallentines.mdcfg.serializer.SerializeContext;
 
 import java.io.*;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -252,7 +251,6 @@ public class JSONCodec implements Codec {
     private static class Decoder<T> {
 
         private final SerializeContext<T> context;
-        private final ByteBuffer copyBuffer = ByteBuffer.allocate(1024);
         private int lastReadChar;
 
         public Decoder(SerializeContext<T> context) {
