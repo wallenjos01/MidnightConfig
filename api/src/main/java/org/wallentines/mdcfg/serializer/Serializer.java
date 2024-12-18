@@ -1,9 +1,6 @@
 package org.wallentines.mdcfg.serializer;
 
-import org.wallentines.mdcfg.ByteBufferInputStream;
-import org.wallentines.mdcfg.ConfigPrimitive;
-import org.wallentines.mdcfg.Functions;
-import org.wallentines.mdcfg.Tuples;
+import org.wallentines.mdcfg.*;
 import org.wallentines.mdcfg.codec.Codec;
 import org.wallentines.mdcfg.codec.DecodeException;
 import org.wallentines.mdcfg.codec.EncodeException;
@@ -178,7 +175,7 @@ public interface Serializer<T> {
      * @return A new serializer with the given fallback.
      */
     default Serializer<T> or(Serializer<T> other) {
-        return new Serializer<>() {
+        return new Serializer<T>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
                 return Serializer.this.serialize(context, value).mapError(() -> other.serialize(context, value));
@@ -191,6 +188,27 @@ public interface Serializer<T> {
         };
     }
 
+    static <L, R> Serializer<Either<L, R>> either(Serializer<L> left, Serializer<R> right) {
+        return new Serializer<Either<L, R>>() {
+            @Override
+            public <O> SerializeResult<O> serialize(SerializeContext<O> context, Either<L, R> value) {
+                if (value.hasLeft()) {
+                    return left.serialize(context, value.left());
+                } else {
+                    return right.serialize(context, value.right());
+                }
+            }
+
+            @Override
+            public <O> SerializeResult<Either<L, R>> deserialize(SerializeContext<O> context, O value) {
+                return left.deserialize(context, value)
+                        .flatMap(Either::<L, R>left)
+                        .mapError(() -> right.deserialize(context, value)
+                                .flatMap(Either::<L, R>right));
+            }
+        };
+    }
+
     /**
      * Creates a new serializer which maps data to another type before serialization and after serialization
      * @param getter A function which converts the mapped type to the serializer's type
@@ -198,8 +216,29 @@ public interface Serializer<T> {
      * @param <O> The type to map to
      * @return A new serializer of the mapped type.
      */
-    default <O> Serializer<O> map(Function<O, T> getter, Function<T, O> construct) {
+    default <O> Serializer<O> map(Function<O, SerializeResult<T>> getter, Function<T, SerializeResult<O>> construct) {
         return new Serializer<>() {
+            @Override
+            public <O1> SerializeResult<O1> serialize(SerializeContext<O1> context, O value) {
+                return getter.apply(value).map(t -> Serializer.this.serialize(context, t));
+            }
+
+            @Override
+            public <O1> SerializeResult<O> deserialize(SerializeContext<O1> context, O1 value) {
+                return Serializer.this.deserialize(context, value).map(construct);
+            }
+        };
+    }
+
+    /**
+     * Creates a new serializer which maps data to another type before serialization and after serialization
+     * @param getter A function which converts the mapped type to the serializer's type
+     * @param construct A function which constructs the mapped type from the serializer's output
+     * @param <O> The type to map to
+     * @return A new serializer of the mapped type.
+     */
+    default <O> Serializer<O> flatMap(Function<O, T> getter, Function<T, O> construct) {
+        return new Serializer<O>() {
             @Override
             public <O1> SerializeResult<O1> serialize(SerializeContext<O1> context, O value) {
                 return Serializer.this.serialize(context, getter.apply(value));

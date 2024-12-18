@@ -382,7 +382,7 @@ public class TestSerializer {
     @Test
     public void testMap() {
 
-        Serializer<StringWrapper> serializer = Serializer.STRING.map(StringWrapper::getStr, StringWrapper::new);
+        Serializer<StringWrapper> serializer = Serializer.STRING.flatMap(StringWrapper::getStr, StringWrapper::new);
 
         ConfigPrimitive prim = new ConfigPrimitive("Hello");
         StringWrapper wrapper = serializer.deserialize(ConfigContext.INSTANCE, prim).getOrThrow();
