@@ -79,7 +79,7 @@ public class ObjectSerializer<T> implements Serializer<T> {
     public static class Entry<T, O> {
 
         private final Serializer<T> serializer;
-        private final Function<O, T> getter;
+        private final Functions.F2<O, SerializeContext<?>, T> getter;
         private final String key;
         private final List<String> alternateKeys = new ArrayList<>();
         private T defaultValue;
@@ -87,11 +87,24 @@ public class ObjectSerializer<T> implements Serializer<T> {
 
         public Entry(Serializer<T> serializer, Function<O, T> getter, String key) {
             this.serializer = serializer;
-            this.getter = getter;
+            this.getter = (o, ctx) -> getter.apply(o);
             this.key = key;
         }
 
         public Entry(Serializer<T> serializer, Function<O, T> getter, String key, Collection<String> alternateKeys) {
+            this.serializer = serializer;
+            this.getter = (o, ctx) -> getter.apply(o);
+            this.key = key;
+            this.alternateKeys.addAll(alternateKeys);
+        }
+
+        public Entry(Serializer<T> serializer, Functions.F2<O, SerializeContext<?>, T> getter, String key) {
+            this.serializer = serializer;
+            this.getter = getter;
+            this.key = key;
+        }
+
+        public Entry(Serializer<T> serializer, Functions.F2<O, SerializeContext<?>, T> getter, String key, Collection<String> alternateKeys) {
             this.serializer = serializer;
             this.getter = getter;
             this.key = key;
@@ -102,8 +115,8 @@ public class ObjectSerializer<T> implements Serializer<T> {
             return serializer;
         }
 
-        public T getValue(O object) {
-            return getter.apply(object);
+        public T getValue(O object, SerializeContext<?> ctx) {
+            return getter.apply(object, ctx);
         }
 
         public String getKey() {
@@ -147,19 +160,24 @@ public class ObjectSerializer<T> implements Serializer<T> {
 
         public <C> SerializeResult<Tuples.T2<String, C>> resolve(SerializeContext<C> context, O object) {
 
-            T out = getValue(object);
-            if(out == null) {
-                if(!optional) {
-                    return SerializeResult.failure("A value for " + key + " could not be obtained from object!");
-                }
-                if(defaultValue != null) {
-                    return SerializeResult.success(new Tuples.T2<>(key, serializer.serialize(context, defaultValue).getOrThrow()));
-                }
+            try {
+                T out = getValue(object, context);
+                if (out == null) {
+                    if (!optional) {
+                        return SerializeResult.failure("A value for " + key + " could not be obtained from object!");
+                    }
+                    if (defaultValue != null) {
+                        return SerializeResult.success(new Tuples.T2<>(key, serializer.serialize(context, defaultValue).getOrThrow()));
+                    }
 
-                return SerializeResult.success(new Tuples.T2<>(key, null));
+                    return SerializeResult.success(new Tuples.T2<>(key, null));
+                }
+                return SerializeResult.success(new Tuples.T2<>(key, serializer.serialize(context, out).getOrThrow()));
+
+            } catch (Throwable th) {
+                return SerializeResult.failure(th);
             }
 
-            return SerializeResult.success(new Tuples.T2<>(key, serializer.serialize(context, out).getOrThrow()));
         }
     }
 
