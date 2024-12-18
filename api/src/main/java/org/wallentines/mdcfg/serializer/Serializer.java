@@ -188,10 +188,21 @@ public interface Serializer<T> {
         };
     }
 
+    /**
+     * Creates a serializer for an Either object
+     * @param left The serializer to use if the left value is present
+     * @param right The serializer to user if the right value is present
+     * @return A new serializer
+     * @param <L> The left type
+     * @param <R> The right type
+     */
     static <L, R> Serializer<Either<L, R>> either(Serializer<L> left, Serializer<R> right) {
         return new Serializer<Either<L, R>>() {
             @Override
             public <O> SerializeResult<O> serialize(SerializeContext<O> context, Either<L, R> value) {
+                if(value == null) {
+                    return SerializeResult.failure("either is null");
+                }
                 if (value.hasLeft()) {
                     return left.serialize(context, value.left());
                 } else {
