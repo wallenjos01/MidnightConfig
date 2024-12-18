@@ -1,8 +1,0 @@
-[
-  {
-    "lines": [ "all" ],
-    "type": "replace",
-    "find": "return new InlineContextSerializer<>() {",
-    "replace": "return new InlineContextSerializer<T,C>() {"
-  }
-]
