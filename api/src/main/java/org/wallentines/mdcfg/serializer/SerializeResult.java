@@ -150,7 +150,9 @@ public class SerializeResult<T> {
      * @return The stored value or a default
      */
     public T getOr(Supplier<T> defaultValue) {
-        if(!success) return defaultValue.get();
+        if(!success) {
+            return defaultValue.get();
+        }
         return value;
     }
 
@@ -163,7 +165,11 @@ public class SerializeResult<T> {
      */
     public <O> SerializeResult<O> map(Function<T, SerializeResult<O>> converter) {
         if(!success) return SerializeResult.failure(error);
-        return converter.apply(value);
+        try {
+            return converter.apply(value);
+        } catch (Throwable e) {
+            return SerializeResult.failure(e);
+        }
     }
 
     /**
@@ -174,7 +180,11 @@ public class SerializeResult<T> {
      */
     public <O> SerializeResult<O> flatMap(Function<T, O> converter) {
         if(!success) return SerializeResult.failure(error);
-        return SerializeResult.ofNullable(converter.apply(value));
+        try {
+            return SerializeResult.ofNullable(converter.apply(value));
+        } catch (Throwable e) {
+            return SerializeResult.failure(e);
+        }
     }
 
     /**
@@ -183,7 +193,13 @@ public class SerializeResult<T> {
      * @return This result, if successful, or newly created one
      */
     public SerializeResult<T> mapError(Supplier<SerializeResult<T>> supplier) {
-        if(!success) return supplier.get();
+        if(!success) {
+            try {
+                return supplier.get();
+            } catch (Throwable t) {
+                return SerializeResult.failure(t);
+            }
+        }
         return this;
     }
 
@@ -193,7 +209,13 @@ public class SerializeResult<T> {
      * @return This result, if successful, or newly created one
      */
     public SerializeResult<T> mapError(Function<Throwable, SerializeResult<T>> function) {
-        if(!success) return function.apply(error);
+        if(!success) {
+            try {
+                return function.apply(error);
+            } catch (Throwable t) {
+                return SerializeResult.failure(t);
+            }
+        }
         return this;
     }
 
@@ -203,7 +225,13 @@ public class SerializeResult<T> {
      * @return This result, if successful, or newly created one
      */
     public SerializeResult<T> flatMapError(Supplier<T> supplier) {
-        if(!success) return SerializeResult.success(supplier.get());
+        if(!success) {
+            try {
+                return SerializeResult.success(supplier.get());
+            } catch (Throwable e) {
+                return SerializeResult.failure(e);
+            }
+        }
         return this;
     }
 
