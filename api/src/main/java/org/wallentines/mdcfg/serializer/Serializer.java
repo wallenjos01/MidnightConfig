@@ -354,7 +354,9 @@ public interface Serializer<T> {
 
             @Override
             public <O1> SerializeResult<O1> serialize(SerializeContext<O1> context, O value) {
-                return dispatcher.apply(reverse.apply(value)).serialize(context, value);
+                T t = reverse.apply(value);
+                SerializeResult<O1> o = Serializer.this.serialize(context, t);
+                return dispatcher.apply(t).serialize(context, value);
             }
         };
     }
