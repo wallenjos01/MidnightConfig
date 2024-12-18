@@ -13,9 +13,9 @@ import java.util.function.Function;
 public class ObjectSerializer<T> implements Serializer<T> {
 
     private final List<Entry<?, T>> entries;
-    private final Functions.F1<EntrySet, SerializeResult<T>> constructor;
+    private final Functions.F2<EntrySet, SerializeContext<?>, SerializeResult<T>> constructor;
 
-    public ObjectSerializer(Collection<Entry<?, T>> entries, Functions.F1<EntrySet, SerializeResult<T>> constructor) {
+    public ObjectSerializer(Collection<Entry<?, T>> entries, Functions.F2<EntrySet, SerializeContext<?>, SerializeResult<T>> constructor) {
         this.entries = List.copyOf(entries);
         this.constructor = constructor;
     }
@@ -49,7 +49,7 @@ public class ObjectSerializer<T> implements Serializer<T> {
             set.add(res.getOrThrow());
         }
 
-        return constructor.apply(set);
+        return constructor.apply(set, context);
     }
 
 
@@ -192,6 +192,10 @@ public class ObjectSerializer<T> implements Serializer<T> {
         }
 
         public ObjectSerializer<O> build(Functions.F1<EntrySet, SerializeResult<O>> constructor) {
+            return new ObjectSerializer<O>(entries, (set, ctx) -> constructor.apply(set));
+        }
+
+        public ObjectSerializer<O> build(Functions.F2<EntrySet, SerializeContext<?>, SerializeResult<O>> constructor) {
             return new ObjectSerializer<O>(entries, constructor);
         }
 
