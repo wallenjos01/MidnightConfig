@@ -134,6 +134,26 @@ public class SerializeResult<T> {
         return value;
     }
 
+    /**
+     * Gets the value if successful, or a default value otherwise
+     * @param defaultValue The default value
+     * @return The stored value or a default
+     */
+    public T getOr(T defaultValue) {
+        if(!success) return defaultValue;
+        return value;
+    }
+
+    /**
+     * Gets the value if successful, or a default value otherwise
+     * @param defaultValue The default value
+     * @return The stored value or a default
+     */
+    public T getOr(Supplier<T> defaultValue) {
+        if(!success) return defaultValue.get();
+        return value;
+    }
+
 
     /**
      * Converts this to a SerializeResult of another type using the given converter, if this result was successful
@@ -174,6 +194,16 @@ public class SerializeResult<T> {
      */
     public SerializeResult<T> mapError(Function<Throwable, SerializeResult<T>> function) {
         if(!success) return function.apply(error);
+        return this;
+    }
+
+    /**
+     * Creates a new SerializeResult of the same type if this one was unsuccessful
+     * @param supplier The function to use to create a new SerializeResult if this one was unsuccessful
+     * @return This result, if successful, or newly created one
+     */
+    public SerializeResult<T> flatMapError(Supplier<T> supplier) {
+        if(!success) return SerializeResult.success(supplier.get());
         return this;
     }
 
