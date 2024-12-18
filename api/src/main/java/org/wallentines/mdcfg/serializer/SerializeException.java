@@ -12,4 +12,8 @@ public class SerializeException extends RuntimeException {
     public SerializeException(Throwable cause) {
         super(cause);
     }
+
+    public SerializeException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

@@ -53,6 +53,16 @@ public class SerializeResult<T> {
     }
 
     /**
+     * Creates a new unsuccessful SerializeResult with the given error
+     * @param error The error String
+     * @return A new SerializeResult with the given error
+     * @param <T> The type of output value
+     */
+    public static <T> SerializeResult<T> failure(String error, Throwable cause) {
+        return new SerializeResult<>(null, new SerializeException(error, cause), false);
+    }
+
+    /**
      * Creates a new successful SerializeResult with the given value, or an unsuccessful SerializeResult if the value is null
      * @param value the output value
      * @return A new SerializeResult with the given value or error
