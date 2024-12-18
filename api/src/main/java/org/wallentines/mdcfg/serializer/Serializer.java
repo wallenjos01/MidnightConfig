@@ -356,7 +356,12 @@ public interface Serializer<T> {
             public <O1> SerializeResult<O1> serialize(SerializeContext<O1> context, O value) {
                 T t = reverse.apply(value);
                 SerializeResult<O1> o = Serializer.this.serialize(context, t);
-                return dispatcher.apply(t).serialize(context, value);
+                if(!o.isComplete()) return o;
+
+                SerializeResult<O1> o2 = dispatcher.apply(t).serialize(context, value);
+                if(!o2.isComplete()) return o2;
+
+                return SerializeResult.success(context.merge(o.getOrThrow(), o2.getOrThrow()));
             }
         };
     }

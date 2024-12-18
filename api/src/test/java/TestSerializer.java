@@ -429,4 +429,56 @@ public class TestSerializer {
 
     }
 
+    static class Typed {
+        String type;
+        String value;
+
+        public Typed(String type, String value) {
+            this.type = type;
+            this.value = value;
+        }
+
+        static Serializer<Typed> s1 = Serializer.STRING.fieldOf("value").flatMap(t -> t.value, s -> new Typed("t1", s));
+        static Serializer<Typed> s2 = Serializer.STRING.fieldOf("value").flatMap(t -> t.value, s -> new Typed("t2", s));
+
+    }
+
+    @Test
+    public void testDispatch() {
+        Serializer<Typed> serializer = Serializer.STRING.fieldOf("type").dispatch(type -> {
+            switch (type) {
+                case "t1":
+                    return Typed.s1;
+                case "t2":
+                    return Typed.s2;
+                default:
+                    throw new IllegalArgumentException("Unknown type: " + type);
+            }
+        }, typed -> typed.type);
+
+        ConfigSection e1 = new ConfigSection()
+                .with("type", "t1")
+                .with("value", "v1");
+
+        ConfigSection e2 = new ConfigSection()
+                .with("type", "t2")
+                .with("value", "v2");
+
+        Typed d1 = serializer.deserialize(ConfigContext.INSTANCE, e1).getOrThrow();
+        Typed d2 = serializer.deserialize(ConfigContext.INSTANCE, e2).getOrThrow();
+
+        Assertions.assertEquals("t1", d1.type);
+        Assertions.assertEquals("t2", d2.type);
+
+        Assertions.assertEquals("v1", d1.value);
+        Assertions.assertEquals("v2", d2.value);
+
+        ConfigObject r1 = serializer.serialize(ConfigContext.INSTANCE, d1).getOrThrow();
+        ConfigObject r2 = serializer.serialize(ConfigContext.INSTANCE, d2).getOrThrow();
+
+        Assertions.assertEquals(e1, r1);
+        Assertions.assertEquals(e2, r2);
+
+    }
+
 }
