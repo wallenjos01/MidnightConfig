@@ -1,7 +1,6 @@
 plugins {
-    id("midnightcfg-build")
-    id("application")
-    alias(libs.plugins.shadow)
+    id("build.application")
+    id("build.shadow")
 }
 
 application {
@@ -16,15 +15,12 @@ java {
 
 dependencies {
 
-    api(project(":api"))
-    api(project(":codec-json"))
-    api(project(":codec-binary"))
+    implementation(project(":api"))
+    implementation(project(":codec-json"))
+    implementation(project(":codec-binary"))
 
-    api(libs.slf4j.api)
-    api(libs.slf4j.simple)
+    implementation(libs.slf4j.api)
+    implementation(libs.slf4j.simple)
 
-    compileOnlyApi(libs.jetbrains.annotations)
-
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
+    compileOnly(libs.jetbrains.annotations)
 }

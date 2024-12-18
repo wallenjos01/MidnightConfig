@@ -1,7 +1,7 @@
 plugins {
-    id("midnightcfg-build")
-    id("midnightcfg-multi-version")
-    id("midnightcfg-publish")
+    id("build.library")
+    id("build.multiversion")
+    id("build.publish")
 }
 
 dependencies {
@@ -12,7 +12,5 @@ dependencies {
 
     implementation(libs.slf4j.api)
 
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.slf4j.simple)
 }

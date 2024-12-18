@@ -69,8 +69,11 @@ public interface SQLDialect {
                     }
 
                     table.append("FOREIGN KEY(").append(column).append(") REFERENCES ").append(ref.encode());
-                    if(refConstraint.cascade) {
-                        table.append(" ON DELETE CASCADE");
+                    if(refConstraint.deleteAction != null) {
+                        table.append(" ON DELETE ").append(refConstraint.deleteAction.grammar);
+                    }
+                    if(refConstraint.updateAction != null) {
+                        table.append(" ON UPDATE ").append(refConstraint.updateAction.grammar);
                     }
                     break;
                 }

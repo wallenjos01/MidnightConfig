@@ -1,7 +1,7 @@
 plugins {
-    id("midnightcfg-build")
-    id("midnightcfg-multi-version")
-    id("midnightcfg-publish")
+    id("build.library")
+    id("build.multiversion")
+    id("build.publish")
 }
 
 dependencies {
@@ -10,8 +10,6 @@ dependencies {
     compileOnly(libs.jetbrains.annotations)
     implementation(libs.slf4j.api)
 
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
     testImplementation(project(":codec-json"))
     testRuntimeOnly(libs.slf4j.simple)
 }

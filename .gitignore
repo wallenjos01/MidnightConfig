@@ -5,10 +5,7 @@ build/
 !**/src/test/**/build/
 
 ### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -47,6 +44,8 @@ bin/
 /api/run/test/test_defaults.json
 /api/run/test/test_empty.json
 /api-sql/run
+
+/cfgtool/run
 
 /codec-binary/run
 /codec-gson/run
