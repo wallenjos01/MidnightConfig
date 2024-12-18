@@ -57,6 +57,18 @@ public interface Serializer<T> {
     }
 
     /**
+     * Creates an entry for use in an ObjectSerializer using the given key and getter
+     * @param key The key to use for lookups and saving
+     * @param getter A function to retrieve an instance of T from an instance of O when serializing
+     * @return An entry for use in ObjectSerializer.create()
+     * @param <O> The type of object to serialize
+     */
+    default <O> ObjectSerializer.Entry<T, O> entry(String key, Functions.F2<O, SerializeContext<?>, T> getter) {
+        return ObjectSerializer.entry(key, this, getter);
+    }
+
+
+    /**
      * Creates a list serializer from this serializer
      * @return A serializer for a list of objects with type T
      */

@@ -205,6 +205,10 @@ public class ObjectSerializer<T> implements Serializer<T> {
         return new Entry<>(serializer, getter, key);
     }
 
+    public static <T, O> Entry<T, O> entry(String key, Serializer<T> serializer, Functions.F2<O, SerializeContext<?>, T> getter) {
+        return new Entry<>(serializer, getter, key);
+    }
+
     public static <T,P1> Serializer<T> create(Entry<P1, T> ent1, Functions.F1<P1,T> constructor) {
 
         return new Builder<T>()
