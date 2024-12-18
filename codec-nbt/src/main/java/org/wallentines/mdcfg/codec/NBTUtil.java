@@ -69,7 +69,7 @@ public class NBTUtil {
         switch (ctx.getType(obj)) {
             case STRING: return TagType.STRING;
             case NUMBER: {
-                Number num = ctx.asNumber(obj);
+                Number num = ctx.asNumber(obj).getOrThrow();
                 if(num instanceof Byte) {
                     return TagType.BYTE;
                 }
@@ -99,7 +99,7 @@ public class NBTUtil {
                     if(type != null) return type;
                 }
 
-                Collection<T> values = ctx.asList(obj);
+                Collection<T> values = ctx.asList(obj).getOrThrow();
                 type = getListType(ctx, values);
 
                 switch (type) {

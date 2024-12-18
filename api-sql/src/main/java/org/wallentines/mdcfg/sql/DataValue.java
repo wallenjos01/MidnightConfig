@@ -92,11 +92,11 @@ public class DataValue<T> implements Expression {
             }
             switch (ctx.getType(value)) {
                 case STRING:
-                    statement.setString(index, ctx.asString(value));
+                    statement.setString(index, ctx.asString(value).getOrThrow());
                     break;
 
                 case NUMBER:
-                    Number num = ctx.asNumber(value);
+                    Number num = ctx.asNumber(value).getOrThrow();
                     if(num instanceof Byte) {
                         statement.setByte(index, (Byte) num);
 
@@ -127,11 +127,11 @@ public class DataValue<T> implements Expression {
                     break;
 
                 case BOOLEAN:
-                    statement.setBoolean(index, ctx.asBoolean(value));
+                    statement.setBoolean(index, ctx.asBoolean(value).getOrThrow());
                     break;
 
                 case BLOB:
-                    statement.setBlob(index, new ByteBufferInputStream(ctx.asBlob(value)));
+                    statement.setBlob(index, new ByteBufferInputStream(ctx.asBlob(value).getOrThrow()));
                     break;
 
                 case NULL:

@@ -102,7 +102,7 @@ public interface Serializer<T> {
      * @param onError A callback to send error text whenever an object fails to serialize
      * @return A serializer for a list of objects with type T
      */
-    default ListSerializer<T> filteredListOf(Consumer<String> onError) {
+    default ListSerializer<T> filteredListOf(Consumer<Throwable> onError) {
         return new ListSerializer<>(this, str -> {
             onError.accept(str);
             return false;
@@ -151,7 +151,7 @@ public interface Serializer<T> {
      * @param onError A callback to send error text whenever an object fails to serialize
      * @return A serializer for map with K keys and T values
      */
-    default MapSerializer<String, T> filteredMapOf(BiConsumer<String, String> onError) {
+    default MapSerializer<String, T> filteredMapOf(BiConsumer<String, Throwable> onError) {
         return new MapSerializer<>(InlineSerializer.RAW, this, (key, str) -> {
             onError.accept(key, str);
             return false;
@@ -165,7 +165,7 @@ public interface Serializer<T> {
      * @return A serializer for map with K keys and T values
      * @param <K> The type of values for the keys in the map
      */
-    default <K> MapSerializer<K, T> filteredMapOf(InlineSerializer<K> keySerializer, BiConsumer<K, String> onError) {
+    default <K> MapSerializer<K, T> filteredMapOf(InlineSerializer<K> keySerializer, BiConsumer<K, Throwable> onError) {
         return new MapSerializer<>(keySerializer, this, (key, str) -> {
             onError.accept(key, str);
             return false;
@@ -231,14 +231,13 @@ public interface Serializer<T> {
 
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
-                if(!context.isBlob(value)) {
-                    return SerializeResult.failure("Expected a blob!");
-                }
-                try(ByteBufferInputStream bis = new ByteBufferInputStream(context.asBlob(value))) {
-                    return Serializer.this.deserialize(context, codec.decode(context, bis));
-                } catch (IOException | DecodeException ex) {
-                    return SerializeResult.failure("Unable to read a value from a blob! " + ex.getMessage());
-                }
+                return context.asBlob(value).map(buf -> {
+                    try(ByteBufferInputStream bis = new ByteBufferInputStream(buf)) {
+                        return Serializer.this.deserialize(context, codec.decode(context, bis));
+                    } catch (IOException | DecodeException ex) {
+                        return SerializeResult.failure("Unable to read a value from a blob! " + ex.getMessage());
+                    }
+                });
             }
         };
     }
@@ -262,14 +261,7 @@ public interface Serializer<T> {
 
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
-                if(!context.isString(value)) {
-                    return SerializeResult.failure("Expected a string!");
-                }
-                try {
-                    return Serializer.this.deserialize(context, codec.decode(context, context.asString(value)));
-                } catch (DecodeException ex) {
-                    return SerializeResult.failure("Unable to read a value from a string! " + ex.getMessage());
-                }
+                return context.asString(value).map(str -> Serializer.this.deserialize(context, codec.decode(context, str)));
             }
         };
     }
@@ -370,11 +362,12 @@ public interface Serializer<T> {
     Serializer<String> STRING = new Serializer<>() {
         @Override
         public <O> SerializeResult<O> serialize(SerializeContext<O> context, String value) {
-            return SerializeResult.ofNullable(context.toString(value), "Unable to serialize " + value + " as a String!");
+            if(value == null) return SerializeResult.failure("String is null!");
+            return SerializeResult.success(context.toString(value));
         }
         @Override
         public <O> SerializeResult<String> deserialize(SerializeContext<O> context, O value) {
-            return SerializeResult.ofNullable(context.asString(value), "Unable to deserialize " + value + " as a String!");
+            return context.asString(value);
         }
     };
 
@@ -396,9 +389,9 @@ public interface Serializer<T> {
         public <O> SerializeResult<BigInteger> deserialize(SerializeContext<O> context, O value) {
             switch (context.getType(value)) {
                 case STRING:
-                    return SerializeResult.success(new BigInteger(context.asString(value)));
+                    return SerializeResult.success(new BigInteger(context.asString(value).getOrThrow()));
                 case NUMBER:
-                    Number num = context.asNumber(value);
+                    Number num = context.asNumber(value).getOrThrow();
                     BigInteger out;
                     if(num instanceof BigInteger) {
                         out = (BigInteger) num;
@@ -423,9 +416,9 @@ public interface Serializer<T> {
         public <O> SerializeResult<BigDecimal> deserialize(SerializeContext<O> context, O value) {
             switch (context.getType(value)) {
                 case STRING:
-                    return SerializeResult.success(new BigDecimal(context.asString(value)));
+                    return SerializeResult.success(new BigDecimal(context.asString(value).getOrThrow()));
                 case NUMBER:
-                    Number num = context.asNumber(value);
+                    Number num = context.asNumber(value).getOrThrow();
                     BigDecimal out;
                     if(num instanceof BigDecimal) {
                         out = (BigDecimal) num;
@@ -450,19 +443,14 @@ public interface Serializer<T> {
         @Override
         public <O> SerializeResult<ByteBuffer> deserialize(SerializeContext<O> context, O value) {
 
-            if(context.isBlob(value)) {
-                return SerializeResult.success(context.asBlob(value));
-            } else if(context.isString(value)) {
-                String val = context.asString(value);
+            return context.asBlob(value).mapError(() -> context.asString(value).map(val -> {
                 Base64.Decoder dec = Base64.getDecoder();
                 try {
                     return SerializeResult.success(ByteBuffer.wrap(dec.decode(val)));
                 } catch (IllegalArgumentException e) {
                     return SerializeResult.failure("String was not in base64! " + e.getMessage());
                 }
-            }
-
-            return SerializeResult.failure("Unable to read " + value + " as a blob!");
+            }));
         }
     };
 
@@ -475,7 +463,8 @@ public interface Serializer<T> {
 
         @Override
         public <O> SerializeResult<java.util.UUID> deserialize(SerializeContext<O> context, O value) {
-            return SerializeResult.ofNullable(context.asString(value)).map(str -> {
+
+            return context.asString(value).map(str -> {
                 try {
                     return SerializeResult.success(java.util.UUID.fromString(str));
                 } catch (IllegalArgumentException ex) {

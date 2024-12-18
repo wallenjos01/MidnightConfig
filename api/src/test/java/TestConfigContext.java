@@ -17,47 +17,46 @@ public class TestConfigContext {
         ConfigContext ctx = ConfigContext.INSTANCE;
 
         ConfigPrimitive primStr = new ConfigPrimitive("String");
-        String str = ctx.asString(primStr);
+        String str = ctx.asString(primStr).getOrThrow();
 
         Assertions.assertNotNull(str);
         Assertions.assertEquals("String", str);
-        Assertions.assertNull(ctx.asNumber(primStr));
+        Assertions.assertFalse(ctx.asNumber(primStr).isComplete());
 
         ConfigPrimitive primNum = new ConfigPrimitive(42);
-        Number num = ctx.asNumber(primNum);
+        Number num = ctx.asNumber(primNum).getOrThrow();
 
         Assertions.assertNotNull(num);
         Assertions.assertEquals(42, num.intValue());
-        Assertions.assertNull(ctx.asString(primNum));
+        Assertions.assertFalse(ctx.asString(primNum).isComplete());
 
         ConfigPrimitive primBool = new ConfigPrimitive(false);
-        Boolean bool = ctx.asBoolean(primBool);
+        Boolean bool = ctx.asBoolean(primBool).getOrThrow();
 
         Assertions.assertNotNull(bool);
         Assertions.assertEquals(false, bool);
-        Assertions.assertNull(ctx.asNumber(primBool));
+        Assertions.assertFalse(ctx.asNumber(primStr).isComplete());
 
         ConfigList list = new ConfigList();
         list.add(37);
         list.add("Hello");
 
-        Collection<ConfigObject> objList = ctx.asList(list);
+        Collection<ConfigObject> objList = ctx.asList(list).getOrThrow();
         Assertions.assertNotNull(objList);
         Assertions.assertEquals(2, objList.size());
 
         List<ConfigObject> objArray = new ArrayList<>(objList);
-        Assertions.assertEquals(37, ctx.asNumber(objArray.get(0)));
-        Assertions.assertEquals("Hello", ctx.asString(objArray.get(1)));
+        Assertions.assertEquals(37, ctx.asNumber(objArray.get(0)).getOrThrow());
+        Assertions.assertEquals("Hello", ctx.asString(objArray.get(1)).getOrThrow());
 
         ConfigSection section = new ConfigSection().with("Key", "Value");
-        Map<String, ConfigObject> objMap = ctx.asMap(section);
-        Assertions.assertNotNull(objMap);
+        Map<String, ConfigObject> objMap = ctx.asMap(section).getOrThrow();
         Assertions.assertEquals(1, objMap.size());
         Assertions.assertTrue(objMap.containsKey("Key"));
         Assertions.assertTrue(objMap.get("Key").isString());
         Assertions.assertEquals("Value", objMap.get("Key").asString());
-        Assertions.assertEquals("Value", ctx.asString(objMap.get("Key")));
-        Assertions.assertEquals("Value", ctx.asString(ctx.get("Key", section)));
+        Assertions.assertEquals("Value", ctx.asString(objMap.get("Key")).getOrThrow());
+        Assertions.assertEquals("Value", ctx.asString(ctx.get("Key", section)).getOrThrow());
 
     }
 

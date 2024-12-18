@@ -29,10 +29,10 @@ public class BooleanSerializer implements Serializer<Boolean> {
 
     @Override
     public <O> SerializeResult<Boolean> deserialize(SerializeContext<O> context, O value) {
-        return SerializeResult.ofNullable(context.asBoolean(value))
-                .mapError(() -> SerializeResult.ofNullable(context.asNumber(value))
+        return context.asBoolean(value)
+                .mapError(() -> context.asNumber(value)
                         .flatMap(num -> num.doubleValue() != 0.0))
-                .mapError(() -> SerializeResult.ofNullable(context.asString(value), "Unable to read " + value + " as a boolean!")
+                .mapError(() -> context.asString(value)
                         .map(str -> {
                             boolean out;
                             if((out = str.equalsIgnoreCase("true")) || str.equalsIgnoreCase("false")) {

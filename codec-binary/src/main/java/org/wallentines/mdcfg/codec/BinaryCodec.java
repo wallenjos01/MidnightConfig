@@ -66,21 +66,21 @@ public class BinaryCodec implements Codec {
         switch (context.getType(input)) {
             case STRING:
                 dos.writeByte(Type.STRING.index());
-                writeString(context.asString(input), dos);
+                writeString(context.asString(input).getOrThrow(), dos);
                 break;
 
             case NUMBER:
-                encodeNumber(context.asNumber(input), dos);
+                encodeNumber(context.asNumber(input).getOrThrow(), dos);
                 break;
 
             case BOOLEAN:
-                Boolean value = context.asBoolean(input);
+                Boolean value = context.asBoolean(input).getOrThrow();
                 dos.writeByte(Type.BOOLEAN.index());
                 dos.writeBoolean(value);
                 break;
 
             case BLOB:
-                ByteBuffer buffer = context.asBlob(input);
+                ByteBuffer buffer = context.asBlob(input).getOrThrow();
                 dos.writeByte(Type.BLOB.index());
                 dos.write(buffer.limit());
 
@@ -97,7 +97,7 @@ public class BinaryCodec implements Codec {
                 break;
 
             case LIST:
-                Collection<T> objects = context.asList(input);
+                Collection<T> objects = context.asList(input).getOrThrow();
                 dos.writeByte(Type.LIST.index());
                 dos.writeInt(objects.size());
 
@@ -107,7 +107,7 @@ public class BinaryCodec implements Codec {
                 break;
 
             case MAP:
-                Map<String, T> entries = context.asOrderedMap(input);
+                Map<String, T> entries = context.asOrderedMap(input).getOrThrow();
                 dos.writeByte(Type.SECTION.index());
                 dos.writeInt(entries.size());
 

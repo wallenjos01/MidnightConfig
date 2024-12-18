@@ -13,10 +13,10 @@ import java.util.function.Supplier;
 public class SerializeResult<T> {
 
     private final T value;
-    private final String error;
+    private final Throwable error;
     private final boolean success;
 
-    private SerializeResult(T value, String error, boolean success) {
+    private SerializeResult(T value, Throwable error, boolean success) {
         this.value = value;
         this.error = error;
         this.success = success;
@@ -39,6 +39,16 @@ public class SerializeResult<T> {
      * @param <T> The type of output value
      */
     public static <T> SerializeResult<T> failure(String error) {
+        return new SerializeResult<>(null, new SerializeException(error), false);
+    }
+
+    /**
+     * Creates a new unsuccessful SerializeResult with the given error
+     * @param error The error String
+     * @return A new SerializeResult with the given error
+     * @param <T> The type of output value
+     */
+    public static <T> SerializeResult<T> failure(Throwable error) {
         return new SerializeResult<>(null, error, false);
     }
 
@@ -75,11 +85,19 @@ public class SerializeResult<T> {
     }
 
     /**
+     * Retrieves the error, or null if there was no error
+     * @return The error
+     */
+    public Throwable getError() {
+        return success ? null : error;
+    }
+
+    /**
      * Retrieves the error string, or null if there was no error
      * @return The error string
      */
-    public String getError() {
-        return success ? null : error;
+    public String getErrorMessage() {
+        return success ? null : error.getMessage();
     }
 
     /**
@@ -106,6 +124,16 @@ public class SerializeResult<T> {
         if(!success) throw new SerializeException(error);
         return value;
     }
+
+    /**
+     * Retrieves the output value, or throws an error
+     * @return The output value
+     */
+    public <E extends Throwable> T getOrThrow(Function<SerializeException, E> func) throws E {
+        if(!success) throw func.apply(new SerializeException(error));
+        return value;
+    }
+
 
     /**
      * Converts this to a SerializeResult of another type using the given converter, if this result was successful
@@ -144,7 +172,7 @@ public class SerializeResult<T> {
      * @param function The function to use to create a new SerializeResult if this one was unsuccessful
      * @return This result, if successful, or newly created one
      */
-    public SerializeResult<T> mapError(Function<String, SerializeResult<T>> function) {
+    public SerializeResult<T> mapError(Function<Throwable, SerializeResult<T>> function) {
         if(!success) return function.apply(error);
         return this;
     }

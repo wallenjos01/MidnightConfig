@@ -9,7 +9,11 @@ public class DecodeException extends RuntimeException {
         super(message);
     }
 
-    public DecodeException(String message, Exception parent) {
+    public DecodeException(String message, Throwable parent) {
         super(message, parent);
+    }
+
+    public DecodeException(Throwable parent) {
+        super(parent);
     }
 }

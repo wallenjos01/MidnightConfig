@@ -19,49 +19,49 @@ public interface SerializeContext<T> {
      * @param object The object to read
      * @return A String, or null if the object cannot be interpreted as such
      */
-    String asString(T object);
+    SerializeResult<String> asString(T object);
 
     /**
      * Interprets the given encode-able object as a Number
      * @param object The object to read
      * @return A Number, or null if the object cannot be interpreted as such
      */
-    Number asNumber(T object);
+    SerializeResult<Number> asNumber(T object);
 
     /**
      * Interprets the given encode-able object as a Boolean
      * @param object The object to read
      * @return A Boolean, or null if the object cannot be interpreted as such
      */
-    Boolean asBoolean(T object);
+    SerializeResult<Boolean> asBoolean(T object);
 
     /**
      * Interprets the given encode-able object as a blob
      * @param object The object to read
      * @return A Blob, or null if the object cannot be interpreted as such
      */
-    ByteBuffer asBlob(T object);
+    SerializeResult<ByteBuffer> asBlob(T object);
 
     /**
      * Interprets the given encode-able object as a List
      * @param object The object to read
      * @return A List, or null if the object cannot be interpreted as such
      */
-    Collection<T> asList(T object);
+    SerializeResult<Collection<T>> asList(T object);
 
     /**
      * Interprets the given encode-able object as a Map
      * @param object The object to read
      * @return A Map, or null if the object cannot be interpreted as such
      */
-    Map<String, T> asMap(T object);
+    SerializeResult<Map<String, T>> asMap(T object);
 
     /**
      * Interprets the given encode-able object as a Map which retains its key order
      * @param object The object to read
      * @return A Map, or null if the object cannot be interpreted as such
      */
-    Map<String, T> asOrderedMap(T object);
+    SerializeResult<Map<String, T>> asOrderedMap(T object);
 
     /**
      * Determines if the given encode-able object should be treated as null
@@ -210,26 +210,30 @@ public interface SerializeContext<T> {
      * Merges the given list of encode-able objects into the given object, assuming it is a list
      * @param list The list to merge from
      * @param object The object to merge into
-     * @return A new list, merged from the given data, or null if the object was not a list
+     * @return A new list, merged from the given data, or the original object if the object was not a list
      */
     default T mergeList(Collection<T> list, T object) {
-        if(!isList(object)) return null;
-        Collection<T> objs = asList(object);
-        if(list != null) objs.addAll(list);
-        return toList(objs);
+        SerializeResult<Collection<T>> objs = asList(object);
+        if(!objs.isComplete()) return object;
+
+        Collection<T> out = objs.getOrNull();
+        out.addAll(list);
+
+        return toList(out);
     }
 
     /**
      * Merges the given encode-able objects together, if both are actually maps
      * @param value The map read from
      * @param other The map merge into
-     * @return A new map consisting of entries from both maps
+     * @return A new map consisting of entries from both maps, or a copy of the second object
      */
     default T mergeMap(T value, T other) {
-        if(!isMap(value) || !isMap(other)) return null;
+
+        if(!isMap(value) || !isMap(other)) return copy(other);
         for(String key : getOrderedKeys(other)) {
-            if(get(key, value) == null) {
-                set(key, get(key, other), value);
+            if(isNull(get(key, other))) {
+                set(key, get(key, value), other);
             }
         }
         return value;
@@ -240,12 +244,12 @@ public interface SerializeContext<T> {
      * values with the same key in the second map
      * @param value The map read from
      * @param other The map merge into
-     * @return A new map consisting of entries from both maps
+     * @return A new map consisting of entries from both maps, or a copy of the second object
      */
     default T mergeMapOverwrite(T value, T other) {
-        if(!isMap(value) || !isMap(other)) return null;
-        for(String key : getOrderedKeys(other)) {
-            set(key, get(key, other), value);
+        if(!isMap(value) || !isMap(other)) return copy(other);
+        for(String key : getOrderedKeys(value)) {
+            set(key, get(key, value), other);
         }
         return value;
     }
@@ -257,8 +261,8 @@ public interface SerializeContext<T> {
      * @return A merged value, if possible, or a copy of the second value if not
      */
     default T merge(T value, T other) {
-        if(value == null) {
-            return copy(other);
+        if(isNull(other)) {
+            return nullValue();
         }
         if(isMap(other)) {
             if(!isMap(value)) return copy(other);
@@ -276,7 +280,7 @@ public interface SerializeContext<T> {
      * @param key The key to save the value as
      * @param value The value to save
      * @param object The object put values into
-     * @return A map with the value set, or null if the given object was not a map
+     * @return A map with the value set, or a null value if the given object was not a map
      */
     T set(String key, T value, T object);
 
@@ -290,20 +294,19 @@ public interface SerializeContext<T> {
     @SuppressWarnings("unchecked")
     default <O> O convert(SerializeContext<O> other, T object) {
 
-        if(object == null) return null;
         if(other.getClass() == getClass()) return (O) object;
 
         switch (getType(object)) {
             case STRING:
-                return other.toString(asString(object));
+                return other.toString(asString(object).getOrThrow());
             case NUMBER:
-                return other.toNumber(asNumber(object));
+                return other.toNumber(asNumber(object).getOrThrow());
             case BOOLEAN:
-                return other.toBoolean(asBoolean(object));
+                return other.toBoolean(asBoolean(object).getOrThrow());
             case BLOB:
-                return other.toBlob(asBlob(object));
+                return other.toBlob(asBlob(object).getOrThrow());
             case LIST:
-                return other.toList(asList(object).stream()
+                return other.toList(asList(object).getOrThrow().stream()
                         .map(t -> convert(other, t)).collect(Collectors.toList()));
             case MAP: {
                 O out = other.toMap(new LinkedHashMap<>());
@@ -313,6 +316,8 @@ public interface SerializeContext<T> {
                 }
                 return out;
             }
+            case NULL:
+                return other.nullValue();
             default:
                 throw new SerializeException("Don't know how to convert " + object + " to another context!");
         }
@@ -325,19 +330,18 @@ public interface SerializeContext<T> {
      */
     default T copy(T object) {
 
-        if(object == null) return null;
         switch (getType(object)) {
             case STRING:
-                return toString(asString(object));
+                return toString(asString(object).getOrThrow());
             case NUMBER:
-                return toNumber(copyNumber(asNumber(object)));
+                return toNumber(copyNumber(asNumber(object).getOrThrow()));
             case BOOLEAN:
-                return toBoolean(asBoolean(object));
+                return toBoolean(asBoolean(object).getOrThrow());
             case BLOB:
-                return toBlob(asBlob(object));
+                return toBlob(asBlob(object).getOrThrow());
             case LIST: {
                 List<T> out = new ArrayList<>();
-                for (T value : asList(object)) {
+                for (T value : asList(object).getOrThrow()) {
                     out.add(copy(value));
                 }
                 return toList(out);
@@ -350,6 +354,8 @@ public interface SerializeContext<T> {
                 }
                 return out;
             }
+            case NULL:
+                return nullValue();
             default:
                 throw new SerializeException("Don't know how to clone " + object + "in this context!");
 

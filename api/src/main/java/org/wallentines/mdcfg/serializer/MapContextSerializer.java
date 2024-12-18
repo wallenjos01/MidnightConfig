@@ -10,7 +10,7 @@ public class MapContextSerializer<K, V, C> implements ContextSerializer<Map<K, V
 
     private final InlineContextSerializer<K, C> keySerializer;
     private final ContextSerializer<V, C> valueSerializer;
-    private final BiFunction<K, String, Boolean> onError;
+    private final BiFunction<K, Throwable, Boolean> onError;
 
     /**
      * Creates a MapSerializer with the given key and value serializers
@@ -29,7 +29,7 @@ public class MapContextSerializer<K, V, C> implements ContextSerializer<Map<K, V
      *                will be stopped with an error
      */
     @Deprecated
-    public MapContextSerializer(InlineContextSerializer<K, C> keySerializer, ContextSerializer<V, C> valueSerializer, Function<String, Boolean> onError) {
+    public MapContextSerializer(InlineContextSerializer<K, C> keySerializer, ContextSerializer<V, C> valueSerializer, Function<Throwable, Boolean> onError) {
         this.keySerializer = keySerializer;
         this.valueSerializer = valueSerializer;
         this.onError = (k, str) -> onError.apply(str);
@@ -41,7 +41,7 @@ public class MapContextSerializer<K, V, C> implements ContextSerializer<Map<K, V
      * @param onError The function to call when an error is encountered. If this function returns true, (de)serializing
      *                will be stopped with an error
      */
-    public MapContextSerializer(InlineContextSerializer<K, C> keySerializer, ContextSerializer<V, C> valueSerializer, BiFunction<K, String, Boolean> onError) {
+    public MapContextSerializer(InlineContextSerializer<K, C> keySerializer, ContextSerializer<V, C> valueSerializer, BiFunction<K, Throwable, Boolean> onError) {
         this.keySerializer = keySerializer;
         this.valueSerializer = valueSerializer;
         this.onError = onError;
@@ -71,26 +71,26 @@ public class MapContextSerializer<K, V, C> implements ContextSerializer<Map<K, V
     @Override
     public <O> SerializeResult<Map<K, V>> deserialize(SerializeContext<O> context, O object, C ctx) {
 
-        Map<K, V> out = new HashMap<>();
-        Map<String, O> in = context.asMap(object);
-        if(in == null) return SerializeResult.failure("Unable to convert " + object + " to a map!");
+        return context.asMap(object).map(in -> {
 
-        for(Map.Entry<String, O> entry : in.entrySet()) {
+            Map<K, V> out = new HashMap<>();
+            for(Map.Entry<String, O> entry : in.entrySet()) {
 
-            K key = keySerializer.readString(entry.getKey(), ctx);
-            if(key == null) return SerializeResult.failure("Unable to deserialize map key " + entry.getKey() + "!");
+                K key = keySerializer.readString(entry.getKey(), ctx);
+                if(key == null) return SerializeResult.failure("Unable to deserialize map key " + entry.getKey() + "!");
 
-            SerializeResult<V> valueResult = valueSerializer.deserialize(context, entry.getValue(), ctx);
-            if(!valueResult.isComplete() && onError.apply(key, valueResult.getError())) {
-                return SerializeResult.failure("Unable to deserialize map value " + entry.getValue() + " with key " + key + "! " + valueResult.getError());
+                SerializeResult<V> valueResult = valueSerializer.deserialize(context, entry.getValue(), ctx);
+                if(!valueResult.isComplete() && onError.apply(key, valueResult.getError())) {
+                    return SerializeResult.failure("Unable to deserialize map value " + entry.getValue() + " with key " + key + "! " + valueResult.getError());
+                }
+
+                if(valueResult.isComplete()) {
+                    out.put(key, valueResult.getOrThrow());
+                }
             }
 
-            if(valueResult.isComplete()) {
-                out.put(key, valueResult.getOrThrow());
-            }
-        }
-
-        return SerializeResult.success(out);
+            return SerializeResult.success(out);
+        });
     }
 
 }

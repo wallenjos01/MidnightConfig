@@ -72,16 +72,20 @@ public class NBTCodec implements Codec {
             }
 
             switch (type) {
-                case BYTE: writer.writeByte(ctx.isBoolean(t) ? ctx.asBoolean(t) ? 0b1 : 0b0 : ctx.asNumber(t).byteValue()); break;
-                case SHORT: writer.writeShort(ctx.asNumber(t).shortValue()); break;
-                case INT: writer.writeInt(ctx.asNumber(t).intValue()); break;
-                case LONG: writer.writeLong(ctx.asNumber(t).longValue()); break;
-                case FLOAT: writer.writeFloat(ctx.asNumber(t).floatValue()); break;
-                case DOUBLE: writer.writeDouble(ctx.asNumber(t).doubleValue()); break;
-                case STRING: writer.writeUTF(ctx.asString(t)); break;
+                case BYTE: writer.writeByte(ctx.isBoolean(t)
+                        ? ctx.asBoolean(t).getOrThrow(EncodeException::new)
+                                ? 0b1
+                                : 0b0
+                        : ctx.asNumber(t).getOrThrow(EncodeException::new).byteValue()); break;
+                case SHORT: writer.writeShort(ctx.asNumber(t).getOrThrow(EncodeException::new).shortValue()); break;
+                case INT: writer.writeInt(ctx.asNumber(t).getOrThrow(EncodeException::new).intValue()); break;
+                case LONG: writer.writeLong(ctx.asNumber(t).getOrThrow(EncodeException::new).longValue()); break;
+                case FLOAT: writer.writeFloat(ctx.asNumber(t).getOrThrow(EncodeException::new).floatValue()); break;
+                case DOUBLE: writer.writeDouble(ctx.asNumber(t).getOrThrow(EncodeException::new).doubleValue()); break;
+                case STRING: writer.writeUTF(ctx.asString(t).getOrThrow(EncodeException::new)); break;
                 case BYTE_ARRAY:
                     if(ctx.isBlob(t)) {
-                        ByteBuffer buf = ctx.asBlob(t).asReadOnlyBuffer();
+                        ByteBuffer buf = ctx.asBlob(t).getOrThrow(EncodeException::new).asReadOnlyBuffer();
                         buf.rewind();
                         int size = buf.limit();
 
@@ -100,7 +104,7 @@ public class NBTCodec implements Codec {
                 case INT_ARRAY:
                 case LONG_ARRAY: {
 
-                    Collection<T> list = ctx.asList(t);
+                    Collection<T> list = ctx.asList(t).getOrThrow(EncodeException::new);
                     writer.writeInt(list.size());
                     for (T t1 : list) {
                         encodeValue(t1);
@@ -108,7 +112,7 @@ public class NBTCodec implements Codec {
                     break;
                 }
                 case LIST: {
-                    Collection<T> list = ctx.asList(t);
+                    Collection<T> list = ctx.asList(t).getOrThrow(EncodeException::new);
                     TagType lt = NBTUtil.getListType(ctx, list);
                     if(lt == null) {
                         throw new EncodeException("Unable to determine NBT list type of" + t + "!");

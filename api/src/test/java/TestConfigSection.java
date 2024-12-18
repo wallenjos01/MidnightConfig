@@ -21,19 +21,19 @@ public class TestConfigSection {
         Assertions.assertEquals(0, test.size());
 
         // Adding a raw entry
-        Assertions.assertNull(test.set("Test", new ConfigPrimitive(12)));
+        Assertions.assertTrue(test.set("Test", new ConfigPrimitive(12)).isNull());
         Assertions.assertEquals(1, test.size());
         Assertions.assertTrue(test.get("Test").isPrimitive());
         Assertions.assertTrue(test.get("Test").asPrimitive().isNumber());
         Assertions.assertEquals(12, test.get("Test").asPrimitive().asInt());
 
         // Adding a String entry
-        Assertions.assertNull(test.set("Hello", "World"));
+        Assertions.assertTrue(test.set("Hello", "World").isNull());
         Assertions.assertEquals(2, test.size());
         Assertions.assertEquals("World", test.getString("Hello"));
 
         // Adding an Integer entry
-        Assertions.assertNull(test.set("Number", 42));
+        Assertions.assertTrue(test.set("Number", 42).isNull());
         Assertions.assertEquals(3, test.size());
         Assertions.assertEquals(42, test.getInt("Number"));
         Assertions.assertEquals("World", test.getString("Hello"));
@@ -43,7 +43,8 @@ public class TestConfigSection {
         Assertions.assertEquals(2, test.size());
         Assertions.assertEquals(42, test.getInt("Number"));
         Assertions.assertEquals("World", removed.asPrimitive().asString());
-        Assertions.assertNull(test.get("Hello"));
+        Assertions.assertFalse(test.has("Hello"));
+        Assertions.assertTrue(test.get("Hello").isNull());
 
         // Overwriting an entry
         ConfigObject overwritten = test.set("Number", true);
@@ -97,7 +98,7 @@ public class TestConfigSection {
         ConfigSection section = new ConfigSection();
         TestSerializable test = new TestSerializable("Hello", 42);
 
-        Assertions.assertNull(section.set("Test", test, serializer));
+        Assertions.assertTrue(section.set("Test", test, serializer).isNull());
         Assertions.assertEquals(1, section.size());
 
         TestSerializable deserialized = section.get("Test", serializer);

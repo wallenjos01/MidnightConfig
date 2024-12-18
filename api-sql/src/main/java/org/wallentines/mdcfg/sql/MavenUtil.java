@@ -200,7 +200,7 @@ public class MavenUtil {
             @Override
             public <O> SerializeResult<ArtifactSpec> deserialize(SerializeContext<O> context, O value) {
                 if(!context.isString(value)) return SerializeResult.failure("Expected a string!");
-                return SerializeResult.ofNullable(ArtifactSpec.parse(context.asString(value)), "Found malformed artifact spec!");
+                return SerializeResult.ofNullable(ArtifactSpec.parse(context.asString(value).getOrThrow()), "Found malformed artifact spec!");
             }
         };
     }

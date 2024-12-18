@@ -324,6 +324,11 @@ public class ConfigList extends ConfigObject {
     }
 
     @Override
+    public boolean isNull() {
+        return false;
+    }
+
+    @Override
     public boolean isList() {
         return true;
     }

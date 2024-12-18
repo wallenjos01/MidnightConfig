@@ -53,7 +53,7 @@ public class NumberSerializer<T extends Number> implements Serializer<T> {
     @Override
     public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
 
-        return SerializeResult.ofNullable(context.asNumber(value), "Unable to read " + value + " as a number!").map(this::validate);
+        return context.asNumber(value).map(this::validate);
     }
 
     /**

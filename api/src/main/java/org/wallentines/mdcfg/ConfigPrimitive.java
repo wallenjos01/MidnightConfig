@@ -172,6 +172,11 @@ public class ConfigPrimitive extends ConfigObject {
     }
 
     @Override
+    public boolean isNull() {
+        return value == null;
+    }
+
+    @Override
     public String asString() {
         if(!isString()) throw new IllegalStateException("Cannot convert " + value + " to a String!");
         return (String) value;

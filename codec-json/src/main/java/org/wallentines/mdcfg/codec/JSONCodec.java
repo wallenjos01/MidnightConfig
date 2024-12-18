@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.serializer.SerializeContext;
+import org.wallentines.mdcfg.serializer.SerializeResult;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -184,10 +185,13 @@ public class JSONCodec implements Codec {
 
         private void encodeList(T value, String prefix, BufferedWriter writer) throws IOException {
 
-            if (!context.isList(value)) throw new EncodeException("Not a list: " + value);
-            String nextPrefix = prefix + indent;
+            SerializeResult<Collection<T>> collectionResult = context.asList(value);
+            if(!collectionResult.isComplete()) {
+                throw new EncodeException("Not a list", collectionResult.getError());
+            }
 
-            Collection<T> collection = context.asList(value);
+            Collection<T> collection = collectionResult.getOrThrow(EncodeException::new);
+            String nextPrefix = prefix + indent;
 
             writer.write("[");
             if(collection.isEmpty()) {
@@ -217,17 +221,17 @@ public class JSONCodec implements Codec {
             switch (context.getType(value)) {
                 case STRING:
                     writer.write("\"");
-                    writer.write(encodeString(context.asString(value)));
+                    writer.write(encodeString(context.asString(value).getOrThrow(EncodeException::new)));
                     writer.write("\"");
                     break;
                 case NUMBER:
-                    writer.write(context.asNumber(value).toString());
+                    writer.write(context.asNumber(value).getOrThrow(EncodeException::new).toString());
                     break;
                 case BOOLEAN:
-                    writer.write(context.asBoolean(value).toString());
+                    writer.write(context.asBoolean(value).getOrThrow(EncodeException::new).toString());
                     break;
                 case BLOB:
-                    String str = Base64.getEncoder().encode(context.asBlob(value)).asCharBuffer().toString();
+                    String str = Base64.getEncoder().encode(context.asBlob(value).getOrThrow(EncodeException::new)).asCharBuffer().toString();
                     writer.write("\"");
                     writer.write(str);
                     writer.write("\"");

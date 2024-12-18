@@ -107,31 +107,31 @@ public class SNBTCodec implements Codec {
             }
             switch (type) {
                 case STRING:
-                    encodeString(context.asString(input));
+                    encodeString(context.asString(input).getOrThrow(EncodeException::new));
                     break;
                 case BYTE:
-                    stream.write(context.asNumber(input) + "b");
+                    stream.write(context.asNumber(input).getOrThrow(EncodeException::new) + "b");
                     break;
                 case SHORT:
-                    stream.write(context.asNumber(input) + "s");
+                    stream.write(context.asNumber(input).getOrThrow(EncodeException::new) + "s");
                     break;
                 case INT:
-                    stream.write(context.asNumber(input).toString());
+                    stream.write(context.asNumber(input).getOrThrow(EncodeException::new).toString());
                     break;
                 case LONG:
-                    stream.write(context.asNumber(input) + "L");
+                    stream.write(context.asNumber(input).getOrThrow(EncodeException::new) + "L");
                     break;
                 case FLOAT:
-                    stream.write(context.asNumber(input) + "f");
+                    stream.write(context.asNumber(input).getOrThrow(EncodeException::new) + "f");
                     break;
                 case DOUBLE:
-                    stream.write(context.asNumber(input) + "d");
+                    stream.write(context.asNumber(input).getOrThrow(EncodeException::new) + "d");
                     break;
                 case BYTE_ARRAY: {
                     stream.write("[B;");
                     if (context.isBlob(input)) {
 
-                        ByteBuffer buf = context.asBlob(input).asReadOnlyBuffer();
+                        ByteBuffer buf = context.asBlob(input).getOrThrow(EncodeException::new).asReadOnlyBuffer();
                         buf.rewind();
                         int size = buf.limit();
                         for(int i = 0 ; i < size ; i++) {
@@ -146,7 +146,7 @@ public class SNBTCodec implements Codec {
 
                     } else {
                         int index = 0;
-                        for (T t : context.asList(input)) {
+                        for (T t : context.asList(input).getOrThrow(EncodeException::new)) {
                             if (index > 0) {
                                 stream.write(',');
                             }
@@ -154,7 +154,7 @@ public class SNBTCodec implements Codec {
                                 stream.write(index + ":");
                             }
                             index++;
-                            stream.write(context.asNumber(t).byteValue() + "b");
+                            stream.write(context.asNumber(t).getOrThrow(EncodeException::new).byteValue() + "b");
                         }
                     }
                     stream.write(']');
@@ -163,7 +163,7 @@ public class SNBTCodec implements Codec {
                 case INT_ARRAY: {
                     stream.write("[I;");
                     int index = 0;
-                    for (T t : context.asList(input)) {
+                    for (T t : context.asList(input).getOrThrow(EncodeException::new)) {
                         if (index > 0) {
                             stream.write(',');
                         }
@@ -171,7 +171,7 @@ public class SNBTCodec implements Codec {
                             stream.write(index + ":");
                         }
                         index++;
-                        stream.write(Objects.toString(context.asNumber(t).intValue()));
+                        stream.write(Objects.toString(context.asNumber(t).getOrThrow(EncodeException::new).intValue()));
                     }
                     stream.write(']');
                     break;
@@ -179,7 +179,7 @@ public class SNBTCodec implements Codec {
                 case LONG_ARRAY: {
                     stream.write("[L;");
                     int index = 0;
-                    for (T t : context.asList(input)) {
+                    for (T t : context.asList(input).getOrThrow(EncodeException::new)) {
                         if (index > 0) {
                             stream.write(',');
                         }
@@ -187,7 +187,7 @@ public class SNBTCodec implements Codec {
                             stream.write(index + ":");
                         }
                         index++;
-                        stream.write(context.asNumber(t).longValue() + "L");
+                        stream.write(context.asNumber(t).getOrThrow(EncodeException::new).longValue() + "L");
                     }
 
                     stream.write(']');
@@ -196,7 +196,7 @@ public class SNBTCodec implements Codec {
                 case LIST:
                     stream.write("[");
                     int index = 0;
-                    for (T t : context.asList(input)) {
+                    for (T t : context.asList(input).getOrThrow(EncodeException::new)) {
                         if (index > 0) {
                             stream.write(',');
                         }
@@ -567,7 +567,7 @@ public class SNBTCodec implements Codec {
             if(listType == TagType.BYTE_ARRAY) {
                 ByteBuffer buf = ByteBuffer.allocate(values.size());
                 for(T t : values) {
-                    buf.put(context.asNumber(t).byteValue());
+                    buf.put(context.asNumber(t).getOrThrow(DecodeException::new).byteValue());
                 }
                 out = context.toBlob(buf);
             } else {

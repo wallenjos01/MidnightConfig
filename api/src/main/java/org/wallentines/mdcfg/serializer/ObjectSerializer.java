@@ -129,16 +129,15 @@ public class ObjectSerializer<T> implements Serializer<T> {
         public <C> SerializeResult<T> parse(SerializeContext<C> context, C value) {
 
             C val = context.get(key, value);
-            if(val == null) {
+            if(context.isNull(val)) {
                 for(String s : alternateKeys) {
                     val = context.get(s, value);
-                    if(val != null) break;
+                    if(!context.isNull(val)) break;
                 }
-            }
-
-            if(val != null) {
+            } else {
                 return serializer.deserialize(context, val).mapError(error -> SerializeResult.failure("Unable to deserialize value with key " + key + "! " + error));
             }
+
             if(!optional) {
                 return SerializeResult.failure("Unable to find value for required key " + key + "!");
             }

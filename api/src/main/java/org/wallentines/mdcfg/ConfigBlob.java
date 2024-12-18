@@ -59,6 +59,11 @@ public class ConfigBlob extends ConfigObject {
         return true;
     }
 
+    @Override
+    public boolean isNull() {
+        return false;
+    }
+
 
     @Override
     public ConfigPrimitive asPrimitive() {

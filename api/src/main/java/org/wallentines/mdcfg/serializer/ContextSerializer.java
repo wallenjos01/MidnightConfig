@@ -93,7 +93,7 @@ public interface ContextSerializer<T,C> {
      * @param onError A callback to send error text whenever an object fails to serialize
      * @return A serializer for a list of objects with type T
      */
-    default ListContextSerializer<T, C> filteredListOf(Consumer<String> onError) {
+    default ListContextSerializer<T, C> filteredListOf(Consumer<Throwable> onError) {
         return new ListContextSerializer<>(this, str -> {
             onError.accept(str);
             return false;
@@ -142,7 +142,7 @@ public interface ContextSerializer<T,C> {
      * @param onError A callback to send error text whenever an object fails to serialize
      * @return A serializer for map with K keys and T values
      */
-    default MapContextSerializer<String, T, C> filteredMapOf(BiConsumer<String, String> onError) {
+    default MapContextSerializer<String, T, C> filteredMapOf(BiConsumer<String, Throwable> onError) {
         return new MapContextSerializer<>(InlineContextSerializer.raw(), this, (key, str) -> {
             onError.accept(key, str);
             return false;
@@ -156,7 +156,7 @@ public interface ContextSerializer<T,C> {
      * @return A serializer for map with K keys and T values
      * @param <K> The type of values for the keys in the map
      */
-    default <K> MapContextSerializer<K, T, C> filteredMapOf(InlineContextSerializer<K, C> keySerializer, BiConsumer<K, String> onError) {
+    default <K> MapContextSerializer<K, T, C> filteredMapOf(InlineContextSerializer<K, C> keySerializer, BiConsumer<K, Throwable> onError) {
         return new MapContextSerializer<>(keySerializer, this, (key, str) -> {
             onError.accept(key, str);
             return false;

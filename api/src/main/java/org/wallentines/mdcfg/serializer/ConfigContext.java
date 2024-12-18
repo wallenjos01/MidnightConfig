@@ -16,50 +16,53 @@ public class ConfigContext implements SerializeContext<ConfigObject> {
     public static final ConfigContext INSTANCE = new ConfigContext();
 
     @Override
-    public String asString(ConfigObject object) {
-        if(!isString(object)) return null;
-        return object.asPrimitive().asString();
+    public SerializeResult<String> asString(ConfigObject object) {
+        if(!isString(object)) return SerializeResult.failure("Not a string");
+        return SerializeResult.success(object.asPrimitive().asString());
     }
 
     @Override
-    public Number asNumber(ConfigObject object) {
-        if(!isNumber(object)) return null;
-        return object.asPrimitive().asNumber();
+    public SerializeResult<Number> asNumber(ConfigObject object) {
+        if(!isNumber(object)) return SerializeResult.failure("Not a number");
+        return SerializeResult.success(object.asPrimitive().asNumber());
     }
 
     @Override
-    public Boolean asBoolean(ConfigObject object) {
-        if(!isBoolean(object)) return null;
-        return object.asPrimitive().asBoolean();
+    public SerializeResult<Boolean> asBoolean(ConfigObject object) {
+        if(!isBoolean(object)) return SerializeResult.failure("Not a boolean");
+        return SerializeResult.success(object.asPrimitive().asBoolean());
     }
 
     @Override
-    public ByteBuffer asBlob(ConfigObject object) {
-        if(!isBlob(object)) return null;
-        return object.asBlob().getData();
+    public SerializeResult<ByteBuffer> asBlob(ConfigObject object) {
+        if(!isBlob(object)) return SerializeResult.failure("Not a blob");
+        return SerializeResult.success(object.asBlob().getData());
     }
 
     @Override
-    public Collection<ConfigObject> asList(ConfigObject object) {
-        if(!isList(object)) return null;
-        return object.asList().values();
+    public SerializeResult<Collection<ConfigObject>> asList(ConfigObject object) {
+        if(!isList(object)) return SerializeResult.failure("Not a list");
+        return SerializeResult.success(object.asList().values());
     }
 
     @Override
-    public Map<String, ConfigObject> asMap(ConfigObject object) {
-        if(!isMap(object)) return null;
-        return object.asSection().stream().collect(Collectors.toMap(t2 -> t2.p1, t2 -> t2.p2));
+    public SerializeResult<Map<String, ConfigObject>> asMap(ConfigObject object) {
+        if(!isMap(object)) return SerializeResult.failure("Not a map!");
+        return SerializeResult.success(
+                object.asSection()
+                        .stream()
+                        .collect(Collectors.toMap(t2 -> t2.p1, t2 -> t2.p2)));
     }
 
     @Override
-    public Map<String, ConfigObject> asOrderedMap(ConfigObject object) {
-        if(!isMap(object)) return null;
+    public SerializeResult<Map<String, ConfigObject>> asOrderedMap(ConfigObject object) {
+        if(!isMap(object)) return SerializeResult.failure("Not a map!");
 
         LinkedHashMap<String, ConfigObject> out = new LinkedHashMap<>();
         for(String key : object.asSection().getKeys()) {
             out.put(key, object.asSection().get(key));
         }
-        return out;
+        return SerializeResult.success(out);
     }
 
     @Override
@@ -70,49 +73,43 @@ public class ConfigContext implements SerializeContext<ConfigObject> {
 
     @Override
     public Collection<String> getOrderedKeys(ConfigObject object) {
-        if(object == null || !object.isSection()) return null;
+        if(!object.isSection()) return null;
         return object.asSection().getKeys();
     }
 
     @Override
     public ConfigObject get(String key, ConfigObject object) {
-        if(object == null || !object.isSection()) return null;
+        if(!object.isSection()) return nullValue();
         return object.asSection().get(key);
     }
 
     @Override
     public ConfigObject toString(String object) {
-        if(object == null) return null;
         return new ConfigPrimitive(object);
     }
 
     @Override
     public ConfigObject toNumber(Number object) {
-        if(object == null) return null;
         return new ConfigPrimitive(object);
     }
 
     @Override
     public ConfigObject toBoolean(Boolean object) {
-        if(object == null) return null;
         return new ConfigPrimitive(object);
     }
 
     @Override
     public ConfigObject toBlob(ByteBuffer object) {
-        if(object == null) return null;
         return new ConfigBlob(object);
     }
 
     @Override
     public ConfigObject toList(Collection<ConfigObject> object) {
-        if(object == null) return null;
         return ConfigList.of(object);
     }
 
     @Override
     public ConfigObject toMap(Map<String, ConfigObject> object) {
-        if(object == null) return null;
         ConfigSection out = new ConfigSection();
         object.forEach(out::set);
         return out;
@@ -125,7 +122,7 @@ public class ConfigContext implements SerializeContext<ConfigObject> {
 
     @Override
     public ConfigObject mergeList(Collection<ConfigObject> list, ConfigObject base) {
-        if(!base.isList()) return null;
+        if(!base.isList()) return nullValue();
         if(list == null) return base;
 
         ConfigList out = base.asList();
@@ -136,28 +133,27 @@ public class ConfigContext implements SerializeContext<ConfigObject> {
 
     @Override
     public ConfigObject mergeMap(ConfigObject object, ConfigObject other) {
-        if(object == null || !object.isSection() || other == null || !other.isSection()) return null;
+        if(object == null || !object.isSection() || other == null || !other.isSection()) return nullValue();
         object.asSection().fill(other.asSection());
         return object;
     }
 
     @Override
     public ConfigObject mergeMapOverwrite(ConfigObject object, ConfigObject other) {
-        if(object == null || !object.isSection() || other == null || !other.isSection()) return null;
+        if(object == null || !object.isSection() || other == null || !other.isSection()) return nullValue();
         object.asSection().fillOverwrite(other.asSection());
         return object;
     }
 
     @Override
     public ConfigObject set(String key, ConfigObject value, ConfigObject object) {
-        if(object == null || !object.isSection()) return null;
+        if(object == null || !object.isSection()) return nullValue();
         object.asSection().set(key, value);
         return object;
     }
 
     @Override
     public ConfigObject copy(ConfigObject object) {
-        if(object == null) return null;
         return object.copy();
     }
 

@@ -42,7 +42,7 @@ public class ConfigSection extends ConfigObject {
      */
     public ConfigObject set(String key, @Nullable ConfigObject value) {
 
-        if(key == null) return null;
+        if(key == null) return ConfigPrimitive.NULL;
 
         if(value == null) {
 
@@ -60,7 +60,7 @@ public class ConfigSection extends ConfigObject {
             orderedKeys.add(key);
             values.add(value);
 
-            return null;
+            return ConfigPrimitive.NULL;
 
         } else {
 
@@ -116,15 +116,14 @@ public class ConfigSection extends ConfigObject {
     }
 
     /**
-     * Gets a reference to the value associated with the given key, or null if not present
+     * Gets a reference to the value associated with the given key, or ConfigPrimitive.NULL if not present
      * @param key The key to lookup
-     * @return The value associated with the given key, or null
+     * @return The value associated with the given key, or ConfigPrimitive.NULL
      */
-    @Nullable
     public ConfigObject get(String key) {
 
         Integer index = indicesByKey.get(key);
-        if(index == null) return null;
+        if(index == null) return ConfigPrimitive.NULL;
 
         return values.get(index);
     }
@@ -365,7 +364,7 @@ public class ConfigSection extends ConfigObject {
      * @throws NoSuchElementException If there is no value associated with the key
      * @throws IllegalStateException If the value associated with the key is not a ConfigList
      */
-    public <T> List<T> getListFiltered(String key, @NotNull Serializer<T> serializer, Consumer<String> onError) {
+    public <T> List<T> getListFiltered(String key, @NotNull Serializer<T> serializer, Consumer<Throwable> onError) {
 
         ConfigList list = getList(key);
         return new ArrayList<>(serializer.filteredListOf(onError).deserialize(ConfigContext.INSTANCE, list).getOrThrow());
@@ -462,10 +461,10 @@ public class ConfigSection extends ConfigObject {
      */
     public ConfigObject remove(String key) {
 
-        if(key == null) return null;
+        if(key == null) return ConfigPrimitive.NULL;
 
         Integer index = indicesByKey.get(key);
-        if(index == null) return null;
+        if(index == null) return ConfigPrimitive.NULL;
 
         // Remove object
         ConfigObject out = values.remove(index.intValue()); // Explicitly cast to a primitive int so remove-by-index is used
@@ -618,6 +617,11 @@ public class ConfigSection extends ConfigObject {
 
     @Override
     public boolean isBlob() {
+        return false;
+    }
+
+    @Override
+    public boolean isNull() {
         return false;
     }
 

@@ -36,56 +36,56 @@ public class GsonContext implements SerializeContext<JsonElement> {
     }
 
     @Override
-    public String asString(JsonElement object) {
-        if(!isString(object)) return null;
-        return object.getAsString();
+    public SerializeResult<String> asString(JsonElement object) {
+        if(!isString(object)) return SerializeResult.failure("Not a string");
+        return SerializeResult.success(object.getAsString());
     }
 
     @Override
-    public Number asNumber(JsonElement object) {
-        if(!isNumber(object)) return null;
-        return object.getAsNumber();
+    public SerializeResult<Number> asNumber(JsonElement object) {
+        if(!isNumber(object)) return SerializeResult.failure("Not a number");
+        return SerializeResult.success(object.getAsNumber());
     }
 
     @Override
-    public Boolean asBoolean(JsonElement object) {
-        if(!isBoolean(object)) return null;
-        return object.getAsBoolean();
+    public SerializeResult<Boolean> asBoolean(JsonElement object) {
+        if(!isBoolean(object)) return SerializeResult.failure("Not a boolean");
+        return SerializeResult.success(object.getAsBoolean());
     }
 
     @Override
-    public ByteBuffer asBlob(JsonElement object) {
-        return null;
+    public SerializeResult<ByteBuffer> asBlob(JsonElement object) {
+        return SerializeResult.failure("Blobs are not supported in Gson");
     }
 
     @Override
-    public Collection<JsonElement> asList(JsonElement object) {
-        if(!isList(object)) return null;
+    public SerializeResult<Collection<JsonElement>> asList(JsonElement object) {
+        if(!isList(object)) return SerializeResult.failure("Not a string");
         if(hasAsMap) {
-            return object.getAsJsonArray().asList();
+            return SerializeResult.success(object.getAsJsonArray().asList());
         }
         List<JsonElement> ele = new ArrayList<>();
         for (JsonElement e : object.getAsJsonArray()) {
             ele.add(e);
         }
-        return ele;
+        return SerializeResult.success(ele);
     }
 
     @Override
-    public Map<String, JsonElement> asMap(JsonElement object) {
+    public SerializeResult<Map<String, JsonElement>> asMap(JsonElement object) {
         if(!isMap(object)) return null;
         if(hasAsMap) {
-            return object.getAsJsonObject().asMap();
+            return SerializeResult.success(object.getAsJsonObject().asMap());
         }
         Map<String, JsonElement> ele = new LinkedHashMap<>();
         for(Map.Entry<String, JsonElement> e : object.getAsJsonObject().entrySet()) {
             ele.put(e.getKey(), e.getValue());
         }
-        return ele;
+        return SerializeResult.success(ele);
     }
 
     @Override
-    public Map<String, JsonElement> asOrderedMap(JsonElement object) {
+    public SerializeResult<Map<String, JsonElement>> asOrderedMap(JsonElement object) {
         return asMap(object);
     }
 

@@ -44,6 +44,12 @@ public abstract class ConfigObject {
     public abstract boolean isBlob();
 
     /**
+     * Whether the value is the null value
+     * @return Whether the value is the null value
+     */
+    public abstract boolean isNull();
+
+    /**
      * Whether the value is a String value. This also means it is a primitive
      * @return Whether the value is a String
      */
