@@ -141,17 +141,10 @@ public class TestGson {
     @Test
     public void testInvalid() {
 
-        String invalid = "{\"key\":\"Invalid Value}";
-
-        boolean caught = false;
-        try {
+        Assertions.assertThrows(DecodeException.class, () -> {
+            String invalid = "{\"key\":\"Invalid Value}";
             GsonCodec.minified().decode(GsonContext.INSTANCE, invalid);
-        } catch (DecodeException ex) {
-            caught = true;
-        }
-
-        Assertions.assertTrue(caught);
-
+        });
     }
     
 }
