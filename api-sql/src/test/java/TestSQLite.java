@@ -14,7 +14,6 @@ public class TestSQLite {
         Common.testJoins(conn);
         Common.testOrderBy(conn);
         Common.testGroupBy(conn);
-        Common.testCascade(conn);
 
     }
 

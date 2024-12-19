@@ -30,7 +30,7 @@ public class Common {
         testOrderBy(conn);
         testAggregate(conn);
         testGroupBy(conn);
-        testCascade(conn);
+        testOnDelete(conn);
     }
 
     public static void testBasics(SQLConnection conn) {
@@ -349,14 +349,14 @@ public class Common {
                 .withTableConstraint(TableConstraint.FOREIGN_KEY("bId", new ColumnRef("bTable", "bId")))
                 .build();
 
+        if(conn.hasTable("cTable")) {
+            conn.dropTable("cTable").execute();
+        }
         if(conn.hasTable("bTable")) {
             conn.dropTable("bTable").execute();
         }
         if(conn.hasTable("aTable")) {
             conn.dropTable("aTable").execute();
-        }
-        if(conn.hasTable("cTable")) {
-            conn.dropTable("cTable").execute();
         }
 
         conn.createTable("aTable", aSchema).execute();
@@ -526,7 +526,7 @@ public class Common {
         conn.dropTable("test_group").execute();
     }
 
-    public static void testCascade(SQLConnection conn) {
+    public static void testOnDelete(SQLConnection conn) {
 
         TableSchema aSchema = TableSchema.builder()
                 .withColumn(Column.builder("aId", DataType.TINYINT).withConstraint(Constraint.PRIMARY_KEY))
@@ -538,40 +538,144 @@ public class Common {
                 .withColumn("bName", DataType.VARCHAR(255))
                 .withColumn(Column.builder("aId", DataType.TINYINT))
                 .withTableConstraint(TableConstraint.PRIMARY_KEY("bId"))
-                .withTableConstraint(TableConstraint.FOREIGN_KEY("aId", new ColumnRef("aTable", "aId")).cascade())
+                .withTableConstraint(TableConstraint.FOREIGN_KEY("aId", new ColumnRef("aTableOnDelete", "aId")).onDelete(TableConstraint.ReferenceAction.CASCADE))
                 .build();
 
-        if(conn.hasTable("bTable")) {
-            conn.dropTable("bTable").execute();
+        TableSchema cSchema = TableSchema.builder()
+                .withColumn("cId", DataType.TINYINT)
+                .withColumn("cName", DataType.VARCHAR(255))
+                .withColumn(Column.builder("aId", DataType.TINYINT))
+                .withTableConstraint(TableConstraint.PRIMARY_KEY("cId"))
+                .withTableConstraint(TableConstraint.FOREIGN_KEY("aId", new ColumnRef("aTableOnDelete", "aId")).onDelete(TableConstraint.ReferenceAction.SET_NULL))
+                .build();
+
+
+//        TableSchema dSchema = TableSchema.builder()
+//                .withColumn("dId", DataType.TINYINT)
+//                .withColumn("dName", DataType.VARCHAR(255))
+//                .withColumn(Column.builder("aId", DataType.TINYINT).withConstraint(Constraint.DEFAULT(DataType.TINYINT.create((byte) 1))))
+//                .withTableConstraint(TableConstraint.PRIMARY_KEY("dId"))
+//                .withTableConstraint(TableConstraint.FOREIGN_KEY("aId", new ColumnRef("aTableOnDelete", "aId")).onDelete(TableConstraint.ReferenceAction.SET_DEFAULT))
+//                .build();
+
+        TableSchema eSchema = TableSchema.builder()
+                .withColumn("eId", DataType.TINYINT)
+                .withColumn("eName", DataType.VARCHAR(255))
+                .withColumn(Column.builder("aId", DataType.TINYINT))
+                .withTableConstraint(TableConstraint.PRIMARY_KEY("eId"))
+                .withTableConstraint(TableConstraint.FOREIGN_KEY("aId", new ColumnRef("aTableOnDelete", "aId")).onDelete(TableConstraint.ReferenceAction.NO_ACTION))
+                .build();
+
+        TableSchema fSchema = TableSchema.builder()
+                .withColumn("fId", DataType.TINYINT)
+                .withColumn("fName", DataType.VARCHAR(255))
+                .withColumn(Column.builder("aId", DataType.TINYINT))
+                .withTableConstraint(TableConstraint.PRIMARY_KEY("fId"))
+                .withTableConstraint(TableConstraint.FOREIGN_KEY("aId", new ColumnRef("aTableOnDelete", "aId")).onDelete(TableConstraint.ReferenceAction.RESTRICT))
+                .build();
+
+
+        if(conn.hasTable("fTableOnDelete")) {
+            conn.dropTable("fTableOnDelete").execute();
         }
-        if(conn.hasTable("aTable")) {
-            conn.dropTable("aTable").execute();
+        if(conn.hasTable("eTableOnDelete")) {
+            conn.dropTable("eTableOnDelete").execute();
+        }
+//        if(conn.hasTable("dTableOnDelete")) {
+//            conn.dropTable("dTableOnDelete").execute();
+//        }
+        if(conn.hasTable("cTableOnDelete")) {
+            conn.dropTable("cTableOnDelete").execute();
+        }
+        if(conn.hasTable("bTableOnDelete")) {
+            conn.dropTable("bTableOnDelete").execute();
+        }
+        if(conn.hasTable("aTableOnDelete")) {
+            conn.dropTable("aTableOnDelete").execute();
         }
 
-        conn.createTable("aTable", aSchema).execute();
-        conn.createTable("bTable", bSchema).execute();
+        conn.createTable("aTableOnDelete", aSchema).execute();
+        conn.createTable("bTableOnDelete", bSchema).execute();
+        conn.createTable("cTableOnDelete", cSchema).execute();
+        //conn.createTable("dTableOnDelete", dSchema).execute();
+        conn.createTable("eTableOnDelete", eSchema).execute();
+        conn.createTable("fTableOnDelete", fSchema).execute();
 
-        conn.insert("aTable", aSchema).addRow(new ConfigSection().with("aId", 1).with("aName", "A1")).execute();
-        conn.insert("aTable", aSchema).addRow(new ConfigSection().with("aId", 2).with("aName", "A2")).execute();
+        conn.insert("aTableOnDelete", aSchema).addRow(new ConfigSection().with("aId", 1).with("aName", "A1")).execute();
+        conn.insert("aTableOnDelete", aSchema).addRow(new ConfigSection().with("aId", 2).with("aName", "A2")).execute();
 
-        conn.insert("bTable", bSchema).addRow(new ConfigSection().with("bId", 1).with("bName", "B1").with("aId", 1)).execute();
-        conn.insert("bTable", bSchema).addRow(new ConfigSection().with("bId", 2).with("bName", "B2").with("aId", 2)).execute();
+        conn.insert("bTableOnDelete", bSchema).addRow(new ConfigSection().with("bId", 1).with("bName", "B1").with("aId", 1)).execute();
+        conn.insert("bTableOnDelete", bSchema).addRow(new ConfigSection().with("bId", 2).with("bName", "B2").with("aId", 2)).execute();
 
-        QueryResult res = conn.select("bTable")
-                .join(Select.JoinType.INNER, "aTable", "aId")
+        conn.insert("cTableOnDelete", cSchema).addRow(new ConfigSection().with("cId", 1).with("cName", "C1").with("aId", 1)).execute();
+        conn.insert("cTableOnDelete", cSchema).addRow(new ConfigSection().with("cId", 2).with("cName", "C2").with("aId", 2)).execute();
+
+//        conn.insert("dTableOnDelete", dSchema).addRow(new ConfigSection().with("dId", 1).with("dName", "D1").with("aId", 1)).execute();
+//        conn.insert("dTableOnDelete", dSchema).addRow(new ConfigSection().with("dId", 2).with("dName", "D2").with("aId", 2)).execute();
+
+        conn.insert("eTableOnDelete", eSchema).addRow(new ConfigSection().with("eId", 1).with("eName", "E1").with("aId", 1)).execute();
+        conn.insert("eTableOnDelete", eSchema).addRow(new ConfigSection().with("eId", 2).with("eName", "E2").with("aId", 2)).execute();
+
+        conn.insert("fTableOnDelete", fSchema).addRow(new ConfigSection().with("fId", 1).with("fName", "F1").with("aId", 1)).execute();
+        conn.insert("fTableOnDelete", fSchema).addRow(new ConfigSection().with("fId", 2).with("fName", "F2").with("aId", 2)).execute();
+
+        QueryResult res = conn.select("bTableOnDelete")
+                .join(Select.JoinType.INNER, "aTableOnDelete", "aId")
                 .execute();
-
         Assertions.assertEquals(2, res.rows());
 
-        conn.delete("aTable").execute();
-
-        res = conn.select("bTable")
-                .join(Select.JoinType.INNER, "aTable", "aId")
+        res = conn.select("cTableOnDelete")
+                .join(Select.JoinType.INNER, "aTableOnDelete", "aId")
                 .execute();
-        Assertions.assertEquals(0, res.rows());
+        Assertions.assertEquals(2, res.rows());
+//
+//        res = conn.select("dTableOnDelete")
+//                .join(Select.JoinType.INNER, "aTableOnDelete", "aId")
+//                .execute();
+//        Assertions.assertEquals(2, res.rows());
 
-        conn.dropTable("bTable").execute();
-        conn.dropTable("aTable").execute();
+        res = conn.select("eTableOnDelete")
+                .join(Select.JoinType.INNER, "aTableOnDelete", "aId")
+                .execute();
+        Assertions.assertEquals(2, res.rows());
+
+        res = conn.select("fTableOnDelete")
+                .join(Select.JoinType.INNER, "aTableOnDelete", "aId")
+                .execute();
+        Assertions.assertEquals(2, res.rows());
+
+        Assertions.assertThrows(IllegalStateException.class, () -> conn.delete("aTableOnDelete").execute());
+
+        conn.delete("fTableOnDelete").execute();
+        conn.delete("eTableOnDelete").execute();
+        conn.delete("aTableOnDelete").where(Condition.equals("aId", DataType.TINYINT.create((byte) 2))).execute();
+
+        res = conn.select("bTableOnDelete")
+                .join(Select.JoinType.INNER, "aTableOnDelete", "aId")
+                .execute();
+        Assertions.assertEquals(1, res.rows());
+
+
+        res = conn.select("cTableOnDelete")
+                .execute();
+        Assertions.assertEquals(2, res.rows());
+        Assertions.assertEquals(1, res.get(0).getInt("aId"));
+        Assertions.assertTrue(res.get(1).toConfigSection().get("aId").isNull() || res.get(1).getInt("aId") == 0);
+//
+//
+//        res = conn.select("dTableOnDelete")
+//                .execute();
+//        Assertions.assertEquals(2, res.rows());
+//        Assertions.assertEquals(1, res.get(0).getInt("aId"));
+//        Assertions.assertEquals(1, res.get(1).getInt("aId"));
+
+
+        conn.dropTable("fTableOnDelete").execute();
+        conn.dropTable("eTableOnDelete").execute();
+        //conn.dropTable("dTableOnDelete").execute();
+        conn.dropTable("cTableOnDelete").execute();
+        conn.dropTable("bTableOnDelete").execute();
+        conn.dropTable("aTableOnDelete").execute();
     }
 
 }
