@@ -232,8 +232,8 @@ public interface SerializeContext<T> {
 
         if(!isMap(value) || !isMap(other)) return copy(other);
         for(String key : getOrderedKeys(other)) {
-            if(isNull(get(key, other))) {
-                set(key, get(key, value), other);
+            if(isNull(get(key, value))) {
+                set(key, copy(get(key, other)), value);
             }
         }
         return value;
@@ -248,8 +248,8 @@ public interface SerializeContext<T> {
      */
     default T mergeMapOverwrite(T value, T other) {
         if(!isMap(value) || !isMap(other)) return copy(other);
-        for(String key : getOrderedKeys(value)) {
-            set(key, get(key, value), other);
+        for(String key : getOrderedKeys(other)) {
+            set(key, copy(get(key, other)), value);
         }
         return value;
     }
