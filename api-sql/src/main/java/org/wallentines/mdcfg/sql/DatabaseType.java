@@ -4,9 +4,6 @@ import org.jetbrains.annotations.Nullable;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -107,35 +104,7 @@ public class DatabaseType {
         DatabaseType create(String prefix);
         Factory DEFAULT = pre -> (new DatabaseType(pre, SQLDialect.STANDARD));
         Factory MYSQL = pre -> (new DatabaseType(pre, SQLDialect.MYSQL));
-        Factory SQLITE = SQLite::new;
         Factory H2 = H2::new;
-    }
-
-    private static class SQLite extends DatabaseType {
-        public SQLite(String prefix) {
-            super(prefix, SQLDialect.SQLITE);
-        }
-
-        @Override
-        protected String getConnectionString(String url) {
-
-            Path p = Paths.get(url);
-            Path parent = p.getParent();
-
-
-            if(!Files.isDirectory(parent)) {
-                try {
-                    Files.createDirectories(parent);
-                } catch (IOException ex) {
-                    throw new RuntimeException("Unable to create SQLite database in " + parent + "!", ex);
-                }
-            }
-
-            String path = p.toAbsolutePath().toString();
-            if(!path.endsWith(".db")) path += ".db";
-
-            return super.getConnectionString(path);
-        }
     }
 
     private static class H2 extends DatabaseType {

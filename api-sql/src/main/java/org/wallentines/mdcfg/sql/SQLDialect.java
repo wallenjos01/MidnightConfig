@@ -122,22 +122,6 @@ public interface SQLDialect {
 
     }
 
-    class SQLite extends Standard {
-
-        @Override
-        protected void writeConstraint(SQLConnection conn, Column def, Constraint<?> constraint, StatementBuilder column, StatementBuilder table) {
-            if(constraint.type == Constraint.Type.PRIMARY_KEY) {
-                column.append(" PRIMARY KEY");
-                return;
-            }
-            if(constraint.type == Constraint.Type.AUTO_INCREMENT) {
-                column.append(" AUTOINCREMENT");
-                return;
-            }
-            super.writeConstraint(conn, def, constraint, column, table);
-        }
-    }
-
     class MySQL extends Standard {
         @Override
         public String writeColumnType(ColumnType<?> type) {
@@ -150,7 +134,6 @@ public interface SQLDialect {
     }
 
     Standard STANDARD = new Standard();
-    SQLite SQLITE = new SQLite();
     MySQL MYSQL = new MySQL();
 
 

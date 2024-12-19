@@ -549,15 +549,6 @@ public class Common {
                 .withTableConstraint(TableConstraint.FOREIGN_KEY("aId", new ColumnRef("aTableOnDelete", "aId")).onDelete(TableConstraint.ReferenceAction.SET_NULL))
                 .build();
 
-
-//        TableSchema dSchema = TableSchema.builder()
-//                .withColumn("dId", DataType.TINYINT)
-//                .withColumn("dName", DataType.VARCHAR(255))
-//                .withColumn(Column.builder("aId", DataType.TINYINT).withConstraint(Constraint.DEFAULT(DataType.TINYINT.create((byte) 1))))
-//                .withTableConstraint(TableConstraint.PRIMARY_KEY("dId"))
-//                .withTableConstraint(TableConstraint.FOREIGN_KEY("aId", new ColumnRef("aTableOnDelete", "aId")).onDelete(TableConstraint.ReferenceAction.SET_DEFAULT))
-//                .build();
-
         TableSchema eSchema = TableSchema.builder()
                 .withColumn("eId", DataType.TINYINT)
                 .withColumn("eName", DataType.VARCHAR(255))
@@ -581,9 +572,6 @@ public class Common {
         if(conn.hasTable("eTableOnDelete")) {
             conn.dropTable("eTableOnDelete").execute();
         }
-//        if(conn.hasTable("dTableOnDelete")) {
-//            conn.dropTable("dTableOnDelete").execute();
-//        }
         if(conn.hasTable("cTableOnDelete")) {
             conn.dropTable("cTableOnDelete").execute();
         }
@@ -597,7 +585,6 @@ public class Common {
         conn.createTable("aTableOnDelete", aSchema).execute();
         conn.createTable("bTableOnDelete", bSchema).execute();
         conn.createTable("cTableOnDelete", cSchema).execute();
-        //conn.createTable("dTableOnDelete", dSchema).execute();
         conn.createTable("eTableOnDelete", eSchema).execute();
         conn.createTable("fTableOnDelete", fSchema).execute();
 
@@ -609,9 +596,6 @@ public class Common {
 
         conn.insert("cTableOnDelete", cSchema).addRow(new ConfigSection().with("cId", 1).with("cName", "C1").with("aId", 1)).execute();
         conn.insert("cTableOnDelete", cSchema).addRow(new ConfigSection().with("cId", 2).with("cName", "C2").with("aId", 2)).execute();
-
-//        conn.insert("dTableOnDelete", dSchema).addRow(new ConfigSection().with("dId", 1).with("dName", "D1").with("aId", 1)).execute();
-//        conn.insert("dTableOnDelete", dSchema).addRow(new ConfigSection().with("dId", 2).with("dName", "D2").with("aId", 2)).execute();
 
         conn.insert("eTableOnDelete", eSchema).addRow(new ConfigSection().with("eId", 1).with("eName", "E1").with("aId", 1)).execute();
         conn.insert("eTableOnDelete", eSchema).addRow(new ConfigSection().with("eId", 2).with("eName", "E2").with("aId", 2)).execute();
@@ -628,11 +612,6 @@ public class Common {
                 .join(Select.JoinType.INNER, "aTableOnDelete", "aId")
                 .execute();
         Assertions.assertEquals(2, res.rows());
-//
-//        res = conn.select("dTableOnDelete")
-//                .join(Select.JoinType.INNER, "aTableOnDelete", "aId")
-//                .execute();
-//        Assertions.assertEquals(2, res.rows());
 
         res = conn.select("eTableOnDelete")
                 .join(Select.JoinType.INNER, "aTableOnDelete", "aId")
@@ -661,18 +640,9 @@ public class Common {
         Assertions.assertEquals(2, res.rows());
         Assertions.assertEquals(1, res.get(0).getInt("aId"));
         Assertions.assertTrue(res.get(1).toConfigSection().get("aId").isNull() || res.get(1).getInt("aId") == 0);
-//
-//
-//        res = conn.select("dTableOnDelete")
-//                .execute();
-//        Assertions.assertEquals(2, res.rows());
-//        Assertions.assertEquals(1, res.get(0).getInt("aId"));
-//        Assertions.assertEquals(1, res.get(1).getInt("aId"));
-
 
         conn.dropTable("fTableOnDelete").execute();
         conn.dropTable("eTableOnDelete").execute();
-        //conn.dropTable("dTableOnDelete").execute();
         conn.dropTable("cTableOnDelete").execute();
         conn.dropTable("bTableOnDelete").execute();
         conn.dropTable("aTableOnDelete").execute();
