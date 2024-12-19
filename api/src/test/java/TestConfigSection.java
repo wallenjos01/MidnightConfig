@@ -57,6 +57,12 @@ public class TestConfigSection {
         Assertions.assertTrue(test.get("Number").isBoolean());
         Assertions.assertEquals(true, test.get("Number").asBoolean());
 
+
+        ConfigSection sec = test.getOrCreateSection("section");
+        Assertions.assertFalse(test.isNull());
+        Assertions.assertEquals(0, sec.size());
+        Assertions.assertSame(sec, test.get("section"));
+
     }
 
     private static class TestSerializable {

@@ -389,7 +389,7 @@ public class ConfigSection extends ConfigObject {
      */
     public ConfigSection getOrCreateSection(String key) {
         ConfigObject obj = get(key);
-        if(obj == null) {
+        if(obj.isNull()) {
             ConfigSection out = new ConfigSection();
             set(key, out);
             return out;
