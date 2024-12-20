@@ -83,6 +83,20 @@ public class ConfigSection extends ConfigObject {
     }
 
     /**
+     * Serializes an object, then associates it with the given key, overwriting any existing value if necessary
+     * @param key The key to associate the given value with
+     * @param value The object to serialize
+     * @param serializer The serializer to use to serialize the value
+     * @param context A serialize context to use to serialize the object
+     * @return A reference to the previous object associated with the given key
+     * @param <T> The type of object passed in to be serialized
+     */
+    public <T, O> ConfigObject set(String key, T value, Serializer<T> serializer, SerializeContext<O> context) {
+        if(value == null) return remove(key);
+        return set(key, context.convert(ConfigContext.INSTANCE, serializer.serialize(context, value).getOrThrow()));
+    }
+
+    /**
      * Associates a given String with the given key
      * @param key The key to associate the given String with
      * @param value The String to put into the section.
@@ -545,6 +559,20 @@ public class ConfigSection extends ConfigObject {
      */
     public <T> ConfigSection with(String key, T value, Serializer<T> serializer) {
         set(key, value, serializer);
+        return this;
+    }
+
+    /**
+     * Serializes an object, then associates it with the given key, overwriting any existing value if necessary, then returns a reference to self
+     * @param key The key to associate the given value with
+     * @param value The object to serialize
+     * @param serializer The serializer to use to serialize the value
+     * @param context A serialize context to use to serialize the object
+     * @return A reference to self
+     * @param <T> The type of object passed in to be serialized
+     */
+    public <T, O> ConfigSection with(String key, T value, Serializer<T> serializer, SerializeContext<O> context) {
+        set(key, value, serializer, context);
         return this;
     }
 
