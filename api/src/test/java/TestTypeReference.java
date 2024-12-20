@@ -9,7 +9,7 @@ public class TestTypeReference {
     @Test
     public void test() {
 
-        TypeReference<List<String>> string = new TypeReference<>() { };
+        TypeReference<List<String>> string = new TypeReference<List<String>>() { };
         Assertions.assertEquals("java.util.List<java.lang.String>", string.getType().toString());
     }
 

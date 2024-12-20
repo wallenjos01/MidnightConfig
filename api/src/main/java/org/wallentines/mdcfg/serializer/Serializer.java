@@ -20,6 +20,7 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * An interface for serializing data into an encode-able format
@@ -326,8 +327,63 @@ public interface Serializer<T> {
             @Override
             public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
                 O val;
-                if(!context.isMap(value) || (val = context.get(key, value)) == null) {
+                if(!context.isMap(value) || context.isNull(val = context.get(key, value))) {
                     return SerializeResult.failure("Key " + key + " not found!");
+                }
+                return Serializer.this.deserialize(context, val);
+            }
+        };
+    }
+
+    /**
+     * Creates a serializer which reads from a map with the given key
+     * @param key The map key to lookup when deserializing
+     * @param defaultValue The value to use if the field is not found
+     * @return A new serializer
+     */
+    default Serializer<T> optionalFieldOf(String key, T defaultValue) {
+        return new Serializer<T>() {
+            @Override
+            public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
+                return Serializer.this.serialize(context, value).flatMap(val -> {
+                    Map<String, O> out = new HashMap<>();
+                    out.put(key, val);
+                    return context.toMap(out);
+                });
+            }
+
+            @Override
+            public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
+                O val;
+                if(!context.isMap(value) || context.isNull(val = context.get(key, value))) {
+                    return SerializeResult.success(defaultValue);
+                }
+                return Serializer.this.deserialize(context, val);
+            }
+        };
+    }
+
+    /**
+     * Creates a serializer which reads from a map with the given key
+     * @param key The map key to lookup when deserializing
+     * @return A new serializer
+     */
+    default Serializer<T> optionalFieldOf(String key, Supplier<T> defaultValue) {
+        return new Serializer<T>() {
+            @Override
+            public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
+                return Serializer.this.serialize(context, value).flatMap(val -> {
+                    Map<String, O> out = new HashMap<>();
+                    out.put(key, val);
+                    return context.toMap(out);
+                });
+            }
+
+            @Override
+            public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
+                O val;
+                if(!context.isMap(value) || context.isNull(val = context.get(key, value))) {
+                    return SerializeResult.success(defaultValue.get());
                 }
                 return Serializer.this.deserialize(context, val);
             }
