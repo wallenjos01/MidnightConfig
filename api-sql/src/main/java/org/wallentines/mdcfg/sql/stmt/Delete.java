@@ -6,6 +6,7 @@ import org.wallentines.mdcfg.sql.UpdateResult;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 
 public class Delete extends DMLStatement {
 
