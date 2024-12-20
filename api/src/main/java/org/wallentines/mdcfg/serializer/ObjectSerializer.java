@@ -13,9 +13,9 @@ import java.util.function.Function;
 public class ObjectSerializer<T> implements Serializer<T> {
 
     private final List<Entry<?, T>> entries;
-    private final Functions.F2<EntrySet, SerializeContext<?>, SerializeResult<T>> constructor;
+    private final Functions.F2<GroupResult, SerializeContext<?>, SerializeResult<T>> constructor;
 
-    public ObjectSerializer(Collection<Entry<?, T>> entries, Functions.F2<EntrySet, SerializeContext<?>, SerializeResult<T>> constructor) {
+    public ObjectSerializer(Collection<Entry<?, T>> entries, Functions.F2<GroupResult, SerializeContext<?>, SerializeResult<T>> constructor) {
         this.entries = List.copyOf(entries);
         this.constructor = constructor;
     }
@@ -40,41 +40,19 @@ public class ObjectSerializer<T> implements Serializer<T> {
     @Override
     public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
 
-        EntrySet set = new EntrySet();
+        List<Object> obj = new ArrayList<>();
         for(Entry<?, T> ent : entries) {
             SerializeResult<?> res = ent.parse(context, value);
             if(!res.isComplete()) {
                 return SerializeResult.failure(res.getError());
             }
-            set.add(res.getOrThrow());
+            obj.add(res.getOrThrow());
         }
 
+        GroupResult set = new GroupResult(obj);
         return constructor.apply(set, context);
     }
-
-
-    public static class EntrySet {
-
-        private final List<Object> deserialized = new ArrayList<>();
-
-        void add(Object o) {
-            deserialized.add(o);
-        }
-
-        @SuppressWarnings("unchecked")
-        public <T> T get(int index) {
-            return (T) deserialized.get(index);
-        }
-        public <T> T get(int index, Class<T> clazz) {
-            Object out = deserialized.get(index);
-            if(out == null) return null;
-            if(out.getClass() == clazz || clazz.isAssignableFrom(out.getClass())) {
-                return clazz.cast(out);
-            }
-            return null;
-        }
-
-    }
+    
 
     public static class Entry<T, O> {
 
@@ -191,11 +169,11 @@ public class ObjectSerializer<T> implements Serializer<T> {
             return this;
         }
 
-        public ObjectSerializer<O> build(Functions.F1<EntrySet, SerializeResult<O>> constructor) {
+        public ObjectSerializer<O> build(Functions.F1<GroupResult, SerializeResult<O>> constructor) {
             return new ObjectSerializer<O>(entries, (set, ctx) -> constructor.apply(set));
         }
 
-        public ObjectSerializer<O> build(Functions.F2<EntrySet, SerializeContext<?>, SerializeResult<O>> constructor) {
+        public ObjectSerializer<O> build(Functions.F2<GroupResult, SerializeContext<?>, SerializeResult<O>> constructor) {
             return new ObjectSerializer<O>(entries, constructor);
         }
 

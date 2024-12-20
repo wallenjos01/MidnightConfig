@@ -444,7 +444,7 @@ public class TestSerializer {
 
         static <T> Serializer<Impl<T>> serializer(Serializer<T> base) {
             return base.flatMap(Impl::getValue, Impl::new);
-        };
+        }
     }
 
     @Test
@@ -458,6 +458,31 @@ public class TestSerializer {
         Assertions.assertInstanceOf(Impl.class, out.getOrThrow());
         Assertions.assertEquals("test", out.getOrThrow().getValue());
 
+    }
+
+    @Test
+    public void testGroup() {
+
+        Serializer<Tuples.T3<String, Integer, Integer>> serializer =
+                GroupSerializer.<Tuples.T3<String, Integer, Integer>>builder()
+                        .add(Serializer.STRING.fieldOf("str"), t3 -> t3.p1)
+                        .add(Serializer.INT.fieldOf("num1"), t3 -> t3.p2)
+                        .add(Serializer.INT.fieldOf("num2"), t3 -> t3.p3)
+                        .build(gr -> SerializeResult.success(new Tuples.T3<>(gr.get(0), gr.get(1), gr.get(2))));
+
+        ConfigSection sec = new ConfigSection()
+                .with("str", "value")
+                .with("num1", 1)
+                .with("num2", 3);
+        Tuples.T3<String, Integer, Integer> out = serializer.deserialize(ConfigContext.INSTANCE, sec).getOrThrow();
+
+        Assertions.assertEquals("value", out.p1);
+        Assertions.assertEquals(1, out.p2);
+        Assertions.assertEquals(3, out.p3);
+
+        ConfigSection reserialized = serializer.serialize(ConfigContext.INSTANCE, out).getOrThrow().asSection();
+
+        Assertions.assertEquals(sec, reserialized);
     }
 
 
