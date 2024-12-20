@@ -1,6 +1,7 @@
 package org.wallentines.mdcfg.sql.stmt;
 
-import org.wallentines.mdcfg.sql.*;
+import org.wallentines.mdcfg.sql.QueryResult;
+import org.wallentines.mdcfg.sql.SQLConnection;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

@@ -1,9 +1,6 @@
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.wallentines.mdcfg.ConfigObject;
-import org.wallentines.mdcfg.ConfigPrimitive;
-import org.wallentines.mdcfg.ConfigSection;
-import org.wallentines.mdcfg.Tuples;
+import org.wallentines.mdcfg.*;
 import org.wallentines.mdcfg.serializer.*;
 
 import java.util.*;
@@ -428,6 +425,41 @@ public class TestSerializer {
         Assertions.assertEquals(sec, serialized);
 
     }
+
+    interface Supertype<T> {
+        T getValue();
+    }
+
+    static class Impl<T> implements Supertype<T> {
+        T value;
+
+        public Impl(T value) {
+            this.value = value;
+        }
+
+        @Override
+        public T getValue() {
+            return value;
+        }
+
+        static <T> Serializer<Impl<T>> serializer(Serializer<T> base) {
+            return base.flatMap(Impl::getValue, Impl::new);
+        };
+    }
+
+    @Test
+    public void testCast() {
+
+        Serializer<Supertype<String>> st = Impl.serializer(Serializer.STRING).cast(new TypeReference<Impl<String>>() {}, new TypeReference<Supertype<String>>() {});
+        SerializeResult<Supertype<String>> out = st.deserialize(ConfigContext.INSTANCE, new ConfigPrimitive("test"));
+
+        Assertions.assertTrue(out.isComplete());
+        Assertions.assertInstanceOf(Supertype.class, out.getOrThrow());
+        Assertions.assertInstanceOf(Impl.class, out.getOrThrow());
+        Assertions.assertEquals("test", out.getOrThrow().getValue());
+
+    }
+
 
     static class Typed {
         String type;

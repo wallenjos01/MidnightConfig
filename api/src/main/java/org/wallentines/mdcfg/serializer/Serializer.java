@@ -7,6 +7,7 @@ import org.wallentines.mdcfg.codec.EncodeException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -369,6 +370,14 @@ public interface Serializer<T> {
                 return Serializer.this.deserialize(context, value).cast(dest);
             }
         };
+    }
+
+    default <O> Serializer<O> cast(TypeReference<T> source, TypeReference<O> dest) {
+
+        Class<T> sourceClazz = source.getTypeClass();
+        Class<O> destClazz = dest.getTypeClass();
+
+        return cast(sourceClazz, destClazz);
     }
 
     /**

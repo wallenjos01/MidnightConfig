@@ -15,4 +15,15 @@ public class TypeReference<T> {
     public Type getType() {
         return type;
     }
+
+    @SuppressWarnings("unchecked")
+    public Class<T> getTypeClass() {
+        if(type instanceof Class) {
+            return (Class<T>) type;
+        } else if(type instanceof ParameterizedType) {
+            return (Class<T>) ((ParameterizedType) type).getRawType();
+        }
+        throw new IllegalStateException("Cannot determine type class for " + type);
+    }
+
 }
