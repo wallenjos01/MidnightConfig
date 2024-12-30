@@ -54,7 +54,11 @@ public class DataValue<T> implements Expression {
      * @throws SQLException If the statement does not accept a parameter at the given index, or the data type is not supported in the current database.
      */
     public void write(PreparedStatement statement, int index) throws SQLException {
-        type.writer.write(statement, index, value);
+        if (value == null) {
+            statement.setNull(index, type.getSQLType().getVendorTypeNumber());
+        } else {
+            type.writer.write(statement, index, value);
+        }
     }
 
     /**
