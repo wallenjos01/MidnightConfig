@@ -119,6 +119,7 @@ public class BinaryCodec implements Codec {
 
             case NULL:
                 dos.writeByte(Type.NONE.index());
+                break;
 
             default:
                 throw new EncodeException("Don't know how to encode " + input + "!");
