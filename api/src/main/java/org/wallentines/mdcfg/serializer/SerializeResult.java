@@ -173,10 +173,14 @@ public class SerializeResult<T> {
      * @return Another serialize result with the new type
      * @param <O> The new type
      */
-    public <O> SerializeResult<O> map(Function<T, SerializeResult<O>> converter) {
+    public <O> SerializeResult<O> map(Function<? super T, SerializeResult<? extends O>> converter) {
         if(!success) return SerializeResult.failure(error);
         try {
-            return converter.apply(value);
+            SerializeResult<? extends O> result = converter.apply(value);
+            if(!result.isComplete()) {
+                return SerializeResult.failure(result.getError());
+            }
+            return SerializeResult.success(result.getOrNull());
         } catch (Throwable e) {
             return SerializeResult.failure(e);
         }
@@ -188,7 +192,7 @@ public class SerializeResult<T> {
      * @return Another serialize result with the new type
      * @param <O> The new type
      */
-    public <O> SerializeResult<O> flatMap(Function<T, O> converter) {
+    public <O> SerializeResult<O> flatMap(Function<? super T, ? extends O> converter) {
         if(!success) return SerializeResult.failure(error);
         try {
             return SerializeResult.ofNullable(converter.apply(value));

@@ -26,25 +26,7 @@ import java.util.function.Supplier;
  * @param <T> The type of data to serialize
  */
 @SuppressWarnings("unused")
-public interface Serializer<T> {
-
-    /**
-     * Serializes an object with type T into an object of type O, using the given context
-     * @param context The context by which to convert the given value to another type
-     * @param value The value to serialize
-     * @return A SerializeResult containing the serialized object, or an error String if serialization failed
-     * @param <O> The type to serialize the value into
-     */
-    <O> SerializeResult<O> serialize(SerializeContext<O> context, T value);
-
-    /**
-     * Deserializes an object from type O into an object of type T, using the given context
-     * @param context The context by which to convert the given value to another type
-     * @param value The value to deserialize
-     * @return A SerializeResult containing the deserialized object, or an error String if deserialization failed
-     * @param <O> The type to deserialize the value from
-     */
-    <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value);
+public interface Serializer<T> extends ForwardSerializer<T>, BackSerializer<T> {
 
     /**
      * Creates an entry for use in an ObjectSerializer using the given key and getter
@@ -218,7 +200,7 @@ public interface Serializer<T> {
      * @param <O> The type to map to
      * @return A new serializer of the mapped type.
      */
-    default <O> Serializer<O> map(Function<O, SerializeResult<T>> getter, Function<T, SerializeResult<O>> construct) {
+    default <O> Serializer<O> map(Function<? super O, SerializeResult<? extends T>> getter, Function<? super T, SerializeResult<? extends O>> construct) {
         return new Serializer<>() {
             @Override
             public <O1> SerializeResult<O1> serialize(SerializeContext<O1> context, O value) {
@@ -239,7 +221,7 @@ public interface Serializer<T> {
      * @param <O> The type to map to
      * @return A new serializer of the mapped type.
      */
-    default <O> Serializer<O> flatMap(Function<O, T> getter, Function<T, O> construct) {
+    default <O> Serializer<O> flatMap(Function<? super O, ? extends T> getter, Function<? super T, ? extends O> construct) {
         return new Serializer<O>() {
             @Override
             public <O1> SerializeResult<O1> serialize(SerializeContext<O1> context, O value) {
@@ -389,11 +371,11 @@ public interface Serializer<T> {
         };
     }
 
-    default <O> DispatchSerializer<T, O> dispatch(Function<T, Serializer<O>> dispatcher, Function<O, T> reverse) {
+    default <O> DispatchSerializer<T, O> dispatch(Function<? super T, Serializer<? extends O>> dispatcher, Function<? super O, ? extends T> reverse) {
         return new DispatchSerializer<>(Serializer.this, (ctx, k) -> dispatcher.apply(k), (ctx, v) -> reverse.apply(v));
     }
 
-    default <O> DispatchSerializer<T, O> dispatch(Functions.F2<SerializeContext<?>, T, Serializer<O>> dispatcher, Functions.F2<SerializeContext<?>, O, T> reverse) {
+    default <O, Y extends O> DispatchSerializer<T, O> dispatch(Functions.F2<SerializeContext<?>, ? super T, Serializer<? extends O>> dispatcher, Functions.F2<SerializeContext<?>, ? super O, ? extends T> reverse) {
         return new DispatchSerializer<>(Serializer.this, dispatcher, reverse);
     }
 
@@ -584,5 +566,13 @@ public interface Serializer<T> {
             return SerializeResult.success(null);
         }
     };
+
+    interface Encoder {
+
+    }
+
+    interface Decoder {
+
+    }
 
 }

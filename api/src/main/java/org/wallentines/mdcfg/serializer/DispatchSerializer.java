@@ -5,13 +5,48 @@ import org.wallentines.mdcfg.Functions;
 public class DispatchSerializer<K, V> implements Serializer<V> {
 
     private final Serializer<K> keySerializer;
-    private final Functions.F2<SerializeContext<?>, K, Serializer<V>> dispatcher;
-    private final Functions.F2<SerializeContext<?>, V, K> keyGetter;
+    private final Functions.F2<SerializeContext<?>, ? super V, ForwardSerializer<V>> dispatcher;
+    private final Functions.F2<SerializeContext<?>, ? super K, BackSerializer<? extends V>> backDispatcher;
+    private final Functions.F2<SerializeContext<?>, ? super V, ? extends K> keyGetter;
 
-    public DispatchSerializer(Serializer<K> keySerializer, Functions.F2<SerializeContext<?>, K, Serializer<V>> dispatcher, Functions.F2<SerializeContext<?>, V, K> keyGetter) {
+    public DispatchSerializer(
+            Serializer<K> keySerializer,
+            Functions.F2<SerializeContext<?>, ? super V, ForwardSerializer<V>> dispatcher,
+            Functions.F2<SerializeContext<?>, ? super K, BackSerializer<? extends V>> backDispatcher,
+            Functions.F2<SerializeContext<?>, ? super V, ? extends K> keyGetter) {
+
         this.keySerializer = keySerializer;
         this.dispatcher = dispatcher;
+        this.backDispatcher = backDispatcher;
         this.keyGetter = keyGetter;
+    }
+
+    public DispatchSerializer(
+            Serializer<K> keySerializer,
+            Functions.F2<SerializeContext<?>, ? super K, Serializer<? extends V>> dispatcher,
+            Functions.F2<SerializeContext<?>, ? super V, ? extends K> keyGetter) {
+
+        this.keySerializer = keySerializer;
+        this.keyGetter = keyGetter;
+        this.dispatcher = (ctx, v) -> {
+            K key = keyGetter.apply(ctx, v);
+            Serializer<? extends V> ser = dispatcher.apply(ctx, key);
+            return generify(ser);
+        };
+        this.backDispatcher = dispatcher::apply;
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <V, Q extends V> ForwardSerializer<V> generify(ForwardSerializer<Q> serializer) {
+        return serializer.map(v -> {
+            try {
+                Q out = (Q) v;
+                return SerializeResult.success(out);
+            } catch (ClassCastException ex) {
+                return SerializeResult.failure(ex);
+            }
+        });
     }
 
     @Override
@@ -22,7 +57,7 @@ public class DispatchSerializer<K, V> implements Serializer<V> {
         SerializeResult<O> keyResult = keySerializer.serialize(context, key);
         if(!keyResult.isComplete()) return SerializeResult.failure("Unable to serialize key for " + value + "!", keyResult.getError());
 
-        Serializer<V> valueSerializer = dispatcher.apply(context, key);
+        ForwardSerializer<V> valueSerializer = dispatcher.apply(context, value);
         if(valueSerializer == null) return SerializeResult.failure("Unable to find value serializer for " + key + "!");
 
         SerializeResult<O> valueResult = valueSerializer.serialize(context, value);
@@ -38,9 +73,9 @@ public class DispatchSerializer<K, V> implements Serializer<V> {
         if(!keyResult.isComplete()) return SerializeResult.failure("Unable to deserialize key!", keyResult.getError());
 
         K key = keyResult.getOrNull();
-        Serializer<V> valueSerializer = dispatcher.apply(context, key);
+        BackSerializer<? extends V> valueSerializer = backDispatcher.apply(context, key);
         if(valueSerializer == null) return SerializeResult.failure("Unable to find value serializer for " + key + "!");
 
-        return valueSerializer.deserialize(context, value);
+        return valueSerializer.deserialize(context, value).flatMap(v -> v);
     }
 }
