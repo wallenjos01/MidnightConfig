@@ -7,7 +7,6 @@ import org.wallentines.mdcfg.codec.EncodeException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -390,27 +389,12 @@ public interface Serializer<T> {
         };
     }
 
-    default <O> Serializer<O> dispatch(Function<T, Serializer<O>> dispatcher, Function<O, T> reverse) {
-        return new Serializer<O>() {
-            @Override
-            public <O1> SerializeResult<O> deserialize(SerializeContext<O1> context, O1 value) {
-                SerializeResult<T> t = Serializer.this.deserialize(context, value);
-                if(!t.isComplete()) return SerializeResult.failure(t.getError());
-                return dispatcher.apply(t.getOrThrow()).deserialize(context, value);
-            }
+    default <O> DispatchSerializer<T, O> dispatch(Function<T, Serializer<O>> dispatcher, Function<O, T> reverse) {
+        return new DispatchSerializer<>(Serializer.this, (ctx, k) -> dispatcher.apply(k), (ctx, v) -> reverse.apply(v));
+    }
 
-            @Override
-            public <O1> SerializeResult<O1> serialize(SerializeContext<O1> context, O value) {
-                T t = reverse.apply(value);
-                SerializeResult<O1> o = Serializer.this.serialize(context, t);
-                if(!o.isComplete()) return o;
-
-                SerializeResult<O1> o2 = dispatcher.apply(t).serialize(context, value);
-                if(!o2.isComplete()) return o2;
-
-                return SerializeResult.success(context.merge(o.getOrThrow(), o2.getOrThrow()));
-            }
-        };
+    default <O> DispatchSerializer<T, O> dispatch(Functions.F2<SerializeContext<?>, T, Serializer<O>> dispatcher, Functions.F2<SerializeContext<?>, O, T> reverse) {
+        return new DispatchSerializer<>(Serializer.this, dispatcher, reverse);
     }
 
     default <O> Serializer<O> cast(Class<T> source, Class<O> dest) {
