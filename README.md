@@ -5,7 +5,7 @@ A general-purpose configuration and serialization library for Java
 <br>
 
 ## Obtaining
-MidnightConfig is hosted at [https://maven.wallentines.org/](https://maven.wallentines.org/).
+MidnightConfig is hosted at [https://maven.wallentines.org/releases](https://maven.wallentines.org/releases).
 
 Example `build.gradle.kts` buildscript configuration:
 ```kotlin
@@ -13,8 +13,8 @@ repositories {
     maven("https://maven.wallentines.org/releases")
 }
 dependencies {
-    implementation("org.wallentines:midnightcfg-api:3.0.0")
-    implementation("org.wallentines:midnightcfg-codec-json:3.0.0")
+    implementation("org.wallentines:midnightcfg-api:3.0.1")
+    implementation("org.wallentines:midnightcfg-codec-json:3.0.1")
 }
 ```
 
