@@ -1,0 +1,29 @@
+[
+  {
+    "lines": [
+      {
+        "find": "public @NotNull Iterator<T> iterator() {",
+        "offset": 1
+      }
+    ],
+    "type": "replace",
+    "find": "return new Iterator<>()",
+    "replace": "return new Iterator<T>()"
+  },
+  {
+    "lines": [
+      "all"
+    ],
+    "type": "replace",
+    "find": "List.copyOf(",
+    "replace": "new java.util.ArrayList<>("
+  },
+  {
+    "lines": [
+      "all"
+    ],
+    "type": "replace",
+    "find": "Map.copyOf(",
+    "replace": "new java.util.HashMap<>("
+  }
+]

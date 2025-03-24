@@ -436,6 +436,12 @@ public interface Serializer<T> extends ForwardSerializer<T>, BackSerializer<T> {
     }
 
 
+    /**
+     * Creates a serializer which selects a serializer for T, given the serialize context
+     * @param selector A function which maps a serialize context to a serializer for T
+     * @return A new serializer
+     * @param <T> The type of object to serialize
+     */
     static <T> Serializer<T> select(Function<SerializeContext<?>, Serializer<T>> selector) {
         return new Serializer<T>() {
             @Override
