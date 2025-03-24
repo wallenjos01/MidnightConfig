@@ -436,6 +436,30 @@ public interface Serializer<T> extends ForwardSerializer<T>, BackSerializer<T> {
     }
 
 
+    static <T> Serializer<T> select(Function<SerializeContext<?>, Serializer<T>> selector) {
+        return new Serializer<T>() {
+            @Override
+            public <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
+                Serializer<T> ser = selector.apply(context);
+                if(ser == null) {
+                    return SerializeResult.failure("No serializer found for context " + context);
+                }
+                return ser.deserialize(context, value);
+            }
+
+            @Override
+            public <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
+                Serializer<T> ser = selector.apply(context);
+                if(ser == null) {
+                    return SerializeResult.failure("No serializer found for context " + context);
+                }
+                return ser.serialize(context, value);
+            }
+        };
+    }
+
+
+
     // Default Serializers
     Serializer<String> STRING = new Serializer<>() {
         @Override
