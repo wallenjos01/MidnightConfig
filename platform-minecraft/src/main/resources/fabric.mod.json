@@ -18,6 +18,7 @@
     "mixins": [
       "midnightcfg.mixins.json"
     ],
+    "accessWidener": "midnightcfg.accesswidener",
     "name": "MidnightConfig",
     "description": "A configuration mod",
     "contact": {

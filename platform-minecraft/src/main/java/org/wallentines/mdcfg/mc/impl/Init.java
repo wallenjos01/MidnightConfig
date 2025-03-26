@@ -37,12 +37,11 @@ public class Init implements ModInitializer {
 
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
 
-            Path configDir = ServerConfigFolders.getConfigFolder(server).resolve("MidnightConfig");
-            try { Files.createDirectories(configDir); } catch (IOException ex) {
-                log.error("Could not create config folder {}", configDir, ex);
+            Path configDir = ServerConfigFolders.createConfigFolder(server, "MidnightConfig").orElse(null);
+            if(configDir == null) {
+                log.error("Could not create config folder for MidnightConfig");
                 return;
             }
-
 
             FileWrapper<ConfigObject> config = ServerConfigFolders.FILE_CODEC_REGISTRY.findOrCreate(ConfigContext.INSTANCE, "config", configDir, DEFAULTS);
             config.load();
