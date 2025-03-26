@@ -1,3 +1,5 @@
+import buildlogic.Utils
+
 plugins {
     id("build.library")
     id("build.fabric")
@@ -7,6 +9,8 @@ plugins {
 loom {
     accessWidenerPath = file("src/main/resources/midnightcfg.accesswidener")
 }
+
+Utils.setupResources(project, rootProject, "fabric.mod.json")
 
 dependencies {
 
@@ -22,8 +26,6 @@ dependencies {
     for(mod in apiModules) {
         modApi(fabricApi.module(mod, "0.119.5+1.21.5"))
     }
-
-    implementation("org.wallentines:pseudonym-api:0.1.0")
 
     api(project(":api"))
     api(project(":api-sql"))

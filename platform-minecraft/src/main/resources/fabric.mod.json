@@ -13,8 +13,7 @@
     "depends": {
         "fabricloader": "*",
         "fabric-api-base": "*",
-        "fabric-lifecycle-events-v1": "*",
-        "pseudonym": "*"
+        "fabric-lifecycle-events-v1": "*"
     },
     "mixins": [
       "midnightcfg.mixins.json"

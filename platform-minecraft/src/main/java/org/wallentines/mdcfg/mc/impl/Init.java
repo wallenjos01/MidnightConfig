@@ -10,6 +10,7 @@ import org.wallentines.mdcfg.codec.FileWrapper;
 import org.wallentines.mdcfg.mc.api.ServerConfigFolders;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.serializer.SerializeResult;
+import org.wallentines.mdcfg.sql.DatabasePreset;
 import org.wallentines.mdcfg.sql.PresetRegistry;
 
 import java.io.IOException;
@@ -24,7 +25,12 @@ public class Init implements ModInitializer {
             .with("repository", new ConfigSection()
                     .with("type", "maven")
                     .with("folder", "config/MidnightConfig/sql_drivers"))
-            .with("presets", new ConfigSection());
+            .with("presets", new ConfigSection()
+                    .with("default",
+                            new DatabasePreset("h2", "default", null, null, null, null, new ConfigSection()),
+                            DatabasePreset.SERIALIZER
+                    )
+            );
 
     @Override
     public void onInitialize() {

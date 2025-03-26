@@ -52,3 +52,5 @@ bin/
 
 /codec-nbt/run/test/*.out
 /codec-nbt/run/test/*.snbt
+
+/platform-minecraft/run
