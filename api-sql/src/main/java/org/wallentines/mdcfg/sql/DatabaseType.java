@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -75,6 +76,21 @@ public class DatabaseType {
      */
     public SQLConnection create(String url, String username, String password, @Nullable String tablePrefix, ConfigSection config) {
 
+        return create(url, username, password, tablePrefix, config, Paths.get(System.getProperty("user.dir")));
+    }
+
+    /**
+     * Connects to the database at the given URL
+     * @param url The address/path database to connect to
+     * @param username The database username
+     * @param password The database password
+     * @param tablePrefix A prefix to append to all table names
+     * @param config Properties to be passed to the JDBC driver
+     * @param resolveFrom The root directory to resolve database files based on, if applicable.
+     * @return A new SQL connection
+     */
+    public SQLConnection create(String url, String username, String password, @Nullable String tablePrefix, ConfigSection config, Path resolveFrom) {
+
         Properties properties = new Properties();
         for(String s : config.getKeys()) {
             ConfigObject obj = config.get(s);
@@ -87,10 +103,14 @@ public class DatabaseType {
         if(password != null) properties.put("password", password);
 
         try {
-            return new SQLConnection(this, DriverManager.getConnection(getConnectionString(url), properties), tablePrefix);
+            return new SQLConnection(this, DriverManager.getConnection(getConnectionString(url, resolveFrom), properties), tablePrefix);
         } catch (SQLException ex) {
             throw new IllegalArgumentException("Unable to connect to database with URL " + prefix + url + "!", ex);
         }
+    }
+
+    protected String getConnectionString(String url, Path resolveFrom) {
+        return getConnectionString(url);
     }
 
     protected String getConnectionString(String url) {
@@ -113,7 +133,7 @@ public class DatabaseType {
         }
 
         @Override
-        protected String getConnectionString(String url) {
+        protected String getConnectionString(String url, Path resolveFrom) {
 
             if(url.startsWith("tcp://") ||
                     url.startsWith("ssl://") ||
@@ -124,7 +144,7 @@ public class DatabaseType {
             String file = url;
             if(file.startsWith("file:")) file = file.substring(5);
 
-            return super.getConnectionString("file:" + Paths.get(file).toAbsolutePath());
+            return super.getConnectionString("file:" + resolveFrom.resolve(file).toAbsolutePath());
         }
     }
 

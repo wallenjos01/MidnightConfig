@@ -9,3 +9,5 @@ include("codec-gson")
 include("codec-binary")
 
 include("cfgtool")
+
+include("platform-minecraft")

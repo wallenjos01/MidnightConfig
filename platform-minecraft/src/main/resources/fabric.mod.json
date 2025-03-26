@@ -1,0 +1,33 @@
+{
+    "schemaVersion": 1,
+    "id": "${id}",
+    "version": "${version}",
+    "environment": "*",
+    "entrypoints": {
+        "main": [
+            "org.wallentines.mdcfg.mc.impl.Init"
+        ],
+        "client": [
+        ]
+    },
+    "depends": {
+        "fabricloader": "*",
+        "fabric-api-base": "*",
+        "fabric-lifecycle-events-v1": "*",
+        "pseudonym": "*"
+    },
+    "mixins": [
+      "midnightcfg.mixins.json"
+    ],
+    "name": "MidnightConfig",
+    "description": "A configuration mod",
+    "contact": {
+        "homepage": "https://github.com/wallenjos01/MidnightConfig"
+    },
+    "authors": [
+        {
+            "name": "wallenjos01"
+        }
+    ],
+    "license": "LGPL"
+}

@@ -1,0 +1,40 @@
+plugins {
+    id("build.library")
+    id("build.fabric")
+    id("build.publish")
+}
+
+loom {
+    accessWidenerPath = file("src/main/resources/midnightcfg.accesswidener")
+}
+
+dependencies {
+
+    minecraft("com.mojang:minecraft:1.21.5")
+    mappings(loom.officialMojangMappings())
+    modImplementation("net.fabricmc:fabric-loader:0.16.10")
+
+    // Fabric API
+    val apiModules = listOf(
+        "fabric-api-base",
+        "fabric-lifecycle-events-v1"
+    )
+    for(mod in apiModules) {
+        modApi(fabricApi.module(mod, "0.119.5+1.21.5"))
+    }
+
+    implementation("org.wallentines:pseudonym-api:0.1.0")
+
+    api(project(":api"))
+    api(project(":api-sql"))
+    api(project(":codec-json"))
+
+    shadow(project(":api"))
+    shadow(project(":api-sql"))
+    shadow(project(":codec-json"))
+
+    compileOnly(libs.jetbrains.annotations)
+    implementation(libs.slf4j.api)
+
+    testRuntimeOnly(libs.slf4j.simple)
+}
