@@ -77,9 +77,13 @@ public class ConfigSection extends ConfigObject {
      * @return A reference to the previous object associated with the given key
      * @param <T> The type of object passed in to be serialized
      */
-    public <T> ConfigObject set(String key, T value, Serializer<T> serializer) {
+    public <T> ConfigObject set(String key, T value, ForwardSerializer<T> serializer) {
         if(value == null) return remove(key);
         return set(key, serializer.serialize(ConfigContext.INSTANCE, value).getOrThrow());
+    }
+
+    public <T> ConfigObject set(String key, T value, Serializer<T> serializer) {
+        return set(key, value, (ForwardSerializer<T>) serializer);
     }
 
     /**
@@ -91,9 +95,13 @@ public class ConfigSection extends ConfigObject {
      * @return A reference to the previous object associated with the given key
      * @param <T> The type of object passed in to be serialized
      */
-    public <T, O> ConfigObject set(String key, T value, Serializer<T> serializer, SerializeContext<O> context) {
+    public <T, O> ConfigObject set(String key, T value, ForwardSerializer<T> serializer, SerializeContext<O> context) {
         if(value == null) return remove(key);
         return set(key, context.convert(ConfigContext.INSTANCE, serializer.serialize(context, value).getOrThrow()));
+    }
+
+    public <T, O> ConfigObject set(String key, T value, Serializer<T> serializer, SerializeContext<O> context) {
+        return set(key, value, (ForwardSerializer<T>) serializer, context);
     }
 
     /**
@@ -159,10 +167,15 @@ public class ConfigSection extends ConfigObject {
      * @param <T> The type of object to deserialize
      * @throws SerializeException if the value is null or cannot be converted to the requested type
      */
-    public <T> T get(String key, @NotNull Serializer<T> serializer) throws SerializeException {
+    public <T> T get(String key, @NotNull BackSerializer<T> serializer) throws SerializeException {
 
         ConfigObject out = get(key);
         return serializer.deserialize(ConfigContext.INSTANCE, out).getOrThrow();
+    }
+
+
+    public <T> T get(String key, @NotNull Serializer<T> serializer) throws SerializeException {
+        return get(key, (BackSerializer<T>) serializer);
     }
 
     /**
@@ -172,9 +185,13 @@ public class ConfigSection extends ConfigObject {
      * @return An optional containing an instance of T deserialized from the value in the section, or empty if it could not be serialized
      * @param <T> The type of object to deserialize
      */
-    public <T> Optional<T> getOptional(String key, @NotNull Serializer<T> serializer) {
+    public <T> Optional<T> getOptional(String key, @NotNull BackSerializer<T> serializer) {
 
         return Optional.ofNullable(get(key)).flatMap(v -> serializer.deserialize(ConfigContext.INSTANCE, v).get());
+    }
+
+    public <T> Optional<T> getOptional(String key, @NotNull Serializer<T> serializer) {
+        return getOptional(key, (BackSerializer<T>) serializer);
     }
 
     /**
@@ -337,6 +354,7 @@ public class ConfigSection extends ConfigObject {
         return getOptional(key).orElseThrow().asList();
     }
 
+
     /**
      * Gets a list associated with the given key, then makes a new list containing only values of type T
      * @param key The key to lookup
@@ -351,6 +369,22 @@ public class ConfigSection extends ConfigObject {
 
         ConfigList list = getList(key);
         return new ArrayList<>(serializer.listOf().deserialize(ConfigContext.INSTANCE, list).getOrThrow());
+    }
+
+    /**
+     * Gets a list associated with the given key, then makes a new list containing only values of type T
+     * @param key The key to lookup
+     * @param serializer The serializer to use to deserialize the values in the list
+     * @return A new list with only elements of type T
+     * @param <T> The type of objects to put in the list
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a ConfigList
+     * @throws SerializeException If any object cannot be deserialized using the given serializer
+     */
+    public <T> List<T> getList(String key, @NotNull BackSerializer<T> serializer) {
+
+        ConfigList list = getList(key);
+        return new ArrayList<>(BackSerializer.oneWay(serializer).listOf().deserialize(ConfigContext.INSTANCE, list).getOrThrow());
     }
 
     /**
@@ -382,6 +416,37 @@ public class ConfigSection extends ConfigObject {
 
         ConfigList list = getList(key);
         return new ArrayList<>(serializer.filteredListOf(onError).deserialize(ConfigContext.INSTANCE, list).getOrThrow());
+    }
+
+    /**
+     * Gets a list associated with the given key, then makes a new list containing only values which can be serialized using the given serializer
+     * @param key The key to lookup
+     * @param serializer The serializer to use to deserialize the values in the list
+     * @return A new list with only elements of type T
+     * @param <T> The type of objects to put in the list
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a ConfigList
+     */
+    public <T> List<T> getListFiltered(String key, @NotNull BackSerializer<T> serializer) {
+
+        ConfigList list = getList(key);
+        return new ArrayList<>(BackSerializer.oneWay(serializer).filteredListOf().deserialize(ConfigContext.INSTANCE, list).getOrThrow());
+    }
+
+    /**
+     * Gets a list associated with the given key, then makes a new list containing only values which can be serialized using the given serializer
+     * @param key The key to lookup
+     * @param serializer The serializer to use to deserialize the values in the list
+     * @param onError A callback to send error text whenever an object fails to serialize
+     * @return A new list with only elements of type T
+     * @param <T> The type of objects to put in the list
+     * @throws NoSuchElementException If there is no value associated with the key
+     * @throws IllegalStateException If the value associated with the key is not a ConfigList
+     */
+    public <T> List<T> getListFiltered(String key, @NotNull BackSerializer<T> serializer, Consumer<Throwable> onError) {
+
+        ConfigList list = getList(key);
+        return new ArrayList<>(BackSerializer.oneWay(serializer).filteredListOf(onError).deserialize(ConfigContext.INSTANCE, list).getOrThrow());
     }
 
     /**
@@ -754,7 +819,7 @@ public class ConfigSection extends ConfigObject {
         }
 
         @Override
-        public <T> ConfigObject set(String key, T value, Serializer<T> serializer) {
+        public <T> ConfigObject set(String key, T value, ForwardSerializer<T> serializer) {
             throw exception();
         }
 

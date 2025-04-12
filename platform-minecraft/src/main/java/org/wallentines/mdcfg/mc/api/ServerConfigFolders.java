@@ -19,7 +19,7 @@ public interface ServerConfigFolders {
 
     static Optional<Path> createConfigFolder(MinecraftServer server, String modName) {
         Path toCreate = ServerConfigFoldersImpl.getConfigFolder(server).resolve(modName);
-        try { Files.createDirectories(toCreate.getParent()); } catch (IOException ex) {
+        try { Files.createDirectories(toCreate); } catch (IOException ex) {
             return Optional.empty();
         }
         return Optional.of(toCreate);

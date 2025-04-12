@@ -39,7 +39,7 @@ public class DispatchSerializer<K, V> implements Serializer<V> {
 
     @SuppressWarnings("unchecked")
     private static <V, Q extends V> ForwardSerializer<V> generify(ForwardSerializer<Q> serializer) {
-        return serializer.map(v -> {
+        return serializer.mapForward(v -> {
             try {
                 Q out = (Q) v;
                 return SerializeResult.success(out);
