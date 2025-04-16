@@ -5,6 +5,7 @@ import org.wallentines.mdcfg.ConfigPrimitive;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * An interface which allows serializers to turn data into an encode-able format, and for codecs to encode data from
@@ -362,11 +363,70 @@ public interface SerializeContext<T> {
         }
     }
 
+    /**
+     * Whether the given object supports storing additional key-value metadata.
+     * Note: this metadata is not guaranteed to be preserved when writing to disk!
+     * @param object The object to inspect
+     * @return Whether that object supports metadata
+     */
     boolean supportsMeta(T object);
 
+    /**
+     * Gets a metadata value on the given object associated with the given key
+     * @param object The object to lookup on
+     * @param key The metadata key
+     * @return A metadata value, or null
+     */
     String getMetaProperty(T object, String key);
 
+    /**
+     * Sets a metadata value on the given object associated with the given key
+     * @param object The object to modify
+     * @param key The metadata key
+     * @param value A metadata value
+     */
     void setMetaProperty(T object, String key, String value);
+
+
+    /**
+     * Gets the first context value with the given type
+     * @param type The type to lookup
+     * @return An optional which may contain a value of the given type
+     * @param <C> The type to lookup
+     */
+    default <C> Optional<C> getFirst(Class<C> type) {
+        return Optional.empty();
+    }
+
+    /**
+     * Gets a stream of context values which conform to the given type
+     * @param type The type to lookup
+     * @return A stream of values with that type
+     * @param <C> The type to lookup
+     */
+    default <C> Stream<C> getByClass(Class<C> type) {
+        return Stream.empty();
+    }
+
+    /**
+     * Creates a new SerializeContext which has the given context value
+     * @param value The value
+     * @return A SerializeContext with the given context value
+     * @param <C> The type of value
+     */
+    default <C> SerializeContext<T> withContextValue(C value) {
+        return new DelegatedContext<T, Void>(this, null, ContextMap.of(value));
+    }
+
+    /**
+     * Creates a new SerializeContext which has the given context map
+     * @param contextMap The ContextMap to add
+     * @return A SerializeContext with the given context map
+     * @param <C> The type of value
+     */
+    default <C> SerializeContext<T> withContextMap(ContextMap contextMap) {
+        return new DelegatedContext<T, Void>(this, null, contextMap);
+    }
 
     /**
      * Copies a number value

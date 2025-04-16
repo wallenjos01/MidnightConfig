@@ -3,16 +3,27 @@ package org.wallentines.mdcfg.serializer;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public class DelegatedContext<T, V> implements SerializeContext<T> {
 
     private final SerializeContext<T> delegate;
     private final V value;
+    private final ContextMap contextMap;
 
     public DelegatedContext(SerializeContext<T> delegate, V value) {
         this.delegate = delegate;
         this.value = value;
+        this.contextMap = new ContextMap();
     }
+
+    public DelegatedContext(SerializeContext<T> delegate, V value, ContextMap contextMap) {
+        this.delegate = delegate;
+        this.value = value;
+        this.contextMap = contextMap;
+    }
+
 
     public V getContextValue() {
         return value;
@@ -121,5 +132,26 @@ public class DelegatedContext<T, V> implements SerializeContext<T> {
     @Override
     public void setMetaProperty(T object, String key, String value) {
         delegate.setMetaProperty(object, key, value);
+    }
+
+
+    @Override
+    public <C> Stream<C> getByClass(Class<C> type) {
+        return contextMap.getByClass(type);
+    }
+
+    @Override
+    public <C> Optional<C> getFirst(Class<C> type) {
+        return contextMap.getFirst(type);
+    }
+
+    @Override
+    public <C> SerializeContext<T> withContextValue(C value) {
+        return new DelegatedContext<>(delegate, value, contextMap.and(ContextMap.of(value)));
+    }
+
+    @Override
+    public SerializeContext<T> withContextMap(ContextMap contextMap) {
+       	return new DelegatedContext<>(delegate, value, this.contextMap.and(contextMap));
     }
 }
