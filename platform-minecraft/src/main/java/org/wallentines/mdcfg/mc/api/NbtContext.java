@@ -140,7 +140,11 @@ public class NbtContext implements SerializeContext<Tag> {
     public Tag set(String key, Tag value, Tag object) {
 
         if(object == null || object.asCompound().isEmpty()) return nullValue();
-        object.asCompound().orElseThrow().put(key, value);
+        if(value == null) {
+            object.asCompound().orElseThrow().remove(key);
+        } else {
+            object.asCompound().orElseThrow().put(key, value);
+        }
         return object;
     }
 
@@ -151,7 +155,7 @@ public class NbtContext implements SerializeContext<Tag> {
 
     @Override
     public String getMetaProperty(Tag object, String key) {
-        return "";
+        return null;
     }
 
     @Override
