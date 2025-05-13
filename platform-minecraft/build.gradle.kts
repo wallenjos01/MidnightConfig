@@ -30,10 +30,12 @@ dependencies {
     api(project(":api"))
     api(project(":api-sql"))
     api(project(":codec-json"))
+    api(project(":codec-binary"))
 
     shadow(project(":api"))
     shadow(project(":api-sql"))
     shadow(project(":codec-json"))
+    shadow(project(":codec-binary"))
 
     compileOnly(libs.jetbrains.annotations)
     implementation(libs.slf4j.api)
