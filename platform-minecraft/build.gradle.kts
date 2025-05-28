@@ -14,9 +14,9 @@ Utils.setupResources(project, rootProject, "fabric.mod.json")
 
 dependencies {
 
-    minecraft("com.mojang:minecraft:1.21.5")
+    minecraft("com.mojang:minecraft:1.21.6-pre1")
     mappings(loom.officialMojangMappings())
-    modImplementation("net.fabricmc:fabric-loader:0.16.10")
+    modImplementation("net.fabricmc:fabric-loader:0.16.14")
 
     // Fabric API
     val apiModules = listOf(
@@ -24,7 +24,7 @@ dependencies {
         "fabric-lifecycle-events-v1"
     )
     for(mod in apiModules) {
-        modApi(fabricApi.module(mod, "0.119.5+1.21.5"))
+        modApi(fabricApi.module(mod, "0.125.1+1.21.6"))
     }
 
     api(project(":api"))
