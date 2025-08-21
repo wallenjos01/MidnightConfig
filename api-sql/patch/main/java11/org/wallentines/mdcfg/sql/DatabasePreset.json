@@ -1,9 +1,0 @@
-[
-  {
-    "lines": [
-      { "find": "public record DatabasePreset" }
-    ],
-    "type": "set",
-    "value": "public class DatabasePreset {\n    private final String driver;\n    private final String url;\n    private final String username;\n    private final String password;\n    private final String database;\n    private final String tablePrefix;\n    private final ConfigSection parameters;\n\n    public DatabasePreset(String driver, String url, String username, String password, String database, String tablePrefix, ConfigSection parameters) {\n        this.driver = driver;\n        this.url = url;\n        this.username = username;\n        this.password = password;\n        this.database = database;\n        this.tablePrefix = tablePrefix;\n        this.parameters = parameters;\n    }\n\n    public String driver() {\n        return driver;\n    }\n\n    public String url() {\n        return url;\n    }\n\n    public String username() {\n        return username;\n    }\n\n    public String password() {\n        return password;\n    }\n\n    public String database() {\n        return database;\n    }\n\n    public String tablePrefix() {\n        return tablePrefix;\n    }\n\n    public ConfigSection parameters() {\n        return parameters;\n    }"
-  }
-]
