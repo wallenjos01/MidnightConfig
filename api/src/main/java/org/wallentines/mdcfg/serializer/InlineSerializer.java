@@ -8,18 +8,37 @@ import java.util.function.Function;
 public interface InlineSerializer<T> extends Serializer<T> {
 
     @Override
-    default <O> SerializeResult<O> serialize(SerializeContext<O> context, T value) {
-        return writeString(value).flatMap(context::toString);
+    default<O> SerializeResult<O> serialize(SerializeContext<O> context,
+                                            T value) {
+        return writeString(context, value).flatMap(context::toString);
     }
 
     @Override
-    default <O> SerializeResult<T> deserialize(SerializeContext<O> context, O value) {
-        return Serializer.STRING.deserialize(context, value).map(this::readString);
+    default<O> SerializeResult<T> deserialize(SerializeContext<O> context,
+                                              O value) {
+        return Serializer.STRING.deserialize(context, value)
+            .map(str -> this.readString(context, str));
     }
 
-    SerializeResult<T> readString(String str);
+    default<O> SerializeResult<T> readString(SerializeContext<O> context,
+                                             String str) {
+        return readString(str);
+    }
 
-    SerializeResult<String> writeString(T value);
+    default<O> SerializeResult<String> writeString(SerializeContext<O> context,
+                                                   T value) {
+        return writeString(value);
+    }
+
+    @Deprecated
+    default SerializeResult<T> readString(String str) {
+        return SerializeResult.failure("No read logic");
+    }
+
+    @Deprecated
+    default SerializeResult<String> writeString(T value) {
+        return SerializeResult.failure("No write logic");
+    }
 
     /**
      * Creates a new inline serializer using the given functions
@@ -28,19 +47,33 @@ public interface InlineSerializer<T> extends Serializer<T> {
      * @return A new Serializer
      * @param <T> The type of data to serialize
      */
-    static <T> InlineSerializer<T> of(Function<T, String> serialize, Function<String, T> deserialize) {
+    static <T> InlineSerializer<T> of(Function<T, String> serialize,
+                                      Function<String, T> deserialize) {
         return new InlineSerializer<>() {
             @Override
+            public <O> SerializeResult<T> readString(SerializeContext<O> ctx,
+                                                     String str) {
+                return SerializeResult.ofNullable(deserialize.apply(str),
+                                                  "Unable to read string");
+            }
+            @Override
+            public <O> SerializeResult<String> writeString(
+                SerializeContext<O> ctx, T value) {
+                return SerializeResult.ofNullable(serialize.apply(value),
+                                                  "Unable to write string");
+            }
+            @Override
             public SerializeResult<T> readString(String str) {
-                return SerializeResult.ofNullable(deserialize.apply(str), "Unable to read string");
+                return SerializeResult.ofNullable(deserialize.apply(str),
+                                                  "Unable to read string");
             }
             @Override
             public SerializeResult<String> writeString(T value) {
-                return SerializeResult.ofNullable(serialize.apply(value), "Unable to write string");
+                return SerializeResult.ofNullable(serialize.apply(value),
+                                                  "Unable to write string");
             }
         };
     }
 
     InlineSerializer<String> RAW = of(str -> str, str -> str);
-
 }

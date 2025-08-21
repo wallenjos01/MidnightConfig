@@ -1,18 +1,18 @@
 package org.wallentines.mdcfg.registry;
 
+import java.util.*;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.wallentines.mdcfg.ConfigPrimitive;
 import org.wallentines.mdcfg.serializer.ConfigContext;
 import org.wallentines.mdcfg.serializer.InlineSerializer;
+import org.wallentines.mdcfg.serializer.SerializeContext;
 import org.wallentines.mdcfg.serializer.SerializeResult;
-import org.wallentines.mdcfg.serializer.Serializer;
-
-import java.util.*;
-import java.util.stream.Stream;
 
 /**
- * An abstract data type for storing values associated with keys. Dy default, values cannot be overwritten
+ * An abstract data type for storing values associated with keys. Dy default,
+ * values cannot be overwritten
  * @param <I> The key type
  * @param <T> The value type
  */
@@ -31,16 +31,23 @@ public class Registry<I, T> implements Iterable<T> {
 
     protected int size;
 
-
     public Registry(InlineSerializer<I> idSerializer) {
         this(idSerializer, false, false, false);
     }
 
-    public Registry(InlineSerializer<I> idSerializer, boolean allowDuplicateValues, boolean allowNullValues, boolean allowEqualValues) {
-        this(idSerializer, allowDuplicateValues, allowNullValues, allowEqualValues, new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new HashMap<>());
+    public Registry(InlineSerializer<I> idSerializer,
+                    boolean allowDuplicateValues, boolean allowNullValues,
+                    boolean allowEqualValues) {
+        this(idSerializer, allowDuplicateValues, allowNullValues,
+             allowEqualValues, new ArrayList<>(), new ArrayList<>(),
+             new HashMap<>(), new HashMap<>());
     }
 
-    protected Registry(InlineSerializer<I> idSerializer, boolean allowDuplicateValues, boolean allowNullValues, boolean allowEqualValues, List<I> ids, List<T> values, Map<I, Integer> indexById, Map<T, Integer> indexByValue) {
+    protected Registry(InlineSerializer<I> idSerializer,
+                       boolean allowDuplicateValues, boolean allowNullValues,
+                       boolean allowEqualValues, List<I> ids, List<T> values,
+                       Map<I, Integer> indexById,
+                       Map<T, Integer> indexByValue) {
         this.idSerializer = idSerializer;
         this.allowDuplicateValues = allowDuplicateValues;
         this.allowNullValues = allowNullValues;
@@ -56,21 +63,27 @@ public class Registry<I, T> implements Iterable<T> {
      * @param id The ID of the value to register
      * @param value The value to register
      * @return The registered value
-     * @throws IllegalArgumentException If there is already an ID with the same name, or the value is a duplicate
+     * @throws IllegalArgumentException If there is already an ID with the same
+     *     name, or the value is a duplicate
      */
     public T register(I id, T value) throws IllegalArgumentException {
 
-        if(value == null && !allowNullValues) {
-            throw new IllegalArgumentException("This registry cannot accept null values!");
+        if (value == null && !allowNullValues) {
+            throw new IllegalArgumentException(
+                "This registry cannot accept null values!");
         }
-        if(ids.contains(id)) {
-            throw new IllegalArgumentException("Attempt to register value with duplicate ID!");
+        if (ids.contains(id)) {
+            throw new IllegalArgumentException(
+                "Attempt to register value with duplicate ID!");
         }
-        if(!allowEqualValues && indexByValue.containsKey(value)) {
-            throw new IllegalArgumentException("Attempt to register a value equal to an existing value! (" + value + ")");
+        if (!allowEqualValues && indexByValue.containsKey(value)) {
+            throw new IllegalArgumentException(
+                "Attempt to register a value equal to an existing value! (" +
+                value + ")");
         }
-        if(!allowDuplicateValues && indexOf(value) != null) {
-            throw new IllegalArgumentException("Attempt to register value twice! (" + value + ")");
+        if (!allowDuplicateValues && indexOf(value) != null) {
+            throw new IllegalArgumentException(
+                "Attempt to register value twice! (" + value + ")");
         }
 
         ids.add(id);
@@ -84,17 +97,22 @@ public class Registry<I, T> implements Iterable<T> {
         return value;
     }
 
-
     /**
      * Attempts to register a given value by converting a given string to an ID
      * @param id The ID of the value to register
      * @param value The value to register
      * @return The registered value
-     * @throws IllegalArgumentException If there is already an ID with the same name, or the value is a duplicate
-     * @throws org.wallentines.mdcfg.serializer.SerializeException If the given string could not be turned into a valid ID
+     * @throws IllegalArgumentException If there is already an ID with the same
+     *     name, or the value is a duplicate
+     * @throws org.wallentines.mdcfg.serializer.SerializeException If the given
+     *     string could not be turned into a valid ID
      */
     public T tryRegister(String id, T value) throws IllegalArgumentException {
-        return register(idSerializer.deserialize(ConfigContext.INSTANCE, new ConfigPrimitive(id)).getOrThrow(), value);
+        return register(
+            idSerializer
+                .deserialize(ConfigContext.INSTANCE, new ConfigPrimitive(id))
+                .getOrThrow(),
+            value);
     }
 
     /**
@@ -107,7 +125,7 @@ public class Registry<I, T> implements Iterable<T> {
 
         Integer index = indexById.get(id);
 
-        if(index == null || index < 0) {
+        if (index == null || index < 0) {
             return null;
         }
 
@@ -124,7 +142,7 @@ public class Registry<I, T> implements Iterable<T> {
 
         Integer index = indexOf(value);
 
-        if(index == null || index < 0) {
+        if (index == null || index < 0) {
             return null;
         }
 
@@ -140,12 +158,14 @@ public class Registry<I, T> implements Iterable<T> {
     public Integer indexOf(T value) {
 
         Integer index = indexByValue.get(value);
-        if(index == null) return null;
+        if (index == null)
+            return null;
 
-        if(values.get(index) != value) {
+        if (values.get(index) != value) {
             // Traverse the registry
-            for(int i = 0 ; i < index ; i++) {
-                if(values.get(i) == value) return i;
+            for (int i = 0; i < index; i++) {
+                if (values.get(i) == value)
+                    return i;
             }
             return null;
         }
@@ -158,21 +178,21 @@ public class Registry<I, T> implements Iterable<T> {
      * @param id The id to lookup
      * @return Whether there is a value registered to that ID
      */
-    public boolean hasKey(I id) {
-
-        return indexById.containsKey(id);
-    }
+    public boolean hasKey(I id) { return indexById.containsKey(id); }
 
     /**
      * Gets the value at a particular index
      * @param index The index into the registry
      * @return The value at the given index
-     * @throws IndexOutOfBoundsException If the index is less than zero or greater than the largest index in the registry
+     * @throws IndexOutOfBoundsException If the index is less than zero or
+     *     greater than the largest index in the registry
      */
     public T valueAtIndex(int index) throws IndexOutOfBoundsException {
 
-        if(index < 0 || index >= size) {
-            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for registry of size " + size + "!");
+        if (index < 0 || index >= size) {
+            throw new IndexOutOfBoundsException(
+                "Index " + index + " out of bounds for registry of size " +
+                size + "!");
         }
 
         return values.get(index);
@@ -182,12 +202,15 @@ public class Registry<I, T> implements Iterable<T> {
      * Gets the ID of the registered value at the given index
      * @param index The index into the registry
      * @return The ID of the value at the index
-     * @throws IndexOutOfBoundsException If the index is less than zero or greater than the largest index in the registry
+     * @throws IndexOutOfBoundsException If the index is less than zero or
+     *     greater than the largest index in the registry
      */
     public I idAtIndex(int index) throws IndexOutOfBoundsException {
 
-        if(index < 0 || index > size) {
-            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for registry of size " + size + "!");
+        if (index < 0 || index > size) {
+            throw new IndexOutOfBoundsException(
+                "Index " + index + " out of bounds for registry of size " +
+                size + "!");
         }
 
         return ids.get(index);
@@ -211,7 +234,8 @@ public class Registry<I, T> implements Iterable<T> {
      * Removes the registered value with the given ID from the registry.
      * <br/>
      * <br/>
-     * WARNING: This is not recommended for most use cases, as it will cause the registry index to be rebuilt.
+     * WARNING: This is not recommended for most use cases, as it will cause the
+     * registry index to be rebuilt.
      * @param id The ID to lookup
      * @return The value which used to be associated with the given ID
      * @throws IllegalArgumentException If there is no object with the given ID
@@ -220,8 +244,9 @@ public class Registry<I, T> implements Iterable<T> {
 
         Integer index = indexById.get(id);
 
-        if(index == null || index < 0) {
-            throw new IllegalArgumentException("Attempt to remove item with unregistered ID!");
+        if (index == null || index < 0) {
+            throw new IllegalArgumentException(
+                "Attempt to remove item with unregistered ID!");
         }
 
         return removeAtIndex(index);
@@ -231,7 +256,8 @@ public class Registry<I, T> implements Iterable<T> {
      * Removes the given registered value from the registry
      * <br/>
      * <br/>
-     * WARNING: This is not recommended for most use cases, as it will cause the registry index to be rebuilt.
+     * WARNING: This is not recommended for most use cases, as it will cause the
+     * registry index to be rebuilt.
      * @param value The value to lookup
      * @return The value which used to be in the registry
      * @throws IllegalArgumentException If the given value is not registered
@@ -240,8 +266,9 @@ public class Registry<I, T> implements Iterable<T> {
 
         Integer index = indexByValue.get(value);
 
-        if(index == null || index < 0) {
-            throw new IllegalArgumentException("Attempt to remove unregistered item!");
+        if (index == null || index < 0) {
+            throw new IllegalArgumentException(
+                "Attempt to remove unregistered item!");
         }
 
         return removeAtIndex(index);
@@ -251,14 +278,17 @@ public class Registry<I, T> implements Iterable<T> {
      * Removes the registered value at the given index from the registry
      * <br/>
      * <br/>
-     * WARNING: This is not recommended for most use cases, as it will cause the registry index to be rebuilt.
+     * WARNING: This is not recommended for most use cases, as it will cause the
+     * registry index to be rebuilt.
      * @param index The index into the registry
      * @return The value which used to be at the given index
      */
     public T removeAtIndex(int index) throws IndexOutOfBoundsException {
 
-        if(index < 0 || index > size) {
-            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for registry of size " + size + "!");
+        if (index < 0 || index > size) {
+            throw new IndexOutOfBoundsException(
+                "Index " + index + " out of bounds for registry of size " +
+                size + "!");
         }
 
         T out = values.remove(index);
@@ -268,7 +298,7 @@ public class Registry<I, T> implements Iterable<T> {
 
         size--;
 
-        for(int i = index ; i < size ; i++) {
+        for (int i = index; i < size; i++) {
             indexById.put(ids.get(i), i);
             indexByValue.put(values.get(i), i);
         }
@@ -280,9 +310,7 @@ public class Registry<I, T> implements Iterable<T> {
      * Gets the number of registered values in the registry
      * @return The size of the registry
      */
-    public int getSize() {
-        return size;
-    }
+    public int getSize() { return size; }
 
     /**
      * Determines if the given value is registered
@@ -298,17 +326,13 @@ public class Registry<I, T> implements Iterable<T> {
      * @param id The ID to lookup
      * @return Whether the ID is in the registry
      */
-    public boolean contains(I id) {
-        return indexById.containsKey(id);
-    }
+    public boolean contains(I id) { return indexById.containsKey(id); }
 
     /**
      * Gets a list of IDs of registered values
      * @return A list of registered value IDs
      */
-    public Collection<I> getIds() {
-        return ids;
-    }
+    public Collection<I> getIds() { return ids; }
 
     /**
      * Gets a list of registered values
@@ -332,9 +356,7 @@ public class Registry<I, T> implements Iterable<T> {
      * Creates a Serializer for getting registered values from Strings
      * @return A new Serializer
      */
-    public InlineSerializer<I> idSerializer() {
-        return idSerializer;
-    }
+    public InlineSerializer<I> idSerializer() { return idSerializer; }
 
     /**
      * Creates a Serializer for getting registered values from Strings
@@ -343,26 +365,30 @@ public class Registry<I, T> implements Iterable<T> {
     public InlineSerializer<T> byIdSerializer() {
         return new InlineSerializer<T>() {
             @Override
-            public SerializeResult<T> readString(String s) {
-                return idSerializer.readString(s).flatMap(Registry.this::get);
+            public <O> SerializeResult<T> readString(SerializeContext<O> ctx,
+                                                     String s) {
+                return idSerializer.readString(ctx, s).flatMap(
+                    Registry.this::get);
             }
 
             @Override
-            public SerializeResult<String> writeString(T t) {
+            public <O> SerializeResult<String> writeString(
+                SerializeContext<O> ctx, T t) {
                 I id = getId(t);
-                if(id == null) return SerializeResult.failure("Unable to serialize unregistered value!");
-                return idSerializer.writeString(getId(t));
+                if (id == null)
+                    return SerializeResult.failure(
+                        "Unable to serialize unregistered value!");
+                return idSerializer.writeString(ctx, getId(t));
             }
         };
     }
 
     /**
-     * Creates an immutable registry which contains all keys and values of this registry, but cannot be modified
+     * Creates an immutable registry which contains all keys and values of this
+     * registry, but cannot be modified
      * @return A frozen registry
      */
-    public Frozen<I, T> freeze() {
-        return new Frozen<>(this, idSerializer);
-    }
+    public Frozen<I, T> freeze() { return new Frozen<>(this, idSerializer); }
 
     @Override
     public @NotNull Iterator<T> iterator() {
@@ -392,14 +418,20 @@ public class Registry<I, T> implements Iterable<T> {
 
     /**
      * Creates a new Registry with String IDs
-     * @param allowDuplicateValues Whether the registry should allow the same value to be registered twice
-     * @param allowNullValues Whether the registry should allow null values to be registered
-     * @param allowEqualValues Whether the registry should allow equivalent values to be registered
+     * @param allowDuplicateValues Whether the registry should allow the same
+     *     value to be registered twice
+     * @param allowNullValues Whether the registry should allow null values to
+     *     be registered
+     * @param allowEqualValues Whether the registry should allow equivalent
+     *     values to be registered
      * @return A new registry
      * @param <T> The type of the values in the registry
      */
-    public static <T> Registry<String, T> createStringRegistry(boolean allowDuplicateValues, boolean allowNullValues, boolean allowEqualValues) {
-        return new Registry<>(InlineSerializer.RAW, allowDuplicateValues, allowNullValues, allowEqualValues);
+    public static <T> Registry<String, T>
+    createStringRegistry(boolean allowDuplicateValues, boolean allowNullValues,
+                         boolean allowEqualValues) {
+        return new Registry<>(InlineSerializer.RAW, allowDuplicateValues,
+                              allowNullValues, allowEqualValues);
     }
 
     /**
@@ -415,14 +447,21 @@ public class Registry<I, T> implements Iterable<T> {
     /**
      * Creates a new Registry with Identifier IDs
      * @param defaultNamespace The default identifier namespace
-     * @param allowDuplicateValues Whether the registry should allow the same value to be registered twice
-     * @param allowNullValues Whether the registry should allow null values to be registered
-     * @param allowEqualValues Whether the registry should allow equivalent values to be registered
+     * @param allowDuplicateValues Whether the registry should allow the same
+     *     value to be registered twice
+     * @param allowNullValues Whether the registry should allow null values to
+     *     be registered
+     * @param allowEqualValues Whether the registry should allow equivalent
+     *     values to be registered
      * @return A new registry
      * @param <T> The type of the values in the registry
      */
-    public static <T> Registry<Identifier, T> create(String defaultNamespace, boolean allowDuplicateValues, boolean allowNullValues, boolean allowEqualValues) {
-        return new Registry<>(Identifier.serializer(defaultNamespace), allowDuplicateValues, allowNullValues, allowEqualValues);
+    public static <T> Registry<Identifier, T>
+    create(String defaultNamespace, boolean allowDuplicateValues,
+           boolean allowNullValues, boolean allowEqualValues) {
+        return new Registry<>(Identifier.serializer(defaultNamespace),
+                              allowDuplicateValues, allowNullValues,
+                              allowEqualValues);
     }
 
     /**
@@ -432,8 +471,13 @@ public class Registry<I, T> implements Iterable<T> {
      */
     public static class Frozen<I, T> extends Registry<I, T> {
 
-        public Frozen(Registry<I, T> registry, InlineSerializer<I> idSerializer) {
-            super(idSerializer, registry.allowDuplicateValues, registry.allowNullValues, registry.allowEqualValues, List.copyOf(registry.ids), List.copyOf(registry.values), Map.copyOf(registry.indexById), Map.copyOf(registry.indexByValue));
+        public Frozen(Registry<I, T> registry,
+                      InlineSerializer<I> idSerializer) {
+            super(idSerializer, registry.allowDuplicateValues,
+                  registry.allowNullValues, registry.allowEqualValues,
+                  List.copyOf(registry.ids), List.copyOf(registry.values),
+                  Map.copyOf(registry.indexById),
+                  Map.copyOf(registry.indexByValue));
             this.size = registry.size;
         }
 
@@ -462,5 +506,4 @@ public class Registry<I, T> implements Iterable<T> {
             throw new IllegalStateException("Registry is frozen!");
         }
     }
-
 }
