@@ -288,8 +288,10 @@ public interface Serializer<T> extends ForwardSerializer<T>, BackSerializer<T> {
      * Creates a new serializer which maps data to a string encoded using the
      * given codec.
      * @return A new serializer of the mapped type.
+     * @deprecated Use mapToInline
      */
-    default InlineSerializer<T> mapToString(Codec codec) {
+    @Deprecated
+    default Serializer<T> mapToString(Codec codec) {
 
         return new InlineSerializer<T>() {
             @Override
@@ -317,6 +319,15 @@ public interface Serializer<T> extends ForwardSerializer<T>, BackSerializer<T> {
                 }
             }
         };
+    }
+
+    /**
+     * Creates a new serializer which maps data to a string encoded using the
+     * given codec.
+     * @return A new serializer of the mapped type.
+     */
+    default InlineSerializer<T> mapToInline(Codec codec) {
+        return (InlineSerializer<T>)mapToString(codec);
     }
 
     /**
