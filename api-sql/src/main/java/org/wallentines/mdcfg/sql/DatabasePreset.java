@@ -74,7 +74,7 @@ public class DatabasePreset {
                         .asSection());
 
         SerializeResult<DatabasePreset> decoded =
-            SERIALIZER.deserialize(ConfigContext.INSTANCE, config);
+            SERIALIZER.deserialize(ConfigContext.INSTANCE, merged);
         if (!decoded.isComplete()) {
             return this;
         }

@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class Select extends DQLStatement {
+public class Select extends DQLStatement implements Expression {
 
     public final List<String> tables;
     public final List<Term> columns;
@@ -135,6 +135,11 @@ public class Select extends DQLStatement {
         } catch (SQLException ex) {
             throw new IllegalStateException("Unable to execute SELECT statement!", ex);
         }
+    }
+
+    @Override
+    public void write(StatementBuilder builder) {
+        builder.append(toBuilder());
     }
 
     public static class SortedTerm {

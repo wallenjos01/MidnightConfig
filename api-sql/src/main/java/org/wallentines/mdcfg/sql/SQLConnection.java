@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Represents a connection to an SQL database
@@ -154,6 +155,8 @@ public class SQLConnection implements AutoCloseable {
                         break;
                     case UPPER:
                         prefix = prefix.toUpperCase();
+                        break;
+                    default:
                         break;
                 }
 
@@ -316,6 +319,28 @@ public class SQLConnection implements AutoCloseable {
      */
     public DropIndex dropIndex(String name, String table) {
         return new DropIndex(this, name, tablePrefix + table);
+    }
+
+    /**
+     * Runs the given function on the database without committing any changes made within
+     * @param func The function to run. Any statements executed within will not be committed until the function exits and returns true.
+     */
+    public void doTransaction(Function<SQLConnection, Boolean> func) {
+
+        try {
+            try {
+                internal.setAutoCommit(false);
+                if(func.apply(this)) {
+                    internal.commit();
+                } else {
+                    internal.rollback();
+                }
+            } finally {
+                internal.setAutoCommit(true);
+            }
+        } catch(SQLException ex) {
+            throw new RuntimeException("An exception occurred while running a transaction", ex);
+        } 
     }
 
     @Override
