@@ -324,14 +324,17 @@ public class SQLConnection implements AutoCloseable {
     /**
      * Runs the given function on the database without committing any changes made within
      * @param func The function to run. Any statements executed within will not be committed until the function exits and returns true.
+     * @return Whether the transaction was successful
      */
-    public void doTransaction(Function<SQLConnection, Boolean> func) {
+    public boolean doTransaction(Function<SQLConnection, Boolean> func) {
 
+        boolean success = false;
         try {
             try {
                 internal.setAutoCommit(false);
                 if(func.apply(this)) {
                     internal.commit();
+                    success = true;
                 } else {
                     internal.rollback();
                 }
@@ -341,6 +344,7 @@ public class SQLConnection implements AutoCloseable {
         } catch(SQLException ex) {
             throw new RuntimeException("An exception occurred while running a transaction", ex);
         } 
+        return success;
     }
 
     @Override
