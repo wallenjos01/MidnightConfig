@@ -338,6 +338,8 @@ public class SQLConnection implements AutoCloseable {
                 } else {
                     internal.rollback();
                 }
+            } catch(SQLException ex) {
+                internal.rollback();
             } finally {
                 internal.setAutoCommit(true);
             }
