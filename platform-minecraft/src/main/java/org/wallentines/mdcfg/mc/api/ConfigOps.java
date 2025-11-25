@@ -42,7 +42,21 @@ public class ConfigOps implements DynamicOps<ConfigObject> {
             return outOps.createBoolean(input.asBoolean());
         }
         if (input.isNumber()) {
-            return outOps.createNumeric(input.asNumber());
+            Number num = input.asNumber();
+            if(num instanceof Byte) {
+                return outOps.createByte(num.byteValue());
+            } else if(num instanceof Short) {
+                return outOps.createShort(num.shortValue());
+            } else if(num instanceof Integer) {
+                return outOps.createInt(num.intValue());
+            } else if(num instanceof Long) {
+                return outOps.createLong(num.longValue());
+            } else if(num instanceof Float) {
+                return outOps.createFloat(num.floatValue());
+            } else if(num instanceof Double) {
+                return outOps.createDouble(num.doubleValue());
+            }
+            return outOps.createNumeric(num);
         }
 
         return outOps.empty();
@@ -111,7 +125,7 @@ public class ConfigOps implements DynamicOps<ConfigObject> {
     public DataResult<Stream<Pair<ConfigObject, ConfigObject>>> getMapValues(ConfigObject input) {
 
         if(input != null && input.isSection()) {
-            return DataResult.success(input.asSection().getKeys().stream().map(key -> Pair.of(new ConfigPrimitive(key), input.asSection().get(key))));
+            return DataResult.success(input.asSection().getKeys().stream().map(key -> Pair.of(createString(key), input.asSection().get(key))));
         }
 
         return DataResult.error(() -> "Not a section!");
@@ -149,7 +163,7 @@ public class ConfigOps implements DynamicOps<ConfigObject> {
     public ConfigObject remove(ConfigObject input, String key) {
 
         if(input.isSection()) {
-            return input.asSection().remove(key);
+            input.asSection().remove(key);
         }
 
         return input;
