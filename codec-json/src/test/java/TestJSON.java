@@ -1,5 +1,6 @@
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.wallentines.mdcfg.ConfigBlob;
 import org.wallentines.mdcfg.ConfigList;
 import org.wallentines.mdcfg.ConfigObject;
 import org.wallentines.mdcfg.ConfigSection;
@@ -9,6 +10,7 @@ import org.wallentines.mdcfg.serializer.ConfigContext;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 public class TestJSON {
@@ -170,7 +172,19 @@ public class TestJSON {
         Assertions.assertThrows(DecodeException.class, () -> {
             JSONCodec.loadConfig("{\"key\":\"Invalid Value}");
         });
+    }
 
+    @Test
+    public void testBlob() {
+
+        String message = "Hello, World";
+        ByteBuffer buf = ByteBuffer.wrap(message.getBytes());
+
+        ConfigSection sec = new ConfigSection();
+        sec.set("blob", new ConfigBlob(buf));
+
+        String json = JSONCodec.minified().encodeToString(ConfigContext.INSTANCE, sec);
+        Assertions.assertEquals("{\"blob\":\"SGVsbG8sIFdvcmxk\"}", json);
 
     }
 
