@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -83,7 +84,7 @@ public class FileCodec {
     public <T> T loadFromFile(SerializeContext<T> context, Path file, Charset charset) throws IOException, DecodeException {
 
         if(!Files.exists(file)) return null;
-        try(InputStream fis = Files.newInputStream(file)) {
+        try(InputStream fis = Files.newInputStream(file, StandardOpenOption.READ)) {
             return base.decode(context, fis, charset);
         }
     }
@@ -110,7 +111,7 @@ public class FileCodec {
      */
     public <T> void saveToFile(SerializeContext<T> context, T data, Path file, Charset charset) throws IOException {
 
-        try(OutputStream fos = Files.newOutputStream(file)) {
+        try(OutputStream fos = Files.newOutputStream(file, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
             base.encode(context, data, fos, charset);
         }
     }

@@ -14,9 +14,10 @@ Utils.setupResources(project, rootProject, "fabric.mod.json")
 
 dependencies {
 
-    minecraft("com.mojang:minecraft:1.21.11")
-    mappings(loom.officialMojangMappings())
-    modImplementation("net.fabricmc:fabric-loader:0.18.3")
+    val fabricApiVersion = "0.144.0+26.1"
+
+    minecraft("com.mojang:minecraft:26.1")
+    implementation("net.fabricmc:fabric-loader:0.18.4")
 
     // Fabric API
     val apiModules = listOf(
@@ -24,7 +25,7 @@ dependencies {
         "fabric-lifecycle-events-v1"
     )
     for(mod in apiModules) {
-        modApi(fabricApi.module(mod, "0.140.0+1.21.11"))
+        api(fabricApi.module(mod, "${fabricApiVersion}"))
     }
 
     api(project(":api"))
@@ -41,4 +42,14 @@ dependencies {
     implementation(libs.slf4j.api)
 
     testRuntimeOnly(libs.slf4j.simple)
+
+
+    // Gametest API modules
+    val testApiModules = listOf(
+        "fabric-gametest-api-v1",
+        "fabric-registry-sync-v0"
+    )
+    for(mod in testApiModules) {
+        gametestImplementation(fabricApi.module(mod, "${fabricApiVersion}"))
+    }
 }

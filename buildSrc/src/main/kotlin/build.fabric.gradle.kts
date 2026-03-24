@@ -6,26 +6,25 @@ import net.fabricmc.loom.task.RemapSourcesJarTask
 plugins {
     id("build.common")
     id("build.shadow")
-    id("fabric-loom")
+    id("net.fabricmc.fabric-loom")
     id("com.gradleup.shadow")
 }
 
-sourceSets {
-    register("testmod") {
 
-        val main = sourceSets.main.get()
-
-        compileClasspath += main.compileClasspath
-        runtimeClasspath += main.runtimeClasspath
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "${rootProject.name}-tests"
+        enableGameTests = true
+        enableClientGameTests = true
+        eula = true
+        clearRunDirectory = true
+        username = "Player0"
     }
 }
 
+
 loom {
-    mods {
-        register(project.name + "-testmod") {
-            sourceSet(sourceSets["testmod"])
-        }
-    }
     runs {
         getByName("client") {
             runDir = "run/client"
@@ -37,12 +36,19 @@ loom {
             ideConfigGenerated(false)
             server()
         }
-        register("testmodServer") {
-            server()
+        register("testClient") {
+            name = "Test Client"
+            runDir = "run/testClient"
             ideConfigGenerated(false)
-            runDir = "run/testserver"
-            name = "Testmod Server"
-            source(sourceSets.getByName("testmod"))
+            client()
+            source(sourceSets.getByName("gametest"))
+        }
+        register("testServer") {
+            name = "Test Server"
+            runDir = "run/testServer"
+            ideConfigGenerated(false)
+            server()
+            source(sourceSets.getByName("gametest"))
         }
     }
     mixin {
@@ -50,45 +56,16 @@ loom {
     }
 }
 
-dependencies {
-    "testmodImplementation"(sourceSets.main.get().output)
-}
-
-
 val archiveName = Utils.getArchiveName(project, rootProject)
-
-val finalShadow = tasks.register<ShadowJar>("finalShadow") {
-
-    val remapJar = tasks.named<RemapJarTask>("remapJar").get()
-    dependsOn(remapJar)
-    from(zipTree(remapJar.archiveFile))
-
-    archiveClassifier.set("")
-    archiveBaseName.set(archiveName)
-
-    configurations = listOf(project.configurations["shadow"])
-}
-
-tasks.named("build") {
-    dependsOn(finalShadow)
-}
 
 tasks.named<Jar>("jar") {
     archiveBaseName.set(archiveName)
-    archiveClassifier.set("partial-dev")
-}
-
-tasks.named<RemapJarTask>("remapJar") {
-    archiveBaseName.set(archiveName)
     archiveClassifier.set("partial")
-    inputFile.set(tasks.named<Jar>("jar").get().archiveFile)
-}
-
-tasks.named<RemapSourcesJarTask>("remapSourcesJar") {
-    archiveBaseName.set(archiveName)
-    archiveClassifier.set("sources")
 }
 
 tasks.named<ShadowJar>("shadowJar") {
-    enabled = false
+    enabled = true
+    archiveBaseName.set(archiveName)
+    archiveClassifier.set("partial")
 }
+
