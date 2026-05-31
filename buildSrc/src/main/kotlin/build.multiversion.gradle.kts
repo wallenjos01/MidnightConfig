@@ -12,10 +12,10 @@ multiVersion {
     defaultVersion(25)
     additionalVersions(21, 17, 11, 8)
 
-    getJarTask(8).archiveBaseName.set(Utils.getArchiveName(project, rootProject))
-    getJarTask(11).archiveBaseName.set(Utils.getArchiveName(project, rootProject))
-    getJarTask(17).archiveBaseName.set(Utils.getArchiveName(project, rootProject))
-    getJarTask(21).archiveBaseName.set(Utils.getArchiveName(project, rootProject))
+    getJarTask(8).archiveBaseName.set(Utils.getArchiveName(project))
+    getJarTask(11).archiveBaseName.set(Utils.getArchiveName(project))
+    getJarTask(17).archiveBaseName.set(Utils.getArchiveName(project))
+    getJarTask(21).archiveBaseName.set(Utils.getArchiveName(project))
 }
 
 patch {

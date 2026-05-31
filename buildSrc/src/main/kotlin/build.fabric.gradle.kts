@@ -23,6 +23,8 @@ fabricApi {
     }
 }
 
+val workingDir = project.projectDir.toPath()
+val tmpDir = System.getProperty("java.io.tmpdir")
 
 loom {
     runs {
@@ -35,6 +37,16 @@ loom {
             runDir = "run/server"
             ideConfigGenerated(false)
             server()
+        }
+        getByName("gameTest") {
+            val randomString = List(16) { ('a'..'z').random() }.joinToString("")
+            val tmpRunDir = file("${tmpDir}/gt_${randomString}").toPath()
+            runDir = workingDir.relativize(tmpRunDir).toString()
+        }
+        getByName("clientGameTest") {
+            val randomString = List(16) { ('a'..'z').random() }.joinToString("")
+            val tmpRunDir = file("${tmpDir}/gtc_${randomString}").toPath()
+            runDir = workingDir.relativize(tmpRunDir).toString()
         }
         register("testClient") {
             name = "Test Client"
@@ -56,7 +68,8 @@ loom {
     }
 }
 
-val archiveName = Utils.getArchiveName(project, rootProject)
+val archiveName = Utils.getArchiveName(project)
+Utils.setupResources(project, rootProject, "fabric.mod.json")
 
 tasks.named<Jar>("jar") {
     archiveBaseName.set(archiveName)
@@ -66,6 +79,6 @@ tasks.named<Jar>("jar") {
 tasks.named<ShadowJar>("shadowJar") {
     enabled = true
     archiveBaseName.set(archiveName)
-    archiveClassifier.set("partial")
+    archiveClassifier.set("")
 }
 

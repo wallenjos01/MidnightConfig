@@ -15,7 +15,7 @@ tasks {
 }
 
 tasks.shadowJar {
-    archiveBaseName.set(Utils.getArchiveName(project, rootProject))
+    archiveBaseName.set(Utils.getArchiveName(project))
     archiveClassifier.set("")
 }
 

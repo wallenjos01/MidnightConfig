@@ -14,10 +14,10 @@ Utils.setupResources(project, rootProject, "fabric.mod.json")
 
 dependencies {
 
-    val fabricApiVersion = "0.144.0+26.1"
+    val fabricApiVersion = "0.150.0+26.1.2"
 
-    minecraft("com.mojang:minecraft:26.1")
-    implementation("net.fabricmc:fabric-loader:0.18.4")
+    minecraft("com.mojang:minecraft:26.1.2")
+    implementation("net.fabricmc:fabric-loader:0.19.2")
 
     // Fabric API
     val apiModules = listOf(
@@ -33,10 +33,11 @@ dependencies {
     api(project(":codec-json"))
     api(project(":codec-binary"))
 
-    shadow(project(":api"))
-    shadow(project(":api-sql"))
-    shadow(project(":codec-json"))
-    shadow(project(":codec-binary"))
+    shadow(project(":api")) { isTransitive = false }
+    shadow(project(":api-sql")) { isTransitive = false }
+    shadow(project(":codec-json")) { isTransitive = false }
+    shadow(project(":codec-binary")) { isTransitive = false }
+    shadow(libs.zstd.jni)
 
     compileOnly(libs.jetbrains.annotations)
     implementation(libs.slf4j.api)
