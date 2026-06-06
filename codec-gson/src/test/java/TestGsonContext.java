@@ -5,6 +5,9 @@ import com.google.gson.JsonPrimitive;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.wallentines.mdcfg.serializer.GsonContext;
+import org.wallentines.mdcfg.serializer.ObjectSerializer;
+import org.wallentines.mdcfg.serializer.SerializeResult;
+import org.wallentines.mdcfg.serializer.Serializer;
 
 import java.util.*;
 
@@ -180,6 +183,23 @@ public class TestGsonContext {
         Assertions.assertEquals(1, cloned.getAsJsonObject().getAsJsonObject("object").size());
         Assertions.assertEquals(object.getAsJsonObject("object"), cloned.getAsJsonObject().getAsJsonObject("object"));
         Assertions.assertNotSame(object.getAsJsonObject("object"), cloned.getAsJsonObject().getAsJsonObject("object"));
+
+    }
+
+    @Test
+    public void testOptional() {
+
+        Serializer<Integer> serializer = ObjectSerializer.<Integer, Integer, Integer>create(
+            Serializer.INT.<Integer>entry("value", i -> i),
+            Serializer.INT.<Integer>entry("optional", i -> i).optional(),
+            (i1, i2) -> (Integer) i1
+        );
+
+        JsonObject obj = new JsonObject();
+        obj.add("value", new JsonPrimitive(42));
+
+        SerializeResult<Integer> res = serializer.deserialize(GsonContext.INSTANCE, obj);
+        Assertions.assertTrue(res.isComplete(), res.getErrorMessage());
 
     }
 

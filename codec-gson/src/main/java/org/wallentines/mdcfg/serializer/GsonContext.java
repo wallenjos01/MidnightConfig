@@ -73,7 +73,7 @@ public class GsonContext implements SerializeContext<JsonElement> {
 
     @Override
     public SerializeResult<Map<String, JsonElement>> asMap(JsonElement object) {
-        if(!isMap(object)) return null;
+        if(!isMap(object)) return SerializeResult.failure("Not a map");
         if(hasAsMap) {
             return SerializeResult.success(object.getAsJsonObject().asMap());
         }
@@ -142,7 +142,7 @@ public class GsonContext implements SerializeContext<JsonElement> {
     @Override
     public JsonElement get(String key, JsonElement object) {
         if(!isMap(object)) return null;
-        return object.getAsJsonObject().get(key);
+        return object.getAsJsonObject().has(key) ? object.getAsJsonObject().get(key) : nullValue();
     }
 
     @Override
@@ -190,7 +190,7 @@ public class GsonContext implements SerializeContext<JsonElement> {
 
     @Override
     public JsonElement mergeList(Collection<JsonElement> list, JsonElement object) {
-        if(!isList(object)) return null;
+        if(!isList(object)) return nullValue();
         JsonArray arr = object.getAsJsonArray();
         if(list != null) list.forEach(arr::add);
         return arr;
